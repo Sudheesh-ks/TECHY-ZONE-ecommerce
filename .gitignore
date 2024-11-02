@@ -1,0 +1,46 @@
+# Node modules
+node_modules/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment variables
+.env
+
+# MongoDB data (if you’re using a local MongoDB setup)
+data/
+dump/
+
+# OS-specific files
+.DS_Store      # macOS
+Thumbs.db      # Windows
+desktop.ini    # Windows
+
+# Editor-specific files
+.vscode/
+.idea/
+*.swp
+
+# Build directories (for example, if you're using Babel or TypeScript)
+dist/
+build/
+
+# Temporary files
+*.tmp
+*.temp
+
+# Coverage files (if you're using a testing framework like Jest)
+coverage/
+
+# Miscellaneous
+*.pid
+*.seed
+*.pid.lock
+
+# If you are using NPM, you may ignore the package-lock.json only if your team agrees
+# Uncomment the line below if that's your choice
+# package-lock.json

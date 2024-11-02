@@ -1,0 +1,75 @@
+body {
+    background-color: #f8f9fa;
+}
+.signup-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin-top: 20px; /* To account for the navbar height */
+}
+.signup-form {
+    background-color: #fff;
+    padding: 40px;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 400px;
+    margin: auto;
+}
+.background-image {
+    background: url('../images/about\ 1.jpeg') no-repeat center center;
+    background-size: cover;
+    border-radius: 8px;
+}
+.footer {
+    background-color: #212529;
+    color: #fff;
+    padding: 40px 0;
+    margin-top: 20px;
+}
+.footer a {
+    color: #fff;
+    text-decoration: none;
+}
+.footer a:hover {
+    text-decoration: underline;
+}
+.navbar .nav-item .fa {
+    font-size: 1.2rem;
+}
+
+
+/* Custom styles for the SweetAlert popup */
+
+.swal-modal {
+    border-radius: 10px; /* Rounded corners for the modal */
+    background-color: #f0f0f0; /* Custom background color */
+    font-family: Arial, sans-serif;
+}
+
+.swal-title {
+    color: #333; /* Custom color for the title */
+    font-size: 20px;
+    font-weight: bold;
+}
+
+.swal-text {
+    color: #666; /* Custom color for the text */
+    font-size: 16px;
+}
+
+.swal-button {
+    background-color: #4CAF50; /* Green background for the button */
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: background-color 0.3s;
+}
+
+.swal-button:hover {
+    background-color: #45a049;  /*Darker green on hover */
+} 

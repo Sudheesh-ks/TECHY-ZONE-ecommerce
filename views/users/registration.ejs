@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Signup Page</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"> <!-- Bootstrap CSS CDN -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet"> <!-- Font Awsome CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert/2.1.2/sweetalert.min.js"></script> <!-- SweetAlert CDN -->
+    <link rel="stylesheet" href="/user/css/register.css">
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg navbar-light bg-light fixed-top">
+    <div class="container">
+        <a class="navbar-brand" href="#"><img src="user/images/icons/Techy_Zone.png"></a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="index.html">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="product.html">Shop</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="myaccount.html">My Account</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="about.html">About</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="contact.html">Contact</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="login.html">Login</a>
+                </li>
+                <!-- Icons -->
+                <li class="nav-item">
+                    <a class="nav-link" href="#"><i class="fas fa-search"></i></a>
+                </li>
+				<li class="nav-item">
+                    <a class="nav-link" href="shoping-cart.html"><i class="fas fa-shopping-cart"></i></a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#"><i class="fas fa-heart"></i></a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<!-- Signup Container -->
+<div class="container signup-container">
+    <div class="row g-0 col-lg-12">
+        <div class="col-lg-6 d-flex align-items-center">
+            <div class="signup-form">
+                <h2 class="mb-4 text-center">Get Started Now</h2>
+                <form action="/register" id="reg-form" method="post">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Username</label>
+                        <input type="text" class="form-control" name="name" id="name" placeholder="Enter your username">
+                    </div>
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email address</label>
+                        <input type="email" class="form-control" name="email" id="email" placeholder="Enter email">
+                    </div>
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Phone number</label>
+                        <input type="number" class="form-control" name="phno" id="phno" placeholder="Enter phone number">
+                    </div>
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Password</label>
+                        <input type="password" class="form-control" name="password" id="password" placeholder="Password">
+                    </div>
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Confirm Password</label>
+                        <input type="password" class="form-control" name="confirmPassword" id="confirmPassword" placeholder="confirm Password">
+                    </div>
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="terms">
+                        <label class="form-check-label" for="terms">I agree to the terms & policies</label>
+                    </div>
+                    <button type="submit" class="btn btn-dark w-100">Signup</button>
+                </form>
+                <hr>
+                <a href="/auth/google" class="btn btn-outline-dark w-100 mb-2"><i class="fab fa-google"></i> Sign in with Google</a>
+                <button class="btn btn-outline-dark w-100"><i class="fab fa-apple"></i> Sign in with Apple</button>
+                <p class="text-center mt-3">Have an account? <a href="/login">Sign in</a></p>
+            </div>
+        </div>
+        <div class="col-lg-6 background-image d-none d-lg-block"></div>
+    </div>
+</div>
+
+<!-- Footer -->
+<div class="footer">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-3">
+                <h5>Categories</h5>
+                <ul class="list-unstyled">
+                    <li><a href="#">Gadgets</a></li>
+                    <li><a href="#">Accessories</a></li>
+                    <li><a href="#">Wearables</a></li>
+                    <li><a href="#">Decorative Items</a></li>
+                </ul>
+            </div>
+            <div class="col-md-3">
+                <h5>Help</h5>
+                <ul class="list-unstyled">
+                    <li><a href="#">Track Order</a></li>
+                    <li><a href="#">Returns</a></li>
+                    <li><a href="#">Shipping</a></li>
+                    <li><a href="#">FAQs</a></li>
+                </ul>
+            </div>
+            <div class="col-md-3">
+                <h5>Get In Touch</h5>
+                <p>Contact us at:</p>
+                <p>email@techyzone.com</p>
+                <p>+1 999 555 8877</p>
+            </div>
+            <div class="col-md-3">
+                <h5>Newsletter</h5>
+                <form>
+                    <input type="email" class="form-control mb-2" placeholder="Enter your email">
+                    <button type="submit" class="btn btn-primary w-100">Subscribe</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/js/all.min.js"></script>
+
+
+
+<script>
+
+document.getElementById('reg-form').addEventListener('submit',(e) => {
+
+
+    if(!formValidate()){
+        e.preventDefault()
+    }
+})
+
+
+    function formValidate() {
+        var name = document.getElementById('name').value.trim();
+        var email = document.getElementById('email').value.trim();
+        var phno = document.getElementById('phno').value.trim();
+        var password = document.getElementById('password').value.trim();
+        var confirmPassword = document.getElementById('confirmPassword').value.trim();
+        var termsChecked = document.getElementById('terms').checked;
+
+    // Empty field validation
+    if (name === "" || email === "" || phno === "" || password === "" || confirmPassword === "") {
+        sweetAlert("Oops...", "All fields are required!", "error");
+        return false;
+    }
+
+    // Email format validation
+    var emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailPattern.test(email)) {
+        sweetAlert("Invalid Email", "Please enter a valid email address.", "error");
+        return false;
+    }
+
+    // Phone number validation
+    if (phno.length < 10 || isNaN(phno)) {
+        sweetAlert("Invalid Phone Number", "Please enter a valid phone number with at least 10 digits.", "error");
+        return false;
+    }
+
+    // Password validation
+    if (password.length < 6) {
+        sweetAlert("Weak Password", "Password must be at least 6 characters long.", "error");
+        return false;
+    }
+
+    // Password and confirm password matching
+    if (password !== confirmPassword) {
+        sweetAlert("Password Mismatch", "Passwords do not match. Please try again.", "error");
+        return false;
+    }
+
+    // Checkbox validation
+    if (!termsChecked) {
+        sweetAlert("Terms and Conditions", "You must agree to the terms and policies to continue.", "error");
+        return false;
+    }
+
+    // For success,if all validations are true
+    sweetAlert("Good job!", "Your OTP has been send. Check your email!", "success");
+    return true;
+
+}
+</script>
+
+
+</body>
+</html>

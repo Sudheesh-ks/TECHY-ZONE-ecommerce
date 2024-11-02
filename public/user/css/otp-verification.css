@@ -1,0 +1,41 @@
+
+        body {
+            background-color: #f8f9fa;
+        }
+        .verify-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin-top: 80px; /* To account for the navbar height */
+        }
+        .verify-form {
+            background-color: #fff;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+            margin: auto;
+        }
+        .background-image {
+            background: url('../images/about\ 1.jpeg') no-repeat center center;
+            background-size: cover;
+            border-radius: 8px;
+        }
+        .footer {
+            background-color: #212529;
+            color: #fff;
+            padding: 40px 0;
+            margin-top: 20px;
+        }
+        .footer a {
+            color: #fff;
+            text-decoration: none;
+        }
+        .footer a:hover {
+            text-decoration: underline;
+        }
+        .navbar .nav-item .fa {
+            font-size: 1.2rem;
+        }

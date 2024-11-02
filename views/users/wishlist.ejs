@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wishlist</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <style>
+        .wishlist-table {
+            margin-top: 100px;
+        }
+        .wishlist-table th, .wishlist-table td {
+            vertical-align: middle;
+        }
+        .btn-custom {
+            background-color: black;
+            color: white;
+            border: none;
+        }
+        .btn-custom:hover {
+            background-color: #333;
+        }
+        .footer {
+            background-color: #212529;
+            color: #fff;
+            padding: 40px 0;
+            margin-top: 40px;
+        }
+        .footer a {
+            color: #fff;
+            text-decoration: none;
+        }
+        .footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg navbar-light bg-light fixed-top">
+    <div class="container">
+        <a class="navbar-brand" href="#">TechyZone</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="#">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">Shop</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">My Account</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">About</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">Contact</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">Login</a>
+                </li>
+                 <!-- Icons -->
+                 <li class="nav-item">
+                    <a class="nav-link" href="#"><i class="fas fa-search"></i></a>
+                </li>
+				<li class="nav-item">
+                    <a class="nav-link" href="shoping-cart.html"><i class="fas fa-shopping-cart"></i></a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#"><i class="fas fa-heart"></i></a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<!-- Wishlist Table -->
+<div class="container wishlist-table">
+    <div class="row">
+        <div class="col-12">
+            <h5><a href="#">Home</a> > Wishlist</h5>
+            <table class="table table-bordered mt-3">
+                <thead class="thead-light">
+                    <tr>
+                        <th>Product</th>
+                        <th>Name</th>
+                        <th>Price</th>
+                        <th>Stock Status</th>
+                        <th>Add to Cart</th>
+                        <th>Remove from Cart</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><img src="images/Wishlist-Monitor 1.png" alt="Monitor" class="img-fluid"></td>
+                        <td>Monitor</td>
+                        <td>₹ 64,671.00</td>
+                        <td><span class="text-success fw-bold">In Stock</span></td>
+                        <td><button class="btn btn-custom">Add to Cart</button></td>
+                        <td><button class="btn btn-danger">Remove</button></td>
+                    </tr>
+                    <tr>
+                        <td><img src="images/Wishlist-Table.png" alt="SmartDesk" class="img-fluid"></td>
+                        <td>SmartDesk</td>
+                        <td>₹ 8,500</td>
+                        <td><span class="text-success fw-bold">In Stock</span></td>
+                        <td><button class="btn btn-custom">Add to Cart</button></td>
+                        <td><button class="btn btn-danger">Remove</button></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Footer -->
+<div class="footer">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-3">
+                <h5>Categories</h5>
+                <ul class="list-unstyled">
+                    <li><a href="#">Gadgets</a></li>
+                    <li><a href="#">Accessories</a></li>
+                    <li><a href="#">Wearables</a></li>
+                    <li><a href="#">Decorative Items</a></li>
+                </ul>
+            </div>
+            <div class="col-md-3">
+                <h5>Help</h5>
+                <ul class="list-unstyled">
+                    <li><a href="#">Track Order</a></li>
+                    <li><a href="#">Returns</a></li>
+                    <li><a href="#">Shipping</a></li>
+                    <li><a href="#">FAQs</a></li>
+                </ul>
+            </div>
+            <div class="col-md-3">
+                <h5>Get In Touch</h5>
+                <p>Any questions? Let us know in store or call us on +1 999 555 8877</p>
+            </div>
+            <div class="col-md-3">
+                <h5>Newsletter</h5>
+                <form>
+                    <input type="email" class="form-control mb-2" placeholder="Enter your email">
+                    <button type="submit" class="btn btn-primary w-100">Subscribe</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
