@@ -1,0 +1,171 @@
+<%- include("../../views/partials/admin/header") %>
+<head>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@10/dist/sweetalert2.min.css"/>
+  <style>
+    /* Styles omitted for brevity */
+  </style>
+</head>
+<body>
+  <section class="content-main">
+    <div class="content-header">
+      <div>
+        <h2 class="content-title card-title">Category</h2>
+      </div>
+    </div>
+    <header class="card-header text-center mb-20">
+      <form action="/admin/category/" method="get" class="d-inline">
+        <div class="input-group input-group-sm border border-1 border-grey rounded-pill" style="width: 500px; margin-left: 230px">
+          <input type="text" class="form-control border-0 rounded-pill mt-3" placeholder="Search categories" name="search"/>
+          <button class="btn" type="submit">Search</button>
+        </div>
+      </form>
+    </header>
+    <div class="card">
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-3">
+            <form method="POST" action="/admin/addCategory">
+                <div class="mb-4">
+                  <label for="product_name" class="form-label">Name</label>
+                  <input type="text" name="name" placeholder="Type here" class="form-control" id="product_name" required/>
+                  <div id="name-error" class="error-message"></div>
+                </div>
+                <div class="mb-4">
+                  <label class="form-label">Description</label>
+                  <textarea placeholder="Type here" name="description" class="form-control" id="descriptionId" required></textarea>
+                  <div id="description-error" class="error-message"></div>
+                </div>
+                <div class="mb-4">
+                  <label class="form-label">Offer Price</label>
+                  <input type="number" name="offerPrice" placeholder="Enter offer price" class="form-control" id="offerPrice" required/>
+                </div>
+                <div class="mb-4">
+                  <label class="form-label">Offer (%)</label>
+                  <input type="number" name="categoryOffer" placeholder="Enter offer percentage" class="form-control" id="categoryOffer" required/>
+                </div>
+                <div class="d-grid">
+                  <button class="btn btn-primary" type="submit">Create category</button>
+                </div>
+              </form>
+          </div>
+          <div class="col-md-8 ml-10">
+            <div class="table-responsive">
+              <table class="table table-hover">
+                <thead>
+                  <tr>
+                    <th class="text-center"></th>
+                    <th>Name</th>
+                    <th>Description</th>
+                    <th>Offer Price</th>
+                    <th>Offer</th>
+                    <th>Status</th>
+                    <th>List/Unlist</th>
+                    <th class="text-start">Edit</th>
+                  </tr>
+                </thead>
+                <tbody>
+                    <% if (cat && cat.length > 0) { %>
+                      <% cat.forEach((category, index) => { %>
+                        <tr>
+                          <td class="text-center"><%= index + 1 %></td>
+                          <td class="text-start"><%= category.name %></td>
+                          <td class="text-start"><%= category.description %></td>
+                          <td class="text-start"><%= category.offerPrice %></td>
+                          <td class="text-start"><%= category.categoryOffer %> %</td>
+                          <td class="text-start">
+                            <span class="badge <%= category.isListed ? 'alert-success' : 'alert-danger' %>">
+                                <%= category.status %>
+                            </span>
+                        </td>                        
+                          <td class="text-start">
+                            <button class="btn <%= category.isListed ? 'btn-danger' : 'btn-success' %>" onclick="toggleListStatus('<%= category._id %>')">
+                              <%= category.isListed ? 'Unlist' : 'List' %>
+                            </button>
+                          </td>
+                          <td class="text-start">
+                            <a href="javascript:void(0);" onclick="openEditModal('<%= category._id %>', '<%= category.name %>', '<%= category.description %>', '<%=category.offerPrice%>,<%=category.categoryOffer%>')" class="btn btn-info text-white">Edit</a>
+                          </td>
+                        </tr>
+                      <% }) %>
+                    <% } else { %>
+                      <tr>
+                        <td colspan="8" class="text-center">No categories found.</td>
+                      </tr>
+                    <% } %>
+                  </tbody>
+
+                  <!-- Edit Category Modal -->
+                  <div id="editModal" class="modal">
+                    <div class="modal-content">
+                      <span onclick="closeModal()" class="close">&times;</span>
+                      <h2>Edit Category</h2>
+                      <form id="editForm" method="post">
+                        <input type="hidden" name="id" id="editId">
+                        <label for="editName">Name:</label>
+                        <input type="text" name="name" id="editName" required>
+
+                        <label for="editDescription">Description:</label>
+                        <textarea name="description" id="editDescription" required></textarea>
+
+                        <label for="editOfferPrice">Offer Price:</label>
+                        <input type="number" name="offerPrice" id="editOfferPrice" required />
+
+                        <label for="editOffer">Offer (%):</label>
+                        <input type="number" name="categoryOffer" id="editOffer" min="0">
+
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                      </form>
+                    </div>
+                  </div>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10/dist/sweetalert2.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+
+<script>
+  function openEditModal(id, name, description, offerPrice, categoryOffer) {
+    document.getElementById("editId").value = id;
+    document.getElementById("editName").value = name;
+    document.getElementById("editDescription").value = description;
+    document.getElementById("editOfferPrice").value = offerPrice;
+    document.getElementById("editOffer").value = categoryOffer;
+
+    document.getElementById("editForm").action = `/admin/category/edit/${id}`;
+    document.getElementById("editModal").style.display = "block";
+  }
+
+  function closeModal() {
+    document.getElementById("editModal").style.display = "none";
+  }
+
+  function toggleListStatus(id) {
+    fetch(`/admin/toggleListStatus/${id}`, { method: 'POST' })
+      .then(() => location.reload())
+      .catch(error => console.error('Error:', error));
+  }
+
+  function toggleListStatus(id) {
+    fetch(`/admin/toggleListStatus/${id}`, { 
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => {
+        if (response.ok) {
+            location.reload(); // Reload the page after successful update
+        } else {
+            console.error('Failed to toggle list status');
+        }
+    })
+    .catch(error => console.error('Error:', error));
+}
+
+</script>
+
+<%- include("../../views/partials/admin/footer") %>
