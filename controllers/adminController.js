@@ -30,9 +30,9 @@ const login = async (req, res) => {
 
     const passwordMatch = await bcrypt.compare(password, admin.password);
     if (passwordMatch) {
-      req.session.admin = true; // Set session admin flag to true
-      console.log("Session admin set to:", req.session.admin); // Log session admin status
-      return res.redirect('/admin/dashboard'); // Redirect to dashboard on success
+      req.session.admin = true; 
+      console.log("Session admin set to:", req.session.admin); 
+      return res.redirect('/admin/dashboard'); 
     } else {
       console.log("Incorrect password");
       return res.render('admin/admin-login', { message: 'Incorrect password' });
@@ -44,11 +44,11 @@ const login = async (req, res) => {
 };
   
 const loadDashboard = (req, res) => {
-  console.log("Session admin status in loadDashboard:", req.session.admin); // Log session status
+  console.log("Session admin status in loadDashboard:", req.session.admin); 
   if (req.session.admin) {
-    return res.render('admin/dashboard'); // Render dashboard if admin session is active
+    return res.render('admin/dashboard');
   }
-  res.redirect('/admin/login'); // Redirect to login if not authenticated
+  res.redirect('/admin/login'); 
 };
 
 

@@ -1,9 +1,8 @@
-// utils/otpStorage.js
 const otpStore = {};
 
 // Function to store OTP
 function storeOTP(email, otp) {
-    otpStore[email] = { otp, expiresAt: Date.now() + 10 * 60 * 1000 }; // OTP expires in 10 minutes
+    otpStore[email] = { otp, expiresAt: Date.now() + 10 * 60 * 1000 }; 
 }
 
 // Function to verify OTP
@@ -13,12 +12,12 @@ function verifyOTP(email, enteredOtp) {
 
     const { otp, expiresAt } = otpEntry;
     if (Date.now() > expiresAt) {
-        delete otpStore[email]; // Remove expired OTP
+        delete otpStore[email]; // To remove expired OTP
         return false;
     }
 
     if (otp === enteredOtp) {
-        delete otpStore[email]; // Clear OTP after successful verification
+        delete otpStore[email]; // To remove the stored otp after verification
         return true;
     }
     return false;

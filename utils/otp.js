@@ -1,7 +1,7 @@
 const nodemailer = require('nodemailer');
 
 
-// This function is to generate a random OTP
+// Function to generate random OTP
 function generateOTP(length = 6) {
     let otp = '';
     const characters = '0123456789';
@@ -11,7 +11,7 @@ function generateOTP(length = 6) {
     return otp;
 }
 
-// Function to send the OTP via email
+// Function to send the OTP through email
 async function sendOTP(email, otp) {
     const transporter = nodemailer.createTransport({
         service: 'gmail',
@@ -21,7 +21,7 @@ async function sendOTP(email, otp) {
         }
     });
 
-    // Email options
+    // Email Structure
     const mailOptions = {
         from: 'sudheeshks132@gmail.com',
         to: email,
@@ -29,7 +29,7 @@ async function sendOTP(email, otp) {
         text: `Your OTP code is ${otp}. It is valid for 10 minutes.`
     };
 
-    // Send the email
+    
     try {
         await transporter.sendMail(mailOptions);
         console.log('OTP sent to:', email);

@@ -5,7 +5,7 @@ const { storeOTP, verifyOTP } = require('../utils/otpStorage');
 
 
 
-const saltRounds = 10; // Salt rounds for hashing complexity
+const saltRounds = 10; 
 
 const loadRegister = async(req,res) => {
     try{
@@ -22,19 +22,11 @@ const insertUser = async(req,res) => {
     const { name, email, phno, password} = req.body;
 
     try {
-
-        // Hash the password before storing it in the session
         const hashedPassword = await bcrypt.hash(password, saltRounds);
-
-        // Store the user data temporarily in the session
         req.session.tempUserData = {name, email, phno, password: hashedPassword};
-
-        // Generate OTP and store it
         const otp = generateOTP();
         storeOTP(email, otp);
         await sendOTP(email, otp);
-
-        // Redirect to OTP verification page
         res.render('users/otp-verification', {email});
     } catch (error) {
         console.log("Error during OTP generation:", error.message);
@@ -57,7 +49,7 @@ const verifyOTPController = async (req, res) => {
     if (isVerified) {
         try {
             console.log(name, email, phno, password)
-            const user = await new User({
+            const user = new User({
                 name,
                 email,
                 phno,
@@ -97,22 +89,29 @@ const login = async(req,res) => {
     const {email,password} = req.body;
     console.log(email,password)
     try {
-        // Retrieve the user by email
         const user = await User.findOne({ email });
 
         if (user) {
-            // Compare the entered password with the hashed password in the database
+
+                if (user.isBlocked) {
+                    return res.render('users/user-ban', { message: "Your account has been banned. Please contact support." });
+                }
+
             const isPasswordValid = await bcrypt.compare(password, user.password);
 
             if (isPasswordValid) {
-                // Password is correct, proceed with login
+
+                req.session.user = {
+                    id: user._id,
+                    name: user.name,
+                    email: user.email
+                };
+
                 res.render('users/index', { message: "Your login is successful" });
             } else {
-                // Password is incorrect
                 res.render('users/login', { message: "Invalid email or password" });
             }
         } else {
-            // User with the provided email does not exist
             res.render('users/login', { message: "Invalid email or password" });
         }
     } catch (error) {

@@ -3,7 +3,7 @@ const nodemailer = require('nodemailer');
 const bcrypt = require('bcrypt');
 const session = require('express-session');
 
-// Step 2a: Load Forgot Password Page
+
 const loadForgotPassword = async (req, res) => {
     try {
         res.render('users/forgot-password');
@@ -13,7 +13,7 @@ const loadForgotPassword = async (req, res) => {
     }
 };
 
-// Step 2b: Validate Email and Send OTP
+
 const forgotEmailValid = async (req, res) => {
     try {
         const { email } = req.body;
@@ -37,7 +37,7 @@ const forgotEmailValid = async (req, res) => {
     }
 };
 
-// Step 2c: Verify OTP for Password Reset
+
 const verifyForgotOTP = async (req, res) => {
     const { otp } = req.body;
 
@@ -48,28 +48,23 @@ const verifyForgotOTP = async (req, res) => {
     }
 };
 
-// Step 2d: Reset Password
+
 const resetPassword = async (req, res) => {
     try {
         const { newPassword } = req.body;
 
-        // Check if the new password was provided
         if (!newPassword) {
             return res.render('users/reset-password', { message: "Password is required." });
         }
 
-        // Hash the new password
         const hashedPassword = await bcrypt.hash(newPassword, 10);
 
-        // Update the user's password
         await User.updateOne({ email: req.session.email }, { password: hashedPassword });
 
-        // Clear session variables for OTP and email
         req.session.userOtp = null;
         req.session.email = null;
 
-        // Redirect to the login page
-        res.redirect('/users/login');
+        res.render('users/login');
     } catch (error) {
         console.error("Error resetting password:", error.message);
         res.redirect('/users/error');
@@ -77,7 +72,7 @@ const resetPassword = async (req, res) => {
 };
 
 
-// Utility: Generate OTP
+// Function to Generate OTP
 function generateOTP(length = 6) {
     const characters = '0123456789';
     let otp = '';
@@ -87,7 +82,7 @@ function generateOTP(length = 6) {
     return otp;
 }
 
-// Utility: Send OTP Email
+
 const sendVerificationEmail = async (email, otp) => {
     try {
         const transporter = nodemailer.createTransport({

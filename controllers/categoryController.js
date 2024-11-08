@@ -53,9 +53,9 @@ const toggleListStatus = async (req, res) => {
             return res.status(404).json({ error: "Category not found" });
         }
 
-        // Toggle the `isListed` status and update the `status` field accordingly
+    
         category.isListed = !category.isListed;
-        category.status = category.isListed ? "Listed" : "Unlisted"; // Update the status field
+        category.status = category.isListed ? "Listed" : "Unlisted"; 
         await category.save();
 
         res.status(200).json({ message: "Category status updated successfully" });
