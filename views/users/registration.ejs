@@ -21,22 +21,22 @@
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav ms-auto">
                 <li class="nav-item">
-                    <a class="nav-link" href="index.html">Home</a>
+                    <a class="nav-link" href="/">Home</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="product.html">Shop</a>
+                    <a class="nav-link" href="/product">Shop</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="myaccount.html">My Account</a>
+                    <a class="nav-link" href="/myaccount">My Account</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="about.html">About</a>
+                    <a class="nav-link" href="/about">About</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="contact.html">Contact</a>
+                    <a class="nav-link" href="/contact">Contact</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="login.html">Login</a>
+                    <a class="nav-link" href="/login">Login</a>
                 </li>
                 <!-- Icons -->
                 <li class="nav-item">
@@ -59,7 +59,7 @@
         <div class="col-lg-6 d-flex align-items-center">
             <div class="signup-form">
                 <h2 class="mb-4 text-center">Get Started Now</h2>
-                <form action="/register" id="reg-form" method="post">
+                <form  id="reg-form" >
                     <div class="mb-3">
                         <label for="name" class="form-label">Username</label>
                         <input type="text" class="form-control" name="name" id="name" placeholder="Enter your username">
@@ -84,7 +84,7 @@
                         <input type="checkbox" class="form-check-input" id="terms">
                         <label class="form-check-label" for="terms">I agree to the terms & policies</label>
                     </div>
-                    <button type="submit" class="btn btn-dark w-100">Signup</button>
+                    <button  class="btn btn-dark w-100 btnReg">Signup</button>
                 </form>
                 <hr>
                 <a href="/auth/google" class="btn btn-outline-dark w-100 mb-2"><i class="fab fa-google"></i> Sign in with Google</a>
@@ -137,63 +137,66 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/js/all.min.js"></script>
 
-
-
 <script>
+    document.querySelector('.btnReg').addEventListener('click',(e)=>{
+        e.preventDefault();
+        const email = document.getElementById('email').value.trim();
+        const name = document.getElementById('name').value.trim();
+        const phno = document.getElementById('phno').value.trim();
+        const password = document.getElementById('password').value.trim();
+        const confirmPassword = document.getElementById('confirmPassword').value.trim();
+        const termsChecked = document.getElementById('terms').checked;
 
-document.getElementById('reg-form').addEventListener('submit',(e) => {
+        const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-
-    if(!formValidate()){
-        e.preventDefault()
-    }
-})
-
-
-    function formValidate() {
-        var name = document.getElementById('name').value.trim();
-        var email = document.getElementById('email').value.trim();
-        var phno = document.getElementById('phno').value.trim();
-        var password = document.getElementById('password').value.trim();
-        var confirmPassword = document.getElementById('confirmPassword').value.trim();
-        var termsChecked = document.getElementById('terms').checked;
-
-    if (name === "" || email === "" || phno === "" || password === "" || confirmPassword === "") {
-        sweetAlert("Oops...", "All fields are required!", "error");
-        return false;
-    }
-
-    var emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailPattern.test(email)) {
-        sweetAlert("Invalid Email", "Please enter a valid email address.", "error");
-        return false;
-    }
-
-    if (phno.length < 10 || isNaN(phno)) {
-        sweetAlert("Invalid Phone Number", "Please enter a valid phone number with at least 10 digits.", "error");
-        return false;
-    }
-
-    if (password.length < 6) {
-        sweetAlert("Weak Password", "Password must be at least 6 characters long.", "error");
-        return false;
-    }
-
-    if (password !== confirmPassword) {
-        sweetAlert("Password Mismatch", "Passwords do not match. Please try again.", "error");
-        return false;
-    }
-
-    if (!termsChecked) {
-        sweetAlert("Terms and Conditions", "You must agree to the terms and policies to continue.", "error");
-        return false;
-    }
-
-    sweetAlert("Good job!", "Your OTP has been send. Check your email!", "success");
-    return true;
-
-}
+        if(name === "" || email === "" || phno === "" || password === "" || confirmPassword === ""){
+            sweetAlert("Oops...", "All fields are required!", "error");
+            
+        }else if(!emailPattern.test(email)){
+            sweetAlert("Invalid Email", "Please enter a valid email address.", "error");
+            
+        }else if(phno.length < 10 || isNaN(phno)){
+            sweetAlert("Invalid Phone Number", "Please enter a valid phone number with at least 10 digits.", "error");
+            
+        }else if(password.length < 6){
+            sweetAlert("Weak Password", "Password must be at least 6 characters long.", "error");
+            
+        }else if(password !== confirmPassword){
+            sweetAlert("Password Mismatch", "Passwords do not match. Please try again.", "error");
+            validate =  false;
+        }else if(!termsChecked){
+            sweetAlert("Terms and Conditions", "You must agree to the terms and policies to continue.", "error");
+            
+        }else{
+            async function fetchData(){
+                try{
+                    const response = await fetch('/register',{
+                        method:'POST',
+                        headers:{
+                            'Content-Type':'application/json'
+                        },
+                        body:JSON.stringify({
+                            name,
+                            email,
+                            phno,
+                            password
+                        })
+                    });
+                    const data = await response.json();
+                    if(!data.val){
+                        sweetAlert("Server msg",data.msg, "error");
+                    }else{
+                        window.location.href = '/verify-otp'
+                    }
+                }catch(err){
+                    console.log(err);
+                }
+            }
+            fetchData();
+        }
+    })
 </script>
+
 
 
 </body>

@@ -27,55 +27,60 @@ const categoryInfo = async (req, res) => {
 };
 
 const addCategory = async (req, res) => {
-    const { name, description, offerPrice, categoryOffer } = req.body;
-
+    const { name, description } = req.body;
+  
     try {
-        const existingCategory = await Category.findOne({ name });
-        if (existingCategory) {
-            return res.status(400).send("<script>alert('Category already exists'); window.location.href='/admin/category';</script>");
-        }
-
-        const newCategory = new Category({ name, description, offerPrice, categoryOffer });
-        await newCategory.save();
-
-        res.redirect('/admin/category');
+      const existingCategory = await Category.findOne({ name });
+      if (existingCategory) {
+        req.flash('message', 'Category already exists');
+        req.flash('type', 'error');
+        return res.redirect('/admin/category');
+      }
+  
+      const newCategory = new Category({ name, description });
+      await newCategory.save();
+  
+      req.flash('message', 'Category added successfully');
+      req.flash('type', 'success');
+      res.redirect('/admin/category');
     } catch (error) {
-        console.error(error);
-        res.status(500).send("<script>alert('An error occurred while adding the category.'); window.location.href='/admin/category';</script>");
+      console.error(error);
+      req.flash('message', 'An error occurred while adding the category');
+      req.flash('type', 'error');
+      res.redirect('/admin/category');
     }
-};
+  };
+  
 
-const toggleListStatus = async (req, res) => {
+  const toggleListStatus = async (req, res) => {
     const { id } = req.params;
     try {
-        const category = await Category.findById(id);
-        if (!category) {
-            return res.status(404).json({ error: "Category not found" });
-        }
-
-    
-        category.isListed = !category.isListed;
-        category.status = category.isListed ? "Listed" : "Unlisted"; 
-        await category.save();
-
-        res.status(200).json({ message: "Category status updated successfully" });
+      const category = await Category.findById(id);
+      if (!category) {
+        return res.status(404).json({ message: 'Category not found', type: 'error' });
+      }
+  
+      category.isListed = !category.isListed;
+      category.status = category.isListed ? 'Listed' : 'Unlisted';
+      await category.save();
+  
+      res.status(200).json({ message: 'Category status updated successfully', type: 'success' });
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: "Internal Server Error" });
+      console.error(error);
+      res.status(500).json({ message: 'Internal Server Error', type: 'error' });
     }
-};
+  };
+  
 
 
 const editCategory = async (req, res) => {
     const { id } = req.params;
-    const { name, description, offerPrice, categoryOffer } = req.body;
+    const { name, description} = req.body;
 
     try {
         await Category.findByIdAndUpdate(id, {
             name,
             description,
-            offerPrice,
-            categoryOffer
         });
         res.redirect('/admin/category');
     } catch (error) {

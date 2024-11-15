@@ -9,6 +9,7 @@ function generateOTP(length = 6) {
         otp += characters.charAt(Math.floor(Math.random() * characters.length));
     }
     return otp;
+    
 }
 
 // Function to send the OTP through email

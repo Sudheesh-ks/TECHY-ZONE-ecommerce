@@ -1,0 +1,304 @@
+<%- include("../../views/partials/admin/header") %>
+
+<section class="content-main">
+  <div class="row">
+    <div class="col-9">
+      <div class="content-header">
+        <h2 class="content-title">Edit Product</h2>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="card mb-4">
+        <div class="card-body">
+          <!-- Update product form -->
+          <form  class="forms-sample" id="editProductForm" enctype="multipart/form-data" novalidate>
+            <!-- Hidden input for editing existing images -->
+            <input style="display: none" type="file" name="existingImages" class="product-image" multiple />
+            
+            <!-- Product Name -->
+            <div class="form-group">
+              <label for="productName">Name</label>
+              <input type="text" class="form-control product-name" id="productName" name="name" value="<%= product.name %>" placeholder="Product Name" required />
+              <p class="error-message" id="productNameError"></p>
+            </div>
+          
+            <!-- Product Images -->
+            <div class="form-group">
+              <label for="productImages">Images</label>
+              <% for (let i = 0; i < 3; i++) { %>
+                <input 
+                  type="file" 
+                  class="form-control product-image" 
+                  id="productImage<%= i + 1 %>" 
+                  accept="image/*" 
+                  onchange="previewAndCrop(event, "<%= i %>)
+                />
+          
+                <!-- Show existing images if they are available -->
+                <div class="cropPreviewSection" id="cropPreviewSection<%= i %>" style="display: <%= product.images && product.images[i] ? 'block' : 'none' %>;">
+                  <% if (product.images && product.images[i]) { %>
+                    <img id="cropPreview<%= i %>" src="/<%= product.images[i] %>" style="max-width: 100%; height: auto;" />
+                  <% } else { %>
+                    <img id="cropPreview<%= i %>" style="max-width: 100%; height: auto;" />
+                  <% } %>
+                  <button  class="btn btn-primary btn-sm" type="button" onclick="startCropping(<%= i %>)">Crop Image <%= i + 1 %></button>
+                </div>
+          
+                <!-- Cropped Image Preview -->
+                <div id="croppedImagePreview<%= i %>" class="cropped-image-preview">
+                  <% if (product.images && product.images[i]) { %>
+                    <img src="/uploads/<%= product.images[i] %>" style="max-width: 100%; height: auto;" />
+                  <% } %>
+                </div>
+                <button  class="btn btn-primary btn-sm" type="button" onclick="">Save Image <%= i + 1 %></button>
+              <% } %>
+            </div>
+          
+            <!-- Product Description -->
+            <div class="form-group">
+              <label for="productDesc">Description</label>
+              <input type="text" class="form-control product-desc" id="productDescription" name="description" value="<%= product.description %>" placeholder="Product Description" required />
+              <p class="error-message" id="descError"></p>
+            </div>
+          
+            <!-- Category -->
+            <div class="form-group">
+              <label for="productCategory">Category</label>
+              <select class="form-control" id="productCategory" name="category">
+                <% for (let i = 0; i < cat.length; i++) { %>
+                  <option value="<%= cat[i].name %>" <%= cat[i].name === product.category ? 'selected' : '' %>><%= cat[i].name %></option>
+                <% } %>
+              </select>
+              <p class="error-message" id="categoryError"></p>
+            </div>
+          
+            <!-- Regular Price -->
+            <div class="form-group">
+              <label for="productOgPrice">Price</label>
+              <input type="number" class="form-control product-og-price" id="productOgPrice" name="regularPrice" value="<%= product.price %>" placeholder="Original Price" required />
+              <p class="error-message" id="ogPriceError"></p>
+            </div>
+          
+            <!-- Offer Price -->
+            <div class="form-group">
+              <div class="form-check mb-3">
+                <input type="checkbox" class="form-check-input" id="toggleOfferPrice" onclick="toggleOfferPriceInput()" <%= product.offerPrice ? 'checked' : '' %> />
+                <label class="form-check-label" for="toggleOfferPrice">Add Offer Price</label>
+              </div>
+              <div class="offer-price-input mt-2" id="offerPriceDiv" style="<%= product.offerPrice ? 'display:block;' : 'display:none;' %>">
+                <label for="productOfferPrice">Offer Price</label>
+                <input type="number" class="form-control product-offer-price" id="productOfferPrice" name="offerPrice" value="<%= product.offerPrice %>" placeholder="Offer Price" />
+                <p class="error-message" id="offerPriceError"></p>
+              </div>
+            </div>
+          
+            <!-- Stock Quantity -->
+            <div class="form-group">
+              <label for="productStock">Stock</label>
+              <input type="number" class="form-control product-stock" id="productStock" name="quantity" value="<%= product.stock %>" placeholder="Stock" required />
+              <p class="error-message" id="stockError"></p>
+            </div>
+          
+            <!-- Warranty -->
+            <div class="form-group">
+              <div class="form-check mb-3">
+                <input type="checkbox" class="form-check-input" id="toggleWarranty" onclick="toggleWarrantyInput()" <%= product.warranty ? 'checked' : '' %> />
+                <label class="form-check-label" for="toggleWarranty">Add Warranty</label>
+              </div>
+              <div class="warranty-input mt-2" id="warrantyDiv" style="<%= product.warranty ? 'display:block;' : 'display:none;' %>">
+                <label for="productWarranty">Warranty</label>
+                <input type="text" class="form-control product-warranty" id="productWarranty" name="warranty" value="<%= product.warranty %>" placeholder="Warranty" />
+                <p class="error-message" id="warrantyError"></p>
+              </div>
+            </div>
+          
+            <!-- Return Policy -->
+            <div class="form-group">
+              <div class="form-check mb-3">
+                <input type="checkbox" class="form-check-input" id="toggleReturnPolicy" onclick="toggleReturnPolicyInput()" <%= product.returnPolicy ? 'checked' : '' %> />
+                <label class="form-check-label" for="toggleReturnPolicy">Add Return Policy</label>
+              </div>
+              <div class="return-policy-input mt-2" id="returnPolicyDiv" style="<%=product.returnPolicy ? 'display:block;' : 'display:none;'%>">
+                <label for="productReturnPolicy">Return Policy</label>
+                <input type="text" class="form-control product-return-policy" id="productReturnPolicy" name="returnPolicy" value="<%= product.returnPolicy %>" placeholder="Return Policy" />
+                <p class="error-message" id="returnPolicyError"></p>
+              </div>
+            </div>
+          
+            <!-- Submit Button -->
+            <button type="submit" data-id="<%= product._id%>" class="btn btn-primary mt-3 btn-UpdateProduct">Update Product</button>
+          </form>
+          
+          
+          
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
+
+
+<%- include("../../views/partials/admin/footer") %>
+
+
+<script>
+
+const cropperInstances = [];
+const croppedImages = [];
+let currentImageIndex = null;
+
+
+// Function to preview and initialize the cropping tool
+function previewAndCrop(event, index) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const cropPreview = document.getElementById(`cropPreview${index}`);
+  const cropPreviewSection = document.getElementById(`cropPreviewSection${index}`);
+
+  cropPreview.src = URL.createObjectURL(file);
+  cropPreviewSection.style.display = "block";
+
+  // Destroy any existing cropper instance for this index
+  if (cropperInstances[index]) {
+    cropperInstances[index].destroy();
+  }
+
+  // Create a new Cropper instance
+  cropperInstances[index] = new Cropper(cropPreview, {
+    aspectRatio: 1, // You can adjust the aspect ratio as needed
+    viewMode: 1,
+    autoCropArea: 1,
+    scalable: true,
+    zoomable: true,
+    movable: true,
+  });
+
+  currentImageIndex = index;
+}
+
+// Function to handle the cropping action
+function startCropping(index) {
+  if (cropperInstances[index]) {
+    const cropper = cropperInstances[index];
+    const canvas = cropper.getCroppedCanvas();
+
+    if (canvas) {
+      canvas.toBlob((blob) => {
+        const croppedImageFile = new File([blob], `croppedImage${index + 1}.png`, {
+          type: "image/png",
+          lastModified: Date.now(),
+        });
+        croppedImages[index] = croppedImageFile;
+
+        // Display the cropped image preview
+        const croppedPreviewContainer = document.getElementById(`croppedImagePreview${index}`);
+        croppedPreviewContainer.innerHTML = "";
+        const croppedImgElement = document.createElement("img");
+        croppedImgElement.src = URL.createObjectURL(croppedImageFile);
+        croppedImgElement.style.width = "100px";
+        croppedImgElement.style.height = "100px";
+        croppedImgElement.style.marginTop = "10px";
+        croppedPreviewContainer.appendChild(croppedImgElement);
+      });
+    } else {
+      alert(`Could not retrieve the cropped canvas for index: ${index}`);
+    }
+  } else {
+    alert("Please select an image to crop.");
+  }
+}
+
+
+function newImageSave(){
+  
+}
+
+
+function showError(input, message) {
+  const error = document.createElement("p");
+  error.className = "error-message";
+  error.style.color = "red";
+  error.textContent = message;
+  input.parentElement.appendChild(error);
+}
+
+
+function toggleOfferPriceInput() {
+  const offerPriceDiv = document.getElementById("offerPriceDiv");
+  const checkbox = document.getElementById("toggleOfferPrice");
+  offerPriceDiv.style.display = checkbox.checked ? "block" : "none";
+}
+
+function toggleWarrantyInput() {
+  const warrantyDiv = document.getElementById("warrantyDiv");
+  warrantyDiv.style.display = warrantyDiv.style.display === "none" ? "block" : "none";
+}
+
+
+console.log(croppedImages)
+
+
+const updateButtons = document.querySelector('.btn-UpdateProduct');
+console.log('croppedImage');
+
+updateButtons.addEventListener('click', async (event) => {
+  event.preventDefault();
+
+  const productName = document.getElementById('productName');
+  const productDescription = document.getElementById('productDescription');
+  const productCategory = document.getElementById('productCategory');
+  const productOgPrice = document.getElementById('productOgPrice');
+  const productOfferPrice = document.getElementById('productOfferPrice');
+  const productStock = document.getElementById('productStock');
+  const productWarranty = document.getElementById('productWarranty');
+  const productReturnPolicy = document.getElementById('productReturnPolicy');
+  
+  console.log(productName.value);
+  console.log(productDescription.value);
+  console.log(productCategory.value);
+  console.log(productOgPrice.value);
+  console.log(productOfferPrice.value);
+  console.log(productStock.value);
+  console.log(productWarranty.value);
+  console.log(productReturnPolicy.value);
+
+  const productId = event.target.getAttribute('data-id');
+  const formData = new FormData();
+
+  formData.append('name', productName.value);
+  formData.append('description', productDescription.value);
+  formData.append('category', productCategory.value);
+  formData.append('price', productOgPrice.value);
+  formData.append('offerPrice', productOfferPrice.value);
+  formData.append('stock', productStock.value);
+  formData.append('warranty', productWarranty.value);
+  formData.append('returnPolicy', productReturnPolicy.value);
+  croppedImages.forEach((croppedImage,i) => {
+    formData.append(`croppedImage${i+1}`, croppedImage);
+  });
+  try{
+    const response = await fetch(`/admin/products/edit/${productId}`,{
+      method:'PUT',
+      body:formData
+    });
+    console.log(response)
+    const data = await response.json();
+    if(!data.val){
+      console.log(data.msg);
+    }else{
+      console.log(data.msg);
+    }
+  }catch(err){
+    console.log(err);
+  }
+  
+})
+  
+
+
+
+</script>

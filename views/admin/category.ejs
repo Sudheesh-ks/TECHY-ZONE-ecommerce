@@ -34,14 +34,14 @@
                   <textarea placeholder="Type here" name="description" class="form-control" id="descriptionId" required></textarea>
                   <div id="description-error" class="error-message"></div>
                 </div>
-                <div class="mb-4">
+                <!-- <div class="mb-4">
                   <label class="form-label">Offer Price</label>
                   <input type="number" name="offerPrice" placeholder="Enter offer price" class="form-control" id="offerPrice" required/>
                 </div>
                 <div class="mb-4">
                   <label class="form-label">Offer (%)</label>
                   <input type="number" name="categoryOffer" placeholder="Enter offer percentage" class="form-control" id="categoryOffer" required/>
-                </div>
+                </div> -->
                 <div class="d-grid">
                   <button class="btn btn-primary" type="submit">Create category</button>
                 </div>
@@ -55,8 +55,6 @@
                     <th class="text-center"></th>
                     <th>Name</th>
                     <th>Description</th>
-                    <th>Offer Price</th>
-                    <th>Offer</th>
                     <th>Status</th>
                     <th>List/Unlist</th>
                     <th class="text-start">Edit</th>
@@ -69,8 +67,6 @@
                           <td class="text-center"><%= index + 1 %></td>
                           <td class="text-start"><%= category.name %></td>
                           <td class="text-start"><%= category.description %></td>
-                          <td class="text-start"><%= category.offerPrice %></td>
-                          <td class="text-start"><%= category.categoryOffer %> %</td>
                           <td class="text-start">
                             <span class="badge <%= category.isListed ? 'alert-success' : 'alert-danger' %>">
                                 <%= category.status %>
@@ -106,12 +102,6 @@
                         <label for="editDescription">Description:</label>
                         <textarea name="description" id="editDescription" required></textarea>
 
-                        <label for="editOfferPrice">Offer Price:</label>
-                        <input type="number" name="offerPrice" id="editOfferPrice" required />
-
-                        <label for="editOffer">Offer (%):</label>
-                        <input type="number" name="categoryOffer" id="editOffer" min="0">
-
                         <button type="submit" class="btn btn-primary">Save Changes</button>
                       </form>
                     </div>
@@ -125,14 +115,28 @@
   </section>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10/dist/sweetalert2.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10/dist/sweetalert2.min.js"></script>
+
+
+
+  <script>
+    // Check if flash messages are set in the session
+    <% if (locals.flash && locals.flash.message) { %>
+      Swal.fire({
+        icon: '<%= flash.type %>',
+        title: '<%= flash.message %>',
+        showConfirmButton: false,
+        timer: 2000
+      });
+    <% } %>
+  </script>
+  
 
 <script>
   function openEditModal(id, name, description, offerPrice, categoryOffer) {
     document.getElementById("editId").value = id;
     document.getElementById("editName").value = name;
     document.getElementById("editDescription").value = description;
-    document.getElementById("editOfferPrice").value = offerPrice;
-    document.getElementById("editOffer").value = categoryOffer;
 
     document.getElementById("editForm").action = `/admin/category/edit/${id}`;
     document.getElementById("editModal").style.display = "block";
@@ -155,15 +159,36 @@
             'Content-Type': 'application/json'
         }
     })
-    .then(response => {
-        if (response.ok) {
-            location.reload(); // Reload the page after successful update
+    .then(response => response.json())
+    .then(data => {
+        if (data.type === 'success') {
+            Swal.fire({
+              icon: 'success',
+              title: data.message,
+              showConfirmButton: false,
+              timer: 1500
+            }).then(() => {
+              location.reload(); // Reload the page after the alert
+            });
         } else {
-            console.error('Failed to toggle list status');
+            Swal.fire({
+              icon: 'error',
+              title: data.message,
+              showConfirmButton: false,
+              timer: 1500
+            });
         }
     })
-    .catch(error => console.error('Error:', error));
-}
+    .catch(error => {
+        console.error('Error:', error);
+        Swal.fire({
+          icon: 'error',
+          title: 'Failed to update category status',
+          showConfirmButton: false,
+          timer: 1500
+        });
+    });
+  }
 
 </script>
 

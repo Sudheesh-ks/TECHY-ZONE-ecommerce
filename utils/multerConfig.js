@@ -6,10 +6,10 @@ let count = 111111111;
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null,path.join(__dirname,'..','public','uploads')); 
+    cb(null, path.join(__dirname, '..', 'public', 'uploads'));
   },
   filename: (req, file, cb) => {
-    cb(null, `${Date.now()}${count++}-${file.originalname}`);
+    cb(null, `${ Date.now()}${ count++}-${file.originalname}`);
   },
 });
 

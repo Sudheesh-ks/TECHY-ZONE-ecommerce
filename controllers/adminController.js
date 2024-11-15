@@ -12,9 +12,12 @@ const pageerror = async(req,res) => {
 
 
 const loadLogin = (req, res) => {
-    if (req.session.admin) {
+    if (req.session.user && req.session.user.isAdmin) {
       return res.redirect('/admin/dashboard');
     }
+    // }else if(!req.session.user.isAdmin){
+    //   return res.redirect('/')
+    // }
     res.render('admin/admin-login', { message: null });
   };
 
@@ -30,7 +33,15 @@ const login = async (req, res) => {
 
     const passwordMatch = await bcrypt.compare(password, admin.password);
     if (passwordMatch) {
-      req.session.admin = true; 
+     // req.session.user = true; 
+     req.session.user = {
+      id: admin._id,
+      name: admin.name,
+      email: admin.email,
+      isAdmin:admin.isAdmin
+    };
+    console.log("sessionsetted",req.session.user);
+
       console.log("Session admin set to:", req.session.admin); 
       return res.redirect('/admin/dashboard'); 
     } else {
@@ -44,8 +55,8 @@ const login = async (req, res) => {
 };
   
 const loadDashboard = (req, res) => {
-  console.log("Session admin status in loadDashboard:", req.session.admin); 
-  if (req.session.admin) {
+ console.log("Session admin status in loadDashboard:", req.session.admin); 
+  if (req.session.user.isAdmin) {
     return res.render('admin/dashboard');
   }
   res.redirect('/admin/login'); 

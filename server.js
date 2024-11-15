@@ -6,32 +6,50 @@ const session = require('express-session');
 const passport = require('./config/passport');
 const dotenv = require('dotenv');
 dotenv.config(); 
-const path = require('path');
 const app = express();
 const nocache = require('nocache');
+const path = require('path');
+const flash = require('connect-flash');
 
 
+const authCheck = require('./middlewares/authCheck');
+const banCheck = require('./middlewares/checkBan');
 
 app.use(express.json())
 app.use(express.urlencoded({extended:true}))
-app.use(nocache());
+
 
 app.use(session({
     secret: process.env.SESSION_SECRET || 'default_secret', 
     resave: false,
     saveUninitialized: true,
-    cookie: { maxAge: 60000 }
+    cookie: { maxAge: 1000*60*60*24 }
 }));
+
+app.use(nocache());
 
 
 app.use(passport.initialize());
 app.use(passport.session());
 
+app.use(flash());
 
-app.use(express.static(path.join(__dirname,'public')))
+// Make flash messages available in all views
+app.use((req, res, next) => {
+  res.locals.flash = req.flash();
+  next();
+});
+
+
+app.use(express.static(path.join(__dirname,'public')));
+app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
+
 
 app.set('view engine', 'ejs');
 app.set('views',path.join(__dirname,'views'));
+
+app.use(authCheck);
+app.use(banCheck);
 
 // for user routes
 const userRoute = require('./routes/userRoute');
