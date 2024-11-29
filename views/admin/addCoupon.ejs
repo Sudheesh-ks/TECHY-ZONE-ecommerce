@@ -1,0 +1,71 @@
+<%- include("../../views/partials/admin/header") %>
+<div class="content-header row">
+    <div class="d-flex justify-content-between align-items-center">
+        <h2 class="content-title card-title">Manage Coupons</h2>
+    </div>
+</div>
+
+<!-- Search Bar -->
+<header class="card-header text-center mb-20">
+    <form action="/admin/coupons" method="get" class="d-inline">
+        <div class="input-group input-group-sm border border-1 border-grey rounded-pill" style="width: 500px; margin-left: 230px;">
+            <input type="text" class="form-control border-0 rounded-pill" placeholder="Search coupons..." name="search">
+            <button class="btn border-0" type="submit">Search</button>
+        </div>
+    </form>
+</header>
+
+<div class="right mt-5">
+    <!-- Add Coupon Form -->
+    <form id="addCouponForm" action="/admin/add-coupon" method="POST" class="mb-4">
+        <div class="form-group">
+            <label for="couponCode"><b>Coupon Code (Unique)</b></label>
+            <input type="text" name="couponCode" class="form-control" id="couponCode" placeholder="Coupon Code" required />
+        </div>
+        <div class="form-group">
+            <label for="discount"><b>Discount (%)</b></label>
+            <input type="number" name="discount" class="form-control" id="discount" placeholder="Discount %" min="1" max="100" required />
+        </div>
+        <div class="form-group">
+            <label for="minAmount"><b>Minimum Amount</b></label>
+            <input type="number" name="minAmount" class="form-control" id="minAmount" placeholder="Minimum Amount" required />
+        </div>
+        <div class="form-group">
+            <label for="maxDiscount"><b>Maximum Discount</b></label>
+            <input type="number" name="maxDiscount" class="form-control" id="maxDiscount" placeholder="Maximum Discount" required />
+        </div>
+        <div class="form-group">
+            <label for="expiryDate"><b>Expiry Date</b></label>
+            <input type="date" name="expiryDate" class="form-control" id="expiryDate" required />
+        </div>
+        <div class="form-group">
+            <label for="maxUsage"><b>Max Usage</b></label>
+            <input type="number" name="maxUsage" class="form-control" id="maxUsage" placeholder="Max Usage" required />
+        </div>
+        <button type="submit" class="btn btn-primary">Add Coupon</button>
+    </form>
+</div>
+
+<script>
+    // Handle Add Coupon
+    document.getElementById('addCouponForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+
+        const response = await fetch('/admin/add-coupon', {
+            method: 'POST',
+            body: JSON.stringify(Object.fromEntries(formData)),
+            headers: { 'Content-Type': 'application/json' },
+        });
+
+        const data = await response.json();
+        if (response.ok) {
+            alert(data.message);
+            window.location.reload();
+        } else {
+            alert(data.error);
+        }
+    });
+
+   
+</script>

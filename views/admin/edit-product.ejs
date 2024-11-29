@@ -22,37 +22,38 @@
               <p class="error-message" id="productNameError"></p>
             </div>
           
-            <!-- Product Images -->
-            <div class="form-group">
-              <label for="productImages">Images</label>
-              <% for (let i = 0; i < 3; i++) { %>
-                <input 
-                  type="file" 
-                  class="form-control product-image" 
-                  id="productImage<%= i + 1 %>" 
-                  accept="image/*" 
-                  onchange="previewAndCrop(event, "<%= i %>)
-                />
-          
-                <!-- Show existing images if they are available -->
-                <div class="cropPreviewSection" id="cropPreviewSection<%= i %>" style="display: <%= product.images && product.images[i] ? 'block' : 'none' %>;">
-                  <% if (product.images && product.images[i]) { %>
-                    <img id="cropPreview<%= i %>" src="/<%= product.images[i] %>" style="max-width: 100%; height: auto;" />
-                  <% } else { %>
-                    <img id="cropPreview<%= i %>" style="max-width: 100%; height: auto;" />
-                  <% } %>
-                  <button  class="btn btn-primary btn-sm" type="button" onclick="startCropping(<%= i %>)">Crop Image <%= i + 1 %></button>
-                </div>
-          
-                <!-- Cropped Image Preview -->
-                <div id="croppedImagePreview<%= i %>" class="cropped-image-preview">
-                  <% if (product.images && product.images[i]) { %>
-                    <img src="/uploads/<%= product.images[i] %>" style="max-width: 100%; height: auto;" />
-                  <% } %>
-                </div>
-                <button  class="btn btn-primary btn-sm" type="button" onclick="">Save Image <%= i + 1 %></button>
-              <% } %>
-            </div>
+           <!-- Product Images -->
+<div class="form-group">
+  <label for="productImages">Images</label>
+  <% for (let i = 0; i < 3; i++) { %>
+    <input 
+      type="file" 
+      class="form-control product-image" 
+      id="productImage<%= i + 1 %>" 
+      accept="image/*" 
+      onchange="previewAndCrop(event, <%= i %>)"
+      name="croppedImage<%= i + 1 %>"  
+    />
+
+    <!-- Show existing images if they are available -->
+    <div class="cropPreviewSection" id="cropPreviewSection<%= i %>" style="display: <%= product.images && product.images[i] ? 'block' : 'none' %>;">
+      <% if (product.images && product.images[i]) { %>
+        <img id="cropPreview<%= i %>" src="/<%= product.images[i] %>" style="max-width: 100%; height: auto;" />
+      <% } else { %>
+        <img id="cropPreview<%= i %>" style="max-width: 100%; height: auto;" />
+      <% } %>
+      <button  class="btn btn-primary btn-sm" type="button" onclick="startCropping(<%= i %>)">Crop Image <%= i + 1 %></button>
+    </div>
+
+    <!-- Cropped Image Preview -->
+    <div id="croppedImagePreview<%= i %>" class="cropped-image-preview">
+      <% if (product.images && product.images[i]) { %>
+        <img src="/uploads/<%= product.images[i] %>" style="max-width: 100%; height: auto;" />
+      <% } %>
+    </div>
+  <% } %>
+</div>
+
           
             <!-- Product Description -->
             <div class="form-group">

@@ -1,0 +1,152 @@
+<%- include("../../views/partials/admin/footer") %><%- include("../../views/partials/admin/header") %>
+<head>
+  <style>
+    .container-fluid {
+      background-color: #fff;
+      padding-top: 3rem;
+      padding-bottom: 3rem;
+    }
+    .card {
+      background-color: #f8f9fa;
+    }
+    .card-header {
+      padding: 1rem;
+    }
+    .dropdown-toggle {
+      width: 100%;
+    }
+    .table {
+      margin-bottom: 0;
+    }
+    .table th, .table td {
+      border-top: none;
+      border-bottom: 1px solid #dee2e6;
+    }
+    .table-hover tbody tr:hover {
+      background-color: #f2f2f2;
+    }
+    /* Custom styles for horizontal layout */
+    .table-container, .address-container {
+      padding: 1rem;
+    }
+  </style>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@10/dist/sweetalert2.min.css">
+  </head>
+    
+
+<div class="content-header">
+    <div>
+        <h2 class="content-title card-title">Order Details</h2>
+    </div>
+</div>
+
+  
+  <div class="container-fluid">
+    <div class="row justify-content-center">
+
+        <!-- Product Table -->
+        <div class="col-md-6 table-container">
+            <div class="card">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Image</th>
+                                    <th>Product Name</th>
+                                    <th>Price</th>
+                                    <th>Quantity</th>
+                                    <th>Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% order.products.forEach(item => { %>
+                                    <tr>
+                                        <td>
+                                            <img src="/<%= item.productDetails.images %>" 
+                                                 alt="<%= item.productDetails.name %>" 
+                                                 style="width: 50px; height: 50px; object-fit: cover;">
+                                        </td>
+                                        <td><%= item.productDetails.name %></td>
+                                        <td>₹<%= item.productDetails.offerPrice || item.productDetails.price %></td>
+                                        <td><%= item.quantity %></td>
+                                        <td>₹<%= item.quantity * (item.productDetails.offerPrice || item.productDetails.price) %></td>
+                                    </tr>
+                                <% }) %>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Shipping Address -->
+        <div class="col-md-6 address-container">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Shipping Address</h5>
+                    <p class="card-text">
+                        Name: <%= order.address.name %><br>
+                        City: <%= order.address.city %><br>
+                        Landmark: <%= order.address.landMark %><br>
+                        State: <%= order.address.state %><br>
+                        Pin Code: <%= order.address.pincode %><br>
+                        Phone: <%= order.address.phone %><br>
+                        Alternate Phone: <%= order.address.altPhone || 'N/A' %>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+
+
+  <div class="card-header m-b-15">
+    <div class="row">
+      <form action="/admin/update-order-status/<%= order._id %>" method="POST">
+        <div class="dropdown">
+            <select name="status" class="form-select"  <%= order.status === 'Cancelled' || order.status === 'Delivered' ? 'disabled' : '' %>>
+                <option value="Processing" <%= order.status === 'Processing' ? 'selected' : '' %>>Processing</option>
+                <option value="Shipped">Shipped</option>
+                <option value="Delivered">Delivered</option>
+                <option value="Cancelled">Cancelled</option>
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary"  <%= order.status === 'Cancelled' || order.status === 'Delivered' ? 'disabled' : '' %>>Update Status</button>
+    </form>
+    </div>
+  </div>
+
+  <!-- Return Status Management -->
+<!-- Return Status Management -->
+<div class="card mt-4">
+  <div class="card-body">
+      <h3 class="card-title">Return Status</h3>
+      <% if (order.returnStatus === 'Requested') { %>
+          <div class="mb-3">
+              <p><h5 class="fw-bold"><strong>Reason for Return:</strong></h5> <%= order.returnReason || 'No reason provided' %></p>
+          </div>
+          <form action="/admin/approve-return/<%= order._id %>" method="POST" style="display: inline-block; margin-right: 10px;">
+              <button class="btn btn-success btn-sm" type="submit">Approve</button>
+          </form>
+          <form action="/admin/reject-return/<%= order._id %>" method="POST" style="display: inline-block;">
+              <button class="btn btn-danger btn-sm" type="submit">Reject</button>
+          </form>
+      <% } else { %>
+          <p class="card-text">
+              <strong>Status:</strong> <%= order.returnStatus || 'N/A' %>
+          </p>
+      <% } %>
+  </div>
+</div>
+
+  
+  <!-- Include Bootstrap JS & Popper.js -->
+  <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.min.js"></script>
+  
+  <%- include("../../views/partials/admin/footer") %>
+  

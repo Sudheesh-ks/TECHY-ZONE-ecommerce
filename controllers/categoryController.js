@@ -30,7 +30,9 @@ const addCategory = async (req, res) => {
     const { name, description } = req.body;
   
     try {
-      const existingCategory = await Category.findOne({ name });
+      const existingCategory = await Category.findOne({
+        name: { $regex: new RegExp("^" + name.trim() + "$", "i") }
+    });
       if (existingCategory) {
         req.flash('message', 'Category already exists');
         req.flash('type', 'error');

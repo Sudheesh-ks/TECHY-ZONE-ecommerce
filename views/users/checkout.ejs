@@ -1,159 +1,1002 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Checkout Page</title>
-    <!-- Bootstrap CSS -->
-    <link href="https://stackpath.bootstrapcdn.com/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
-    <link rel="stylesheet" href="/user/css/checkout.css">
+	<title>Checkout Page</title>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+<!--===============================================================================================-->	
+	<link rel="icon" type="image/png" href="/user/images/icons/favicon.png"/>
+<!--===============================================================================================-->
+	<link rel="stylesheet" type="text/css" href="/user/vendor/bootstrap/css/bootstrap.min.css">
+<!--===============================================================================================-->
+	<link rel="stylesheet" type="text/css" href="/user/fonts/font-awesome-4.7.0/css/font-awesome.min.css">
+<!--===============================================================================================-->
+	<link rel="stylesheet" type="text/css" href="/user/fonts/iconic/css/material-design-iconic-font.min.css">
+<!--===============================================================================================-->
+	<link rel="stylesheet" type="text/css" href="/user/fonts/linearicons-v1.0.0/icon-font.min.css">
+<!--===============================================================================================-->
+	<link rel="stylesheet" type="text/css" href="/user/vendor/animate/animate.css">
+<!--===============================================================================================-->	
+	<link rel="stylesheet" type="text/css" href="/user/vendor/css-hamburgers/hamburgers.min.css">
+<!--===============================================================================================-->
+	<link rel="stylesheet" type="text/css" href="/user/vendor/animsition/css/animsition.min.css">
+<!--===============================================================================================-->
+	<link rel="stylesheet" type="text/css" href="/user/vendor/select2/select2.min.css">
+<!--===============================================================================================-->
+	<link rel="stylesheet" type="text/css" href="/user/vendor/perfect-scrollbar/perfect-scrollbar.css">
+<!--===============================================================================================-->
+	<link rel="stylesheet" type="text/css" href="/user/css/util.css">
+	<link rel="stylesheet" type="text/css" href="/user/css/main.css">
+<!--===============================================================================================-->
+
+<style>
+
+/* General Styles */
+
+body {
+    background-color: #f8f9fa;
+    color: #333;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+}
+
+/* Card Styles */
+.card {
+    border: none;
+    box-shadow: 0 0 20px rgba(0,0,0,0.05);
+    border-radius: 10px;
+    margin-bottom: 1.5rem;
+}
+
+.card-title {
+    color: #000;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #f8f9fa;
+}
+
+/* Address Card Styles */
+.card-body {
+    padding: 1.5rem;
+}
+
+.form-check-input {
+    width: 1.2em;
+    height: 1.2em;
+    margin-top: 0.25em;
+    cursor: pointer;
+}
+
+.form-check-input:checked {
+    background-color: #000 !important;
+    border-color: #000 !important;
+}
+
+.form-check-label {
+    margin-left: 0.5rem;
+    font-weight: 500;
+}
+
+/* Cart Summary Table Styles */
+.table {
+    margin-bottom: 0;
+}
+
+.table th {
+    border-bottom: 2px solid #f8f9fa;
+    color: #000;
+    font-weight: 600;
+    padding: 1rem;
+}
+
+.table td {
+    padding: 1rem;
+    vertical-align: middle;
+    border-bottom: 1px solid #f8f9fa;
+}
+
+.table img {
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Product Details */
+.text-muted {
+    color: #6c757d !important;
+}
+
+/* Payment Section Styles */
+.form-check {
+    margin-bottom: 0.75rem;
+}
+
+/* Place Order Button */
+.btn-primary {
+    background-color: #000;
+    border: none;
+    padding: 0.8rem 1.5rem;
+    font-weight: 500;
+    border-radius: 5px;
+    transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+    background-color: #383838;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.btn-primary:active {
+    transform: translateY(0);
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .card {
+        margin-bottom: 1rem;
+    }
+    
+    .navbar .form-control {
+        width: 100%;
+    }
+    
+    .table td {
+        padding: 0.75rem;
+    }
+    
+    .card-body {
+        padding: 1rem;
+    }
+}
+
+/* Cart Icons */
+.btn-outline-secondary {
+    border: 1px solid #e0e0e0;
+    padding: 0.375rem 0.75rem;
+    margin-left: 0.5rem;
+    border-radius: 5px;
+    color: #000;
+}
+
+.btn-outline-secondary:hover {
+    background-color: #f8f9fa;
+    color: #000;
+    border-color: #000;
+}
+
+/* Product Image Container */
+.product-image-container {
+    width: 50px;
+    height: 50px;
+    overflow: hidden;
+    border-radius: 5px;
+    margin-right: 1rem;
+}
+
+/* Subtotal and Total Rows */
+.table tr:nth-last-child(3) td,
+.table tr:nth-last-child(2) td,
+.table tr:last-child td {
+    border-top: 2px solid #f8f9fa;
+    font-weight: 500;
+}
+
+.table tr:last-child td {
+    font-weight: 600;
+    color: #000;
+}
+
+/* Free Shipping Badge */
+.shipping-badge {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    background-color: #e8f5e9;
+    color: #2e7d32;
+    border-radius: 4px;
+    font-size: 0.875rem;
+}
+    </style>
 </head>
-<body>
+<body class="animsition">
+	
+	<!-- Header -->
+	<header class="header-v4">
+		<!-- Header desktop -->
+		<div class="container-menu-desktop">
+			<div class="wrap-menu-desktop how-shadow1">
+				<nav class="limiter-menu-desktop container">
+					
+					<!-- Logo desktop -->		
+					<a href="#" class="logo">
+						<img src="/user/images/icons/Techy_Zone.png" alt="IMG-LOGO">
+					</a>
 
-<!-- Navbar -->
-<nav class="navbar navbar-expand-lg navbar-light bg-light fixed-top">
-    <div class="container">
-        <a class="navbar-brand" href="#"><img src="/user/images/icons/Techy_Zone.png"></a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav ms-auto">
-                <li class="nav-item">
-                    <a class="nav-link" href="/">Home</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="/product">Shop</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="/myaccount">My Account</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="/about">About</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="/contact">Contact</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="/login">Login</a>
-                </li>
-                <!-- Icons -->
-                <li class="nav-item">
-                    <a class="nav-link" href="#"><i class="fas fa-search"></i></a>
-                </li>
-				<li class="nav-item">
-                    <a class="nav-link" href="/shoping-cart"><i class="fas fa-shopping-cart"></i></a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="/wishlist"><i class="fas fa-heart"></i></a>
-                </li>
-            </ul>
-        </div>
-    </div>
-</nav>
+					<!-- Menu desktop -->
+					<div class="menu-desktop">
+						<ul class="main-menu">
+							<li>
+								<a href="/">Home</a>
+							</li>
 
-<!-- Progress Steps -->
-<div class="container mt-4">
-    <div class="step-progress">
-        <span class="active">Address</span> >
-        <span>Shipping</span> >
-        <span>Payment</span>
-    </div>
-</div>
+							<li>
+								<a href="/product">Shop</a>
+							</li>
+                            
+							<li>
+								<a href="/myaccount">My Account</a>
+							</li>
 
-<!-- Address and Order Summary Section -->
-<div class="container mt-4">
-    <div class="row">
-        <div class="col-md-8">
-            <div class="address-item">
-                <input type="radio" name="address" id="address1" checked>
-                <label for="address1">
-                    <strong>Huzefa Bagwala <span class="badge bg-secondary">Home</span></strong><br>
-                    1131 Dusty Townline, Jacksonville, TX 40322<br>
-                    Contact - (936) 361-0310
-                </label>
-                <div class="mt-2">
-                    <a href="#" class="text-decoration-none">Edit</a> | 
-                    <a href="#" class="text-danger text-decoration-none">Remove</a>
-                </div>
-            </div>
-            <div class="address-item">
-                <input type="radio" name="address" id="address2">
-                <label for="address2">
-                    <strong>IndiaTech <span class="badge bg-secondary">Office</span></strong><br>
-                    1219 Harvest Path, Jacksonville, TX 40326<br>
-                    Contact - (936) 361-0310
-                </label>
-                <div class="mt-2">
-                    <a href="#" class="text-decoration-none">Edit</a> | 
-                    <a href="#" class="text-danger text-decoration-none">Remove</a>
-                </div>
-            </div>
-            <a href="#" class="text-decoration-none mt-3 d-block">+ Add New Address</a>
-        </div>
-        <div class="col-md-4">
-            <div class="order-summary">
-                <h5>Order Summary</h5>
-                <p>Price: <span class="float-end">$319.98</span></p>
-                <p>Discount: <span class="float-end">$31.99</span></p>
-                <p>Shipping: <span class="float-end">Free</span></p>
-                <p>Coupon Applied: <span class="float-end">$0.00</span></p>
-                <hr>
-                <p>Total: <span class="float-end">$288.08</span></p>
-                <p>Estimated Delivery by: <span class="float-end">01 Feb, 2023</span></p>
-                <div class="mb-3">
-                    <input type="text" class="form-control" placeholder="Coupon Code">
-                </div>
-                <button class="btn btn-black w-100">Continue to Shipping</button>
-            </div>
-        </div>
-    </div>
-</div>
+							<li>
+								<a href="/about">About</a>
+							</li>
+
+							<li>
+								<a href="/contact">Contact</a>
+							</li>
+
+							<% if(!user){ %>
+								<li>
+									<a href="/login">Login</a>
+								</li>
+							<% } %>
+						</ul>
+					</div>	
+
+					<!-- Icon header -->
+					<div class="wrap-icon-header flex-w flex-r-m">
+						<div class="icon-header-item cl2 hov-cl1 trans-04 p-l-22 p-r-11 js-show-modal-search">
+							<i class="zmdi zmdi-search"></i>
+						</div>
+
+						<div class="icon-header-item cl2 hov-cl1 trans-04 p-l-22 p-r-11 icon-header-noti js-show-cart" data-notify="2">
+							<i class="zmdi zmdi-shopping-cart"></i>
+						</div>
+
+						<a href="#" class="icon-header-item cl2 hov-cl1 trans-04 p-l-22 p-r-11 icon-header-noti" data-notify="0">
+							<i class="zmdi zmdi-favorite-outline"></i>
+						</a>
+					</div>
+				</nav>
+			</div>	
+		</div>
+
+		<!-- Header Mobile -->
+		<div class="wrap-header-mobile">
+			<!-- Logo moblie -->		
+			<div class="logo-mobile">
+				<a href="index.html"><img src="/user/images/icons/Techy_Zone.png" alt="IMG-LOGO"></a>
+			</div>
+
+			<!-- Icon header -->
+			<div class="wrap-icon-header flex-w flex-r-m m-r-15">
+				<div class="icon-header-item cl2 hov-cl1 trans-04 p-r-11 js-show-modal-search">
+					<i class="zmdi zmdi-search"></i>
+				</div>
+
+				<div class="icon-header-item cl2 hov-cl1 trans-04 p-r-11 p-l-10 icon-header-noti js-show-cart" data-notify="2">
+					<i class="zmdi zmdi-shopping-cart"></i>
+				</div>
+
+				<a href="#" class="dis-block icon-header-item cl2 hov-cl1 trans-04 p-r-11 p-l-10 icon-header-noti" data-notify="0">
+					<i class="zmdi zmdi-favorite-outline"></i>
+				</a>
+			</div>
+
+			<!-- Button show menu -->
+			<div class="btn-show-menu-mobile hamburger hamburger--squeeze">
+				<span class="hamburger-box">
+					<span class="hamburger-inner"></span>
+				</span>
+			</div>
+		</div>
+
+
+		<!-- Menu Mobile -->
+		<div class="menu-mobile">
+
+			<ul class="main-menu-m">
+				<li>
+					<a href="/">Home</a>
+				</li>
+
+				<li>
+					<a href="/product">Shop</a>
+				</li>
+
+				<li>
+					<a href="/myaccount">My Account</a>
+				</li>
+
+				<li>
+					<a href="/about">About</a>
+				</li>
+
+				<li>
+					<a href="/contact">Contact</a>
+				</li>
+
+				<% if(!user){ %>
+					<li>
+						<a href="/login">Login</a>
+					</li>
+				<% } %>
+			</ul>
+		</div>
+
+		<!-- Modal Search -->
+		<div class="modal-search-header flex-c-m trans-04 js-hide-modal-search">
+			<div class="container-search-header">
+				<button class="flex-c-m btn-hide-modal-search trans-04 js-hide-modal-search">
+					<img src="/user/images/icons/icon-close2.png" alt="CLOSE">
+				</button>
+
+				<form class="wrap-search-header flex-w p-l-15">
+					<button class="flex-c-m trans-04">
+						<i class="zmdi zmdi-search"></i>
+					</button>
+					<input class="plh3" type="text" name="search" placeholder="Search...">
+				</form>
+			</div>
+		</div>
+	</header>
+
+	<!-- Cart -->
+	<div class="wrap-header-cart js-panel-cart">
+		<div class="s-full js-hide-cart"></div>
+
+		<div class="header-cart flex-col-l p-l-65 p-r-25">
+			<div class="header-cart-title flex-w flex-sb-m p-b-8">
+				<span class="mtext-103 cl2">
+					Your Cart
+				</span>
+
+				<div class="fs-35 lh-10 cl2 p-lr-5 pointer hov-cl1 trans-04 js-hide-cart">
+					<i class="zmdi zmdi-close"></i>
+				</div>
+			</div>
+			
+			<div class="header-cart-content flex-w js-pscroll">
+				<ul class="header-cart-wrapitem w-full">
+					<li class="header-cart-item flex-w flex-t m-b-12">
+						<div class="header-cart-item-img">
+							<img src="/user/images/Monitor 1.png" alt="IMG">
+						</div>
+
+						<div class="header-cart-item-txt p-t-8">
+							<a href="#" class="header-cart-item-name m-b-18 hov-cl1 trans-04">
+								Monitor
+							</a>
+
+							<span class="header-cart-item-info">
+								1 x ₹64,671.00
+							</span>
+						</div>
+					</li>
+
+					<li class="header-cart-item flex-w flex-t m-b-12">
+						<div class="header-cart-item-img">
+							<img src="/user/images/Table.png" alt="IMG">
+						</div>
+
+						<div class="header-cart-item-txt p-t-8">
+							<a href="#" class="header-cart-item-name m-b-18 hov-cl1 trans-04">
+								SmartDesk
+							</a>
+
+							<span class="header-cart-item-info">
+								1 x ₹8,500
+							</span>
+						</div>
+					</li>
+
+					<li class="header-cart-item flex-w flex-t m-b-12">
+						<div class="header-cart-item-img">
+							<img src="/user/images/Hoodies 1.png" alt="IMG">
+						</div>
+
+						<div class="header-cart-item-txt p-t-8">
+							<a href="#" class="header-cart-item-name m-b-18 hov-cl1 trans-04">
+								Black Hoodies 1
+							</a>
+
+							<span class="header-cart-item-info">
+								1 x ₹999
+							</span>
+						</div>
+					</li>
+				</ul>
+				
+				<div class="w-full">
+					<div class="header-cart-total w-full p-tb-40">
+						Total: ₹74,170
+					</div>
+
+					<div class="header-cart-buttons flex-w w-full">
+						<a href="shoping-cart.html" class="flex-c-m stext-101 cl0 size-107 bg3 bor2 hov-btn3 p-lr-15 trans-04 m-r-8 m-b-10">
+							View Cart
+						</a>
+
+						<a href="shoping-cart.html" class="flex-c-m stext-101 cl0 size-107 bg3 bor2 hov-btn3 p-lr-15 trans-04 m-b-10">
+							Check Out
+						</a>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+
+	<!-- breadcrumb -->
+	<div class="container">
+		<div class="bread-crumb flex-w p-l-25 p-r-15 p-t-30 p-lr-0-lg">
+			<a href="/" class="stext-109 cl8 hov-cl1 trans-04">
+				Home
+				<i class="fa fa-angle-right m-l-9 m-r-10" aria-hidden="true"></i>
+			</a>
+
+			<a href="/shopping-cart" class="stext-109 cl8 hov-cl1 trans-04">
+				Shopping cart
+				<i class="fa fa-angle-right m-l-9 m-r-10" aria-hidden="true"></i>
+			</a>
+
+            <span class="stext-109 cl4">
+				Checkout
+			</span>
+		</div>
+	</div>
+
+
+    <!-- Main Content -->
+    <div class="container my-4">
+		<form id="checkoutForm" action="/place-order" method="POST">
+			<div class="row">
+				<!-- Shipping Address Section -->
+				<div class="col-md-6">
+					<h3 class="fw-bold mb-4">Select Your Addresses</h3>
+	
+					<% if (addresses && addresses.length > 0) { %>
+						<% addresses.forEach((address) => { %>
+							<div class="card mb-4">
+								<div class="card-body">
+									<!-- Radio button to select address -->
+									<div class="form-check">
+										<input class="form-check-input" type="radio" name="addressId" id="address-<%= address._id %>" value="<%= address._id %>" <% if (address.isDefault) { %> checked <% } %> >
+									</div>
+									<h5 class="card-title"><%= address.addressType %> Address</h5>
+									<div class="mb-3">
+										<p class="mb-1"><strong>Name:</strong> <%= address.name %></p>
+										<p class="mb-1"><%= address.city %>, <%= address.landMark %></p>
+										<p class="mb-1"><%= address.state %> - <%= address.pincode %></p>
+										<p class="mb-1"><strong>Phone:</strong> <%= address.phone %></p>
+										<% if (address.altPhone) { %>
+											<p class="mb-1"><strong>Alternate Phone:</strong> <%= address.altPhone %></p>
+										<% } %>
+									</div>
+	
+									<!-- Edit and Delete Buttons -->
+									<div class="mt-3">
+										<a href="/editCheckoutAddress?id=<%= address._id %>" class="btn btn btn-dark">Edit</a>
+									</div>
+								</div>
+							</div>
+						<% }); %>
+					<% } else { %>
+						<p>No addresses found. Please add a new address.</p>
+					<% } %>
+					<a href="/addCheckoutAddress" class="btn btn-dark">Add New Address</a>
+				</div>
+	
+				<!-- Cart Summary Section -->
+				<div class="col-md-6">
+					<div class="card">
+						<div class="card-body">
+							<h5 class="card-title">Cart Totals</h5>
+							<div class="table-responsive">
+								<table class="table">
+									<thead>
+										<tr>
+											<th>Products</th>
+											<th class="text-end">Total</th>
+										</tr>
+									</thead>
+									<tbody>
+										<% let subtotal = 0; %> <!-- Initialize subtotal -->
+									
+										<% if (product) { %> 
+											<!-- Render single product passed from "Buy Now" -->
+											<tr>
+												<td>
+													<div class="d-flex align-items-center">
+														<img src="<%= product.image %>" alt="<%= product.name %>" class="me-2" style="width: 50px;">
+														<div>
+															<%= product.name %>
+															<br>
+															<small class="text-muted">× <%= product.quantity %></small>
+														</div>
+													</div>
+												</td>
+												<td class="text-end">₹<%= (product.price * product.quantity).toFixed(2) %></td>
+											</tr>
+											<% subtotal += product.price * product.quantity; %>
+										<% } %>
+									
+										<% if (cart && cart.items && cart.items.length > 0) { %> 
+											<!-- Render cart items -->
+											<% cart.items.forEach(item => { %>
+												<tr>
+													<td>
+														<div class="d-flex align-items-center">
+															<img src="<%= item.images %>" alt="<%= item.name %>" class="me-2" style="width: 50px;">
+															<div>
+																<%= item.name %>
+																<br>
+																<small class="text-muted">× <%= item.quantity %></small>
+															</div>
+														</div>
+													</td>
+													<td class="text-end">₹<%= (item.price * item.quantity).toFixed(2) %></td>
+												</tr>
+												<% subtotal += item.price * item.quantity; %>
+											<% }); %>
+										<% } %>
+									
+										<tr>
+											<td>Subtotal</td>
+											<td class="text-end">₹<%= subtotal.toFixed(2) %></td>
+										</tr>
+										<tr>
+											<td>Free Shipping</td>
+											<td class="text-end">₹0.00</td>
+										</tr>
+										<tr>
+										<!-- Coupon Code -->
+
+							<div class="flex-w flex-m m-r-20 m-tb-5">
+								<input class="stext-104 cl2 plh4 size-117 bor13 p-lr-20 m-r-10 m-tb-5" 
+									   type="text" id="couponCode" name="coupon" placeholder="Coupon Code">
+									   
+								<div id="applyCouponBtn" 
+									 class="flex-c-m stext-101 cl2 size-118 bg8 bor13 hov-btn3 p-lr-15 trans-04 pointer m-tb-5">
+									Apply Coupon
+								</div>
+	
+								<div id="removeCouponBtn" 
+									 class="flex-c-m stext-101 cl2 size-118 bg8 bor13 hov-btn3 p-lr-15 trans-04 pointer m-tb-5" 
+									 style="display: none;">
+									Remove Coupon
+								</div>
+							</div>
+	
+							<!-- Coupon Messages -->
+							<div id="couponMessage" class="m-tb-10 stext-104 cl2"></div>
+	
+							<!-- Order Summary -->
+							<div class="order-summary m-tb-20">
+								<p>Cart Total: ₹<span id="cartTotal"><%= subtotal.toFixed(2) %></span></p>
+								<p>Discount: ₹<span id="discount">0.00</span></p>
+								<p>Final Total: ₹<span id="finalTotal"><%= subtotal.toFixed(2) %></span></p>
+							</div>
+										<tr>
+											<td><strong>Total</strong></td>
+											<td class="text-end"><strong>₹<span id="finalTotal"></span><%= subtotal.toFixed(2) %></strong></td>
+										</tr>
+									</tbody>        
+								</table>
+							</div>
+						</tr>
+
+							
+	
+							<!-- Payment Methods -->
+							<div class="mt-4">
+								<h6>Payment</h6>
+								<div class="form-check">
+									<input class="form-check-input" type="radio" name="paymentMethod" id="razorpay" value="Razorpay">
+									<label class="form-check-label" for="razorpay">Razorpay</label>
+								</div>
+								<div class="form-check">
+									<input class="form-check-input" type="radio" name="paymentMethod" id="cash-on-delivery" value="Cash on Delivery">
+									<label class="form-check-label" for="cash-on-delivery">Cash on Delivery</label>
+								</div>
+								<div class="form-check">
+									<input class="form-check-input" type="radio" name="paymentMethod" id="wallet" value="Wallet">
+									<label class="form-check-label" for="wallet">Wallet</label>
+								</div>
+							</div>
+							
+	
+							<!-- Place Order Button -->
+							<button type="submit" class="btn btn-primary w-100 mt-4">Place Order</button>
+						</div>
+					</div>
+				</div>
+			</div>
+		</form>
+	</div>
+
+	
+	
 
 <!-- Footer -->
-<footer class="footer mt-5">
-    <div class="container">
-        <div class="row">
-            <div class="col-md-3">
-                <h5>Categories</h5>
-                <ul class="list-unstyled">
-                    <li><a href="#">Gadgets</a></li>
-                    <li><a href="#">Accessories</a></li>
-                    <li><a href="#">Wearables</a></li>
-                    <li><a href="#">Decorative Items</a></li>
-                </ul>
-            </div>
-            <div class="col-md-3">
-                <h5>Help</h5>
-                <ul class="list-unstyled">
-                    <li><a href="#">Track Order</a></li>
-                    <li><a href="#">Returns</a></li>
-                    <li><a href="#">Shipping</a></li>
-                    <li><a href="#">FAQs</a></li>
-                </ul>
-            </div>
-            <div class="col-md-3">
-                <h5>Get In Touch</h5>
-                <p>Any questions? Let us know at store@techyzone.com or call us on (+1) 86 76 9879</p>
-            </div>
-            <div class="col-md-3">
-                <h5>Newsletter</h5>
-                <p>Get the latest news and updates.</p>
-                <input type="email" class="form-control mb-3" placeholder="Your Email">
-                <button class="btn btn-black w-100">Subscribe</button>
-            </div>
-        </div>
-        <div class="text-center mt-4">
-            <p>&copy; 2024 All rights reserved | Made with <i class="bi bi-heart-fill text-danger"></i> by CodiLib & distributed by ThemeWagon</p>
-        </div>
-    </div>
-</footer>
+	<footer class="bg3 p-t-75 p-b-32">
+		<div class="container">
+			<div class="row">
+				<div class="col-sm-6 col-lg-3 p-b-50">
+					<h4 class="stext-301 cl0 p-b-30">
+						Categories
+					</h4>
 
-<!-- Bootstrap JS and Icons -->
-<script src="https://stackpath.bootstrapcdn.com/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
-<link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.5.0/font/bootstrap-icons.min.css" rel="stylesheet">
+					<ul>
+						<li class="p-b-10">
+							<a href="#" class="stext-107 cl7 hov-cl1 trans-04">
+								Gadgets
+							</a>
+						</li>
+
+						<li class="p-b-10">
+							<a href="#" class="stext-107 cl7 hov-cl1 trans-04">
+								Accessories
+							</a>
+						</li>
+
+						<li class="p-b-10">
+							<a href="#" class="stext-107 cl7 hov-cl1 trans-04">
+								Wearables
+							</a>
+						</li>
+
+						<li class="p-b-10">
+							<a href="#" class="stext-107 cl7 hov-cl1 trans-04">
+								Decorative Items
+							</a>
+						</li>
+					</ul>
+				</div>
+
+				<div class="col-sm-6 col-lg-3 p-b-50">
+					<h4 class="stext-301 cl0 p-b-30">
+						Help
+					</h4>
+
+					<ul>
+						<li class="p-b-10">
+							<a href="#" class="stext-107 cl7 hov-cl1 trans-04">
+								Track Order
+							</a>
+						</li>
+
+						<li class="p-b-10">
+							<a href="#" class="stext-107 cl7 hov-cl1 trans-04">
+								Returns 
+							</a>
+						</li>
+
+						<li class="p-b-10">
+							<a href="#" class="stext-107 cl7 hov-cl1 trans-04">
+								Shipping
+							</a>
+						</li>
+
+						<li class="p-b-10">
+							<a href="#" class="stext-107 cl7 hov-cl1 trans-04">
+								FAQs
+							</a>
+						</li>
+					</ul>
+				</div>
+
+				<div class="col-sm-6 col-lg-3 p-b-50">
+					<h4 class="stext-301 cl0 p-b-30">
+						GET IN TOUCH
+					</h4>
+
+					<p class="stext-107 cl7 size-201">
+						Any questions? Let us know in store at 5th floor, Kinfra, Kakkanchery, Kerala or call us on (+1) 96 716 6879
+					</p>
+
+					<div class="p-t-27">
+						<a href="#" class="fs-18 cl7 hov-cl1 trans-04 m-r-16">
+							<i class="fa fa-facebook"></i>
+						</a>
+
+						<a href="#" class="fs-18 cl7 hov-cl1 trans-04 m-r-16">
+							<i class="fa fa-instagram"></i>
+						</a>
+
+						<a href="#" class="fs-18 cl7 hov-cl1 trans-04 m-r-16">
+							<i class="fa fa-pinterest-p"></i>
+						</a>
+					</div>
+				</div>
+
+				<div class="col-sm-6 col-lg-3 p-b-50">
+					<h4 class="stext-301 cl0 p-b-30">
+						Newsletter
+					</h4>
+
+					<form>
+						<div class="wrap-input1 w-full p-b-4">
+							<input class="input1 bg-none plh1 stext-107 cl7" type="text" name="email" placeholder="email@techyzone.com">
+							<div class="focus-input1 trans-04"></div>
+						</div>
+
+						<div class="p-t-18">
+							<button class="flex-c-m stext-101 cl0 size-103 bg1 bor1 hov-btn2 p-lr-15 trans-04">
+								Subscribe
+							</button>
+						</div>
+					</form>
+				</div>
+			</div>
+
+			<div class="p-t-40">
+				<div class="flex-c-m flex-w p-b-18">
+					<a href="#" class="m-all-1">
+						<img src="/user/images/icons/icon-pay-01.png" alt="ICON-PAY">
+					</a>
+
+					<a href="#" class="m-all-1">
+						<img src="/user/images/icons/icon-pay-02.png" alt="ICON-PAY">
+					</a>
+
+					<a href="#" class="m-all-1">
+						<img src="/user/images/icons/icon-pay-03.png" alt="ICON-PAY">
+					</a>
+
+					<a href="#" class="m-all-1">
+						<img src="/user/images/icons/icon-pay-04.png" alt="ICON-PAY">
+					</a>
+
+					<a href="#" class="m-all-1">
+						<img src="/user/images/icons/icon-pay-05.png" alt="ICON-PAY">
+					</a>
+				</div>
+
+				<p class="stext-107 cl6 txt-center">
+					<!-- Link back to Colorlib can't be removed. Template is licensed under CC BY 3.0. -->
+Copyright &copy;<script>document.write(new Date().getFullYear());</script> All rights reserved | Made with <i class="fa fa-heart-o" aria-hidden="true"></i> by <a href="https://colorlib.com" target="_blank">Colorlib</a> &amp; distributed by <a href="https://themewagon.com" target="_blank">ThemeWagon</a>
+<!-- Link back to Colorlib can't be removed. Template is licensed under CC BY 3.0. -->
+
+				</p>
+			</div>
+		</div>
+	</footer>
+
+
+	<!-- Back to top -->
+	<div class="btn-back-to-top" id="myBtn">
+		<span class="symbol-btn-back-to-top">
+			<i class="zmdi zmdi-chevron-up"></i>
+		</span>
+	</div>
+
+<!--===============================================================================================-->	
+	<script src="/user/vendor/jquery/jquery-3.2.1.min.js"></script>
+<!--===============================================================================================-->
+	<script src="/user/vendor/animsition/js/animsition.min.js"></script>
+<!--===============================================================================================-->
+	<script src="/user/vendor/bootstrap/js/popper.js"></script>
+	<script src="/user/vendor/bootstrap/js/bootstrap.min.js"></script>
+<!--===============================================================================================-->
+	<script src="/user/vendor/select2/select2.min.js"></script>
+	<script>
+		₹(".js-select2").each(function(){
+			₹(this).select2({
+				minimumResultsForSearch: 20,
+				dropdownParent: ₹(this).next('.dropDownSelect2')
+			});
+		})
+	</script>
+<!--===============================================================================================-->
+	<script src="/user/vendor/MagnificPopup/jquery.magnific-popup.min.js"></script>
+<!--===============================================================================================-->
+	<script src="/user/vendor/perfect-scrollbar/perfect-scrollbar.min.js"></script>
+	<script>
+		₹('.js-pscroll').each(function(){
+			₹(this).css('position','relative');
+			₹(this).css('overflow','hidden');
+			var ps = new PerfectScrollbar(this, {
+				wheelSpeed: 1,
+				scrollingThreshold: 1000,
+				wheelPropagation: false,
+			});
+
+			₹(window).on('resize', function(){
+				ps.update();
+			})
+		});
+	</script>
+<!--===============================================================================================-->
+	<script src="/user/js/main.js"></script>
+
+
+	<script>
+		const paymentRadios = document.querySelectorAll('input[name="paymentMethod"]');
+		paymentRadios.forEach(radio => {
+			radio.addEventListener('click', function () {
+				// If the radio is already checked, uncheck it
+				if (this.checked) {
+					const isChecked = Array.from(paymentRadios).filter(r => r.checked).length;
+					if (isChecked > 1) {
+						this.checked = false;
+					}
+				}
+			});
+		});
+	</script>
+	
+	<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+	
+	<script>
+		document.getElementById('checkoutForm').addEventListener('submit', function (e) {
+			
+			const addressSelected = document.querySelector('input[name="addressId"]:checked');
+			if (!addressSelected) {
+				e.preventDefault();
+				Swal.fire({
+					icon: 'error',
+					title: 'Address Required',
+					text: 'Please select a shipping address before placing your order.',
+					confirmButtonColor: '#d33'
+				});
+				return;
+			}
+	
+			const paymentSelected = document.querySelector('input[name="paymentMethod"]:checked');
+			if (!paymentSelected) {
+				e.preventDefault();
+				Swal.fire({
+					icon: 'error',
+					title: 'Payment Method Required',
+					text: 'Please select a payment method before placing your order.',
+					confirmButtonColor: '#d33'
+				});
+				return;
+			}
+		});
+	</script>
+	
+	<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+	<script>
+		document.getElementById('checkoutForm').addEventListener('submit', async (event) => {
+			event.preventDefault();
+	
+			const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
+			if (paymentMethod === 'Razorpay') {
+				const response = await fetch('/place-order', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({
+						addressId: document.querySelector('input[name="addressId"]:checked').value,
+						paymentMethod: 'Razorpay',
+					}),
+				});
+				
+				const data = await response.json();
+				if (data.razorpayOrderId) {
+					const options = {
+						key: data.razorpayKey,
+						amount: data.amount,
+						currency: data.currency,
+						order_id: data.razorpayOrderId,
+						handler: async function (response) {
+							const paymentVerification = await fetch('/verify-payment', {
+								method: 'POST',
+								headers: { 'Content-Type': 'application/json' },
+								body: JSON.stringify({
+									orderId: data.orderId,
+									paymentId: response.razorpay_payment_id,
+									razorpayOrderId: response.razorpay_order_id,
+									razorpaySignature: response.razorpay_signature,
+								}),
+							});
+							if (paymentVerification.ok) {
+								Swal.fire({
+									icon: 'success',
+									title: 'Order Placed Successfully',
+									text: 'Your order has been placed successfully. Redirecting...',
+									showConfirmButton: false,
+									timer: 3000,
+								});
+								setTimeout(() => {
+									window.location.href = `/order-confirmation/${data.orderId}`;
+								}, 3000);
+							} else {
+								Swal.fire({
+									icon: 'error',
+									title: 'Payment Verification Failed',
+									text: 'Payment verification failed. Please contact support.',
+								});
+							}
+						},
+					};
+					const rzp = new Razorpay(options);
+					rzp.open();
+				} else {
+					Swal.fire({
+						icon: 'error',
+						title: 'Order Creation Failed',
+						text: 'Unable to create a Razorpay order. Please try again.',
+					});
+					return;
+				}
+			} else {
+				document.getElementById('checkoutForm').submit();
+			}
+		});
+
+
+
+		// Coupon  Integration
+
+
+		document.getElementById('applyCouponBtn').addEventListener('click', async () => {
+    const couponCode = document.getElementById('couponCode').value;
+    const cartTotal = parseFloat(document.getElementById('cartTotal').innerText);
+
+    if (!couponCode) {
+        document.getElementById('couponMessage').innerText = 'Please enter a coupon code';
+        return;
+    }
+
+    try {
+        const response = await fetch('/apply-coupon', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ couponCode, cartTotal }),
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            // Update the UI with the discounted values
+            document.getElementById('discount').innerText = data.discount.toFixed(2);
+            document.getElementById('finalTotal').innerText = data.discountedTotal.toFixed(2);
+            document.getElementById('couponMessage').innerText = data.message;
+
+            // Toggle buttons
+            document.getElementById('applyCouponBtn').style.display = 'none';
+            document.getElementById('removeCouponBtn').style.display = 'block';
+        } else {
+            document.getElementById('couponMessage').innerText = data.message;
+        }
+    } catch (error) {
+        console.error('Error applying coupon:', error);
+        document.getElementById('couponMessage').innerText = 'Failed to apply the coupon.';
+    }
+});
+
+
+document.getElementById('removeCouponBtn').addEventListener('click', async () => {
+    try {
+        const response = await fetch('/remove-coupon', {
+            method: 'POST',
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            // Reset the UI
+            document.getElementById('discount').innerText = '0';
+            const cartTotal = parseFloat(document.getElementById('cartTotal').innerText);
+            document.getElementById('finalTotal').innerText = cartTotal.toFixed(2);
+            document.getElementById('couponMessage').innerText = data.message;
+
+            // Toggle buttons
+            document.getElementById('applyCouponBtn').style.display = 'block';
+            document.getElementById('removeCouponBtn').style.display = 'none';
+        } else {
+            document.getElementById('couponMessage').innerText = data.message;
+        }
+    } catch (error) {
+        console.error('Error removing coupon:', error);
+        document.getElementById('couponMessage').innerText = 'Failed to remove the coupon.';
+    }
+});
+
+
+	</script>
+  	
+
 </body>
 </html>

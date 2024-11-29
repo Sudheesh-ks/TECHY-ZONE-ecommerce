@@ -1,8 +1,6 @@
 <%- include("../../views/partials/admin/header") %>
 <head>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@10/dist/sweetalert2.min.css"/>
-  <style>
-  </style>
 </head>
 <body>
   <section class="content-main">
@@ -34,14 +32,6 @@
                   <textarea placeholder="Type here" name="description" class="form-control" id="descriptionId" required></textarea>
                   <div id="description-error" class="error-message"></div>
                 </div>
-                <!-- <div class="mb-4">
-                  <label class="form-label">Offer Price</label>
-                  <input type="number" name="offerPrice" placeholder="Enter offer price" class="form-control" id="offerPrice" required/>
-                </div>
-                <div class="mb-4">
-                  <label class="form-label">Offer (%)</label>
-                  <input type="number" name="categoryOffer" placeholder="Enter offer percentage" class="form-control" id="categoryOffer" required/>
-                </div> -->
                 <div class="d-grid">
                   <button class="btn btn-primary" type="submit">Create category</button>
                 </div>
@@ -120,7 +110,6 @@
 
 
   <script>
-    // Check if flash messages are set in the session
     <% if (locals.flash && locals.flash.message) { %>
       Swal.fire({
         icon: '<%= flash.type %>',
@@ -141,6 +130,20 @@
     document.getElementById("editForm").action = `/admin/category/edit/${id}`;
     document.getElementById("editModal").style.display = "block";
   }
+
+
+  if (name === "" || description === "") {
+      event.preventDefault(); 
+
+      Swal.fire({
+        icon: 'error',
+        title: 'All fields are required',
+        text: 'Please fill in both the name and description fields.',
+        showConfirmButton: true
+      });
+    }
+
+
 
   function closeModal() {
     document.getElementById("editModal").style.display = "none";
@@ -168,7 +171,7 @@
               showConfirmButton: false,
               timer: 1500
             }).then(() => {
-              location.reload(); // Reload the page after the alert
+              location.reload();
             });
         } else {
             Swal.fire({

@@ -14,9 +14,8 @@ const userSchema = new mongoose.Schema({
     },
 
     phno:{
-        type:Number,
+        type:String,
         required:false,
-        sparse:true,
         default:null
     },
 

@@ -4,6 +4,8 @@ const adminController = require('../controllers/adminController');
 const customerController = require('../controllers/customerController');
 const categoryController = require('../controllers/categoryController');
 const productController = require('../controllers/productController');
+const orderController = require('../controllers/orderController');
+const couponController = require('../controllers/couponController');
 const {isLogin,isAuthenticated} = require('../middlewares/adminAuth');
 
 
@@ -33,8 +35,6 @@ router.post('/products/add', upload.fields([
     { name: 'productImage1', maxCount: 1 },
     { name: 'productImage2', maxCount: 1 },
     { name: 'productImage3', maxCount: 1 },
-    // { name: 'productImage4', maxCount: 1 },
-    // { name: 'productImage5', maxCount: 1 }
   ]), productController.productsAdd);
 
 router.get('/products',isAuthenticated,productController.getAllProducts);
@@ -43,15 +43,29 @@ router.get('/unblockProduct',productController.unblockProduct);
 router.get('/products/edit/:id', productController.getEditProductPage);
 
 
-router.put('/products/edit/:productId', 
+router.put(
+  '/products/edit/:id', 
   upload.fields([
     { name: 'croppedImage1', maxCount: 1 },
     { name: 'croppedImage2', maxCount: 1 },
     { name: 'croppedImage3', maxCount: 1 }
-  ]), 
-  productController.updateProduct);
+  ]),
+  productController.updateProduct
+);
 
 
+// Order Management
+router.get('/orders',orderController.getAllOrders);
+router.get('/order-detail/:id',orderController.loadOrderDetails);
+router.post('/update-order-status/:id', orderController.updateOrderStatus);
+router.post('/approve-return/:id', orderController.approveReturn);
+router.post('/reject-return/:id', orderController.rejectReturn);
+
+// Coupon Management
+router.get('/coupon',couponController.loadCoupon);
+router.get('/addCoupon',couponController.loadAddCoupon);
+router.post('/add-coupon', couponController.addCoupon);
+router.delete('/delete-coupon/:id', couponController.deleteCoupon);
 
 
 module.exports = router;

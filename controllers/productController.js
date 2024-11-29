@@ -1,9 +1,9 @@
 const productModel = require('../models/productModel');
 const categoryModel = require('../models/categoryModel');
 const User = require('../models/userModel');
-const fs = require('fs');
+// const fs = require('fs');
 const path = require('path');
-const sharp = require('sharp');
+// const sharp = require('sharp');
 
 
 const getProductAddPage = async (req,res) => {
@@ -186,45 +186,78 @@ const getEditProductPage = async (req, res) => {
 
 
 const updateProduct = async (req, res) => {
-
-  console.log('dhhfhf')
   try {
+    // Extract productId from params and fields from request body
     const productId = req.params.id;
-    const {name, description, category, price, offerPrice, stock, warranty, returnPolicy} = req.body;
-    const imagePaths = [];
-    for (const key in req.files) {
-      
-      req.files[key].forEach((file) => {
-        imagePaths.push(
-          path.relative(path.join(__dirname, "..", "public"), file.path)
-        );
-      });
-    }
-    console.log(name, description, category, price, offerPrice, stock, warranty, returnPolicy)
-    const product = await productModel.findOne({ _id: productId });
-    
-    if (!product) {
-      return res.status(200).json({val:false,msg:"Product not found"});
-    }
-    
-    await productModel.updateOne({ _id: productId }, {
-      name,
-      description,
-      category: categoryObject._id,
-      price,
-      images: imagePaths,
-      offerPrice,
-      stock,
-      warranty,
-      returnPolicy,
-    });
+    const { name, description, category, price, offerPrice, stock, warranty, returnPolicy } = req.body;
 
-    return res.status(200).json({val:true,msg:"Product updated successfully",product});
+    console.log('Request Data:', req.body); // Debugging: log request body
+    console.log('Files:', req.files); // Debugging: log files received
+
+    // Ensure image handling is correct
+    const imagePaths = [];
+    if (req.files) {
+      for (const key in req.files) {
+        req.files[key].forEach((file) => {
+          // Log file paths before processing
+          console.log(`Processing file: ${file.path}`);
+          imagePaths.push(path.relative(path.join(__dirname, "..", "public"), file.path));
+        });
+      }
+    }
+
+    // Check if productId is valid (ensure it's a valid ObjectId)
+    if (!productId) {
+      console.log('Invalid Product ID');
+      return res.status(400).json({ val: false, msg: "Invalid Product ID" });
+    }
+
+    // Find the product by ID
+    const product = await productModel.findById(productId);
+
+    if (!product) {
+      console.log(`Product with ID ${productId} not found`); 
+      return res.status(404).json({ val: false, msg: "Product not found" });
+    }
+
+    
+    console.log('Existing Product:', product);
+
+    
+    const categoryData = await categoryModel.findOne({ name: category });
+    if (!categoryData) {
+      console.log(`Category ${category} not found`);
+      return res.status(404).json({ val: false, msg: `Category ${category} not found` });
+    }
+
+    
+    product.name = name;
+    product.description = description;
+    product.category = categoryData._id; 
+    product.price = price;
+    product.offerPrice = offerPrice;
+    product.stock = stock;
+    product.warranty = warranty;
+    product.returnPolicy = returnPolicy;
+    product.images = imagePaths; 
+
+    
+    await product.save();
+
+
+    
+    console.log('Updated Product:', product);
+
+    res.redirect('/admin/products');
+
   } catch (error) {
-    console.error('Error fetching product for editing:', error);
-    res.status(500).json({val:false,msg:"Internal server error"});
+    console.error("Error updating product:", error); 
+    return res.status(500).json({ val: false, msg: "Internal server error", error: error.message });
   }
 };
+
+
+
 
 
 

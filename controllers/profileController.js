@@ -155,7 +155,6 @@ const postNewPassword = async (req,res) => {
     }
 }
 
-
 module.exports = {
     loadForgotPassword,
     forgotEmailValid,

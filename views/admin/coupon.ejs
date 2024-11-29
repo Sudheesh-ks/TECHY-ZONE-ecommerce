@@ -1,0 +1,70 @@
+<%- include("../../views/partials/admin/header") %>
+<div class="content-header row">
+    <div class="d-flex justify-content-between align-items-center">
+        <h2 class="content-title card-title">Manage Coupons</h2>
+    </div>
+</div>
+
+<!-- Search Bar -->
+<header class="card-header text-center mb-20">
+    <form action="/admin/coupons" method="get" class="d-inline">
+        <div class="input-group input-group-sm border border-1 border-grey rounded-pill" style="width: 500px; margin-left: 230px;">
+            <input type="text" class="form-control border-0 rounded-pill" placeholder="Search coupons..." name="search">
+            <button class="btn border-0" type="submit">Search</button>
+        </div>
+    </form>
+</header>
+
+<div class="right mt-5">
+
+    <!-- Coupon List -->
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th scope="col"><b>Code</b></th>
+                <th scope="col"><b>Discount</b></th>
+                <th scope="col"><b>Min Amount</b></th>
+                <th scope="col"><b>Max Discount</b></th>
+                <th scope="col"><b>Expiry Date</b></th>
+                <th scope="col"><b>Status</b></th>
+                <th scope="col"><b>Actions</b></th>
+            </tr>
+        </thead>
+        <tbody>
+            <% coupons.forEach(coupon => { %>
+                <tr>
+                    <td><%= coupon.couponCode %></td>
+                    <td><%= coupon.discount %>%</td>
+                    <td>$<%= coupon.minAmount %></td>
+                    <td>$<%= coupon.maxDiscount %></td>
+                    <td><%= coupon.expiryDate.toISOString().split('T')[0] %></td>
+                    <td><%= coupon.isActive ? 'Active' : 'Inactive' %></td>
+                    <td>
+                        <button class="btn btn-danger btn-sm delete-btn" data-id="<%= coupon._id %>">Delete</button>
+                    </td>
+                </tr>
+            <% }) %>
+        </tbody>
+    </table>
+    <a href="/admin/addCoupon" type="submit" class="btn btn-primary">Add Coupon</a>
+</div>
+
+<script>
+    // Handle Delete Coupon
+    document.querySelectorAll('.delete-btn').forEach(btn => {
+        btn.addEventListener('click', async function () {
+            const id = this.dataset.id;
+
+            const response = await fetch(`/admin/delete-coupon/${id}`, {
+                method: 'DELETE',
+            });
+
+            const data = await response.json();
+            if (response.ok) {
+                window.location.href = "/admin/coupon";
+            } else {
+                alert(data.error);
+            }
+        });
+    });
+</script>
