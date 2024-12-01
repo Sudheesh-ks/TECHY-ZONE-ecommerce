@@ -11,7 +11,7 @@ const cartSchema = new mongoose.Schema({
         quantity: { type: Number, default: 1 },
         name: String,
         price: Number,
-        images: String // Assuming you want to store the product image
+        images: String
     }],
     totalQuantity: { type: Number, default: 0 },
     totalPrice: { type: Number, default: 0 }

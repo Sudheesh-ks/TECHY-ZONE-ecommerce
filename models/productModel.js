@@ -28,7 +28,7 @@ const productSchema = new mongoose.Schema(
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date, default: Date.now },
   },
-  { timestamps: true } // This will automatically manage 'createdAt' and 'updatedAt' fields
+  { timestamps: true } 
 );
 
 module.exports = mongoose.model('Products', productSchema);

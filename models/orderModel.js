@@ -62,14 +62,14 @@ const orderSchema = new mongoose.Schema({
         default: 'Not Requested'
     },
     returnReason: {
-        type: String, // Optional reason for the return
+        type: String,
         default: ''
     },
     returnRequestedAt: {
-        type: Date // To track when the return was requested
+        type: Date 
     },
     returnApprovedAt: {
-        type: Date // To track when the return was approved
+        type: Date
     }
 });
 

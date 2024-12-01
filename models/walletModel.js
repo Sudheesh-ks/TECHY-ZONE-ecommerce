@@ -11,14 +11,14 @@ const walletSchema = new mongoose.Schema({
         type: Number,
         default: 0
     },
-    transactions: [{ // Array to store transaction details
+    transactions: [{ 
         amount: {
             type: Number,
             required: true
         },
         type: {
             type: String,
-            enum: ['Credit', 'Debit'], // Ensure only Credit or Debit types are used
+            enum: ['Credit', 'Debit'],
             required: true
         },
         description: {

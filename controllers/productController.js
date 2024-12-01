@@ -1,9 +1,7 @@
 const productModel = require('../models/productModel');
 const categoryModel = require('../models/categoryModel');
 const User = require('../models/userModel');
-// const fs = require('fs');
 const path = require('path');
-// const sharp = require('sharp');
 
 
 const getProductAddPage = async (req,res) => {
@@ -187,32 +185,27 @@ const getEditProductPage = async (req, res) => {
 
 const updateProduct = async (req, res) => {
   try {
-    // Extract productId from params and fields from request body
     const productId = req.params.id;
     const { name, description, category, price, offerPrice, stock, warranty, returnPolicy } = req.body;
 
-    console.log('Request Data:', req.body); // Debugging: log request body
-    console.log('Files:', req.files); // Debugging: log files received
+    console.log('Request Data:', req.body);
+    console.log('Files:', req.files);
 
-    // Ensure image handling is correct
     const imagePaths = [];
     if (req.files) {
       for (const key in req.files) {
         req.files[key].forEach((file) => {
-          // Log file paths before processing
           console.log(`Processing file: ${file.path}`);
           imagePaths.push(path.relative(path.join(__dirname, "..", "public"), file.path));
         });
       }
     }
 
-    // Check if productId is valid (ensure it's a valid ObjectId)
     if (!productId) {
       console.log('Invalid Product ID');
       return res.status(400).json({ val: false, msg: "Invalid Product ID" });
     }
 
-    // Find the product by ID
     const product = await productModel.findById(productId);
 
     if (!product) {
@@ -255,8 +248,6 @@ const updateProduct = async (req, res) => {
     return res.status(500).json({ val: false, msg: "Internal server error", error: error.message });
   }
 };
-
-
 
 
 

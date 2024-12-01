@@ -26,18 +26,15 @@ const addCoupon = async (req, res) => {
     try {
         const { couponCode, discount, minAmount, expiryDate, maxDiscount, maxUsage} = req.body;
 
-        // Validate the required fields
         if (!couponCode || !discount || !minAmount || !expiryDate) {
             return res.status(400).json({ error: 'All fields are required.' });
         }
 
-        // Check if the coupon code already exists
         const existingCoupon = await Coupon.findOne({ couponCode });
         if (existingCoupon) {
             return res.status(400).json({ error: 'Coupon code already exists.' });
         }
 
-        // Save the new coupon
         const coupon = new Coupon({
             couponCode,
             discount,
@@ -79,14 +76,12 @@ const applyCoupon = async (req, res) => {
     const { couponCode, cartTotal } = req.body;
 
     try {
-        // Find active coupon
         const coupon = await Coupon.findOne({ couponCode, isActive: true });
 
         if (!coupon) {
             return res.status(400).json({ success: false, message: "Invalid or expired coupon." });
         }
 
-        // Check minimum spend
         if (cartTotal < coupon.minAmount) {
             return res.status(400).json({
                 success: false,
@@ -94,14 +89,12 @@ const applyCoupon = async (req, res) => {
             });
         }
 
-        // Calculate discount
         const discount = coupon.discount 
             ? (cartTotal * coupon.discount) / 100 
             : Math.min(cartTotal, coupon.maxDiscount);
 
-        const discountedTotal = Math.max(cartTotal - discount, 0); // Ensure no negative prices
+        const discountedTotal = Math.max(cartTotal - discount, 0); 
 
-        // Store applied coupon details in session
         req.session.appliedCoupon = {
             couponCode: coupon.couponCode,
             discount,

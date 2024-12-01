@@ -317,7 +317,7 @@ const loadShop = async (req, res) => {
         }
 
         
-        productData = productData.slice(0, 8);
+        productData = productData.slice(0, 16);
 
         let cart = null;
         if (req.session.user) {
@@ -333,7 +333,7 @@ const loadShop = async (req, res) => {
             selectedCategory: category,
             priceRange,
             products: productData,
-            cart
+            cart,
         });
 
     } catch (error) {
@@ -565,7 +565,6 @@ const cancelOrder = async (req, res) => {
         const userId = req.session.user.id;
         const orderId = req.params.id;
 
-        // Find and update the order to set its status to 'Cancelled'
         const order = await Order.findOneAndUpdate(
             { _id: orderId, userId },
             { status: 'Cancelled' },
@@ -579,13 +578,25 @@ const cancelOrder = async (req, res) => {
 
         console.log(`Order ${orderId} cancelled successfully.`);
 
-        // Refund the amount to the wallet
+        for (let item of order.products) {
+            const product = await Product.findById(item.productId);
+            if (product) {
+                await Product.findByIdAndUpdate(item.productId, {
+                    $inc: { stock: item.quantity }, 
+                });
+                console.log(`Stock updated for product ${product.name}: +${item.quantity}`);
+            } else {
+                console.error(`Product with ID ${item.productId} not found.`);
+            }
+        }
+
+        console.log(`Stock updated for canceled order ${orderId}.`);
+
         const refundAmount = order.totalPrice;
 
         let wallet = await Wallet.findOne({ userId });
 
         if (!wallet) {
-            // Create a new wallet for the user if it doesn't exist
             wallet = new Wallet({
                 userId,
                 balance: refundAmount,
@@ -598,7 +609,6 @@ const cancelOrder = async (req, res) => {
                 ],
             });
         } else {
-            // Update wallet balance and add transaction
             wallet.balance += refundAmount;
             wallet.transactions.push({
                 amount: refundAmount,
@@ -620,7 +630,7 @@ const cancelOrder = async (req, res) => {
 
 const requestReturn = async (req, res) => {
     const { orderId } = req.params;
-    const { reason } = req.body; // Reason for return from form input
+    const { reason } = req.body; 
 
     try {
         const order = await Order.findById(orderId);
@@ -629,7 +639,6 @@ const requestReturn = async (req, res) => {
             return res.status(404).send('Order not found.');
         }
 
-        // Check if the order is delivered and return has not been requested
         if (order.status !== 'Delivered') {
             return res.status(400).send('Only delivered orders can be returned.');
         }
@@ -638,13 +647,11 @@ const requestReturn = async (req, res) => {
             return res.status(400).send('Return request already exists.');
         }
 
-        // Update the order's return status, reason, and other fields
         order.returnStatus = 'Requested';
         order.returnReason = reason || '';
         order.returnRequestedAt = new Date();
         await order.save();
 
-        // Redirect back to the order list with a success message
         req.flash('success', 'Return request submitted successfully!');
         res.status(200).json({ message: 'Return request submitted successfully!' });
     } catch (error) {
@@ -857,7 +864,7 @@ const loadWallet = async (req, res) => {
         res.render('users/wallet', {
             user: req.session.user,
             walletBalance: wallet?.balance || 0,
-            transactions: wallet?.transactions || [], // Pass transactions to view if needed
+            transactions: wallet?.transactions || [], 
         });
     } catch (error) {
         console.error('Error loading wallet:', error.message);
@@ -1014,7 +1021,6 @@ const removeFromCart = async (req, res) => {
     const { productId } = req.params;
 
     try {
-        
         const cart = await Cart.findOneAndUpdate(
             { userId: req.session.user.id },
             { $pull: { items: { productId } } },
@@ -1027,15 +1033,30 @@ const removeFromCart = async (req, res) => {
 
         if (cart.items.length === 0) {
             await Cart.deleteOne({ _id: cart._id });
-            return res.json({ success: true, message: 'Cart cleared successfully!' });
+            return res.json({ 
+                success: true, 
+                message: 'Cart cleared successfully!', 
+                totalPrice: 0 
+            });
         }
 
-        res.json({ success: true});
+        cart.totalPrice = cart.items.reduce((total, item) => {
+            return total + item.price * item.quantity;
+        }, 0);
+
+        await cart.save();
+
+        res.json({ 
+            success: true, 
+            message: 'Product removed successfully!', 
+            totalPrice: cart.totalPrice.toFixed(2) 
+        });
     } catch (error) {
         console.error(error);
         res.status(500).json({ success: false, message: 'Failed to remove product.' });
     }
 };
+
 
 
 const loadCheckout = async (req, res) => {
@@ -1054,7 +1075,6 @@ const loadCheckout = async (req, res) => {
         let appliedCoupon = req.session.appliedCoupon || null;
         let discount = 0;
 
-        // Handle single product checkout
         if (productId && quantity) {
             const product = await Product.findById(productId);
             if (!product) {
@@ -1070,12 +1090,11 @@ const loadCheckout = async (req, res) => {
                 total: product.price * parseInt(quantity)
             };
 
-            // Apply coupon discount to single product checkout
             if (appliedCoupon) {
                 discount = Math.min(
                     appliedCoupon.discount,
                     checkoutProduct.total
-                ); // Ensure discount does not exceed total
+                );
                 checkoutProduct.total -= discount;
             }
 
@@ -1089,14 +1108,13 @@ const loadCheckout = async (req, res) => {
             });
         }
 
-        // Handle cart checkout
         const cart = await Cart.findOne({ userId });
 
         if (cart && appliedCoupon) {
             discount = Math.min(
                 appliedCoupon.discount,
                 cart.totalPrice
-            ); // Ensure discount does not exceed total
+            );
             cart.totalPrice -= discount;
         }
 
@@ -1106,7 +1124,7 @@ const loadCheckout = async (req, res) => {
             cart: cart || { items: [], totalPrice: 0, totalQuantity: 0 },
             product: null,
             appliedCoupon,
-            discount
+            discount,
         });
     } catch (error) {
         console.error(error.message);
@@ -1243,102 +1261,6 @@ const postEditCheckoutAddress = async (req, res) => {
 };
 
 
-// const placeOrder = async (req, res) => {
-//     try {
-//         const { addressId, paymentMethod } = req.body;
-
-//         if (paymentMethod !== 'Cash on Delivery') {
-//             return res.status(400).send('Only Cash on Delivery is supported.');
-//         }
-
-//         if (!addressId) {
-//             return res.status(400).send('Address is required.');
-//         }
-
-//         const userId = req.session.user.id;
-
-        
-//         const userAddresses = await Address.findOne({ userId });
-//         const selectedAddress = userAddresses.address.find(addr => addr._id.toString() === addressId);
-//         if (!selectedAddress) {
-//             return res.status(404).send('Address not found.');
-//         }
-
-
-//         const { productId, quantity } = req.query;
-
-//         let orderProducts = [];
-//         let totalPrice = 0;
-
-//         if (productId && quantity) {
-                
-            
-//             const product = await Product.findById(productId);
-//             if (!product) {
-//                 return res.status(404).send('Product not found.');
-//             }
-
-//             orderProducts.push({
-//                 productId: product._id,
-//                 name: product.name,
-//                 price: product.price,
-//                 quantity: parseInt(quantity),
-//                 image: product.images[0] || 'default-image.jpg'
-//             });
-
-//             totalPrice = product.price * quantity;
-//         } else {
-
-//             const cart = await Cart.findOne({ userId });
-//             if (!cart || cart.items.length === 0) {
-//                 return res.status(400).send('Your cart is empty.');
-//             }
-
-//             orderProducts = cart.items.map(item => ({
-//                 productId: item.productId,
-//                 name: item.name,
-//                 price: item.price,
-//                 quantity: item.quantity,
-//                 image: item.images
-//             }));
-
-//             totalPrice = cart.totalPrice;
-//         }
-
-//         const order = new Order({
-//             userId,
-//             products: orderProducts,
-//             totalPrice,
-//             address: selectedAddress,
-//             paymentMethod,
-//             paymentStatus: 'Pending',
-//             status: 'Pending'
-//         });
-
-//         await order.save();
-
-//          // Code for update stock 
-//          for (const item of orderProducts) {
-//             const product = await Product.findById(item.productId);
-//             if (product) {
-//                 if (product.stock < item.quantity) {
-//                     return res.status(400).send(`Insufficient stock for ${product.name}.`);
-//                 }
-//                 product.stock -= item.quantity; 
-//                 await product.save();
-//             }
-//         }
-
-//         if (!productId) {
-//             await Cart.deleteOne({ userId });
-//         }
-
-//         res.redirect(`/order-confirmation/${order._id}`);
-//     } catch (error) {
-//         console.error(error.message);
-//         res.status(500).send('Internal Server Error');
-//     }
-// };
 
 const loadOrderConfirmation = async (req, res) => {
     try {
@@ -1609,7 +1531,6 @@ module.exports = {
     postAddCheckoutAddress,
     editCheckoutAddress,
     postEditCheckoutAddress,
-    // placeOrder,
     loadOrderConfirmation,
     loadWishlist,
     addToWishlist,

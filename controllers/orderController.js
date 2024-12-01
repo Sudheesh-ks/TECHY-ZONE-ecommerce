@@ -1,11 +1,29 @@
 const Order = require('../models/orderModel');
 const Product = require('../models/productModel');
 const User = require('../models/userModel'); 
+const Wallet = require('../models/walletModel');
 
 const getAllOrders = async (req, res) => {
     try {
+
+        let search = "";
+        if (req.query.search) {
+            search = req.query.search;
+        }
+
+        let page = 1;
+        if (req.query.page) {
+            page = parseInt(req.query.page);
+        }
+        const limit = 4; 
+
+        const count = await Order.countDocuments();
         
-        const orders = await Order.find().sort({ createdAt: -1 }).lean();
+        const orders = await Order.find().sort({ createdAt: -1 }).lean()
+        .sort({ createdAt: -1 })
+            .limit(limit)
+            .skip((page - 1) * limit)
+            .lean();
 
         if (!orders || orders.length === 0) {
             return res.render('admin/admin-orders', { orders: [], message: 'No orders found.' });
@@ -32,7 +50,12 @@ const getAllOrders = async (req, res) => {
         }
              
         
-        res.render('admin/orders', { orders });
+        res.render('admin/orders', 
+            { orders,
+              totalPages: Math.ceil(count / limit),
+              currentPage: page,
+            },
+        );
     } catch (error) {
         console.error('Error fetching orders:', error);
         res.status(500).send('An error occurred while fetching orders.');
@@ -44,20 +67,17 @@ const loadOrderDetails = async (req, res) => {
     try {
         const orderId = req.params.id;
 
-        // Find the order by ID
         const order = await Order.findById(orderId).lean();
 
         if (!order) {
             return res.render('admin/order-detail', { order: null, message: 'Order not found.' });
         }
 
-        // Find the user associated with the order
         const user = await User.findById(order.userId).lean();
         if (user) {
             order.user = user;
         }
 
-        // Populate product details for each product in the order
         for (let item of order.products) {
             const product = await Product.findById(item.productId).lean();
             if (product) {
@@ -70,7 +90,6 @@ const loadOrderDetails = async (req, res) => {
             }
         }
 
-        // Render the order detail page and include returnReason if it exists
         res.render('admin/order-detail', { order });
     } catch (error) {
         console.error('Error fetching order details:', error.message);
@@ -103,6 +122,19 @@ const updateOrderStatus = async (req, res) => {
             return res.status(404).send('Order not found');
         }
 
+         order.status = status;
+
+         if (status === 'Delivered' && order.paymentMethod === 'Cash on Delivery') {
+             order.paymentStatus = 'Completed';
+         }
+ 
+         await order.save();
+ 
+         console.log(`Order ${orderId} status updated to ${status}`);
+         if (status === 'Delivered' && order.paymentMode === 'COD') {
+             console.log(`Payment status for order ${orderId} updated to Completed.`);
+         }
+
         console.log(`Order ${orderId} status updated to ${status}`);
         res.redirect('/admin/orders'); 
     } catch (error) {
@@ -112,17 +144,61 @@ const updateOrderStatus = async (req, res) => {
 };
 
 
-// Approve Return
 const approveReturn = async (req, res) => {
     try {
         const orderId = req.params.id;
 
-        // Find the order and update the return status to 'Approved'
         const updatedOrder = await Order.findByIdAndUpdate(orderId, { returnStatus: 'Approved' }, { new: true });
 
         if (!updatedOrder) {
             return res.status(404).json({ message: 'Order not found' });
         }
+
+
+        for (let item of updatedOrder.products) {
+            const product = await Product.findById(item.productId);
+            if (product) {
+                await Product.findByIdAndUpdate(item.productId, {
+                    $inc: { stock: item.quantity },
+                });
+                console.log(`Stock updated for product ${product.name}: +${item.quantity}`);
+            } else {
+                console.error(`Product with ID ${item.productId} not found.`);
+            }
+        }
+
+        console.log(`Stock updated for returned order ${orderId}.`);
+
+
+         const userId = updatedOrder.userId;
+         const refundAmount = updatedOrder.totalPrice;
+ 
+         let wallet = await Wallet.findOne({ userId });
+ 
+         if (!wallet) {
+             wallet = new Wallet({
+                 userId,
+                 balance: refundAmount,
+                 transactions: [
+                     {
+                         amount: refundAmount,
+                         type: 'Credit',
+                         description: `Refund for returned order ${orderId}`,
+                     },
+                 ],
+             });
+         } else {
+             wallet.balance += refundAmount;
+             wallet.transactions.push({
+                 amount: refundAmount,
+                 type: 'Credit',
+                 description: `Refund for returned order ${orderId}`,
+             });
+         }
+ 
+         await wallet.save();
+ 
+         console.log(`Refund of ₹${refundAmount} credited to wallet for user ${userId}.`);
 
         req.flash('success', 'Return approved successfully!');
         res.redirect(`/admin/order-detail/${orderId}`);
@@ -137,7 +213,6 @@ const rejectReturn = async (req, res) => {
     try {
         const orderId = req.params.id;
 
-        // Find the order and update the return status to 'Rejected'
         const updatedOrder = await Order.findByIdAndUpdate(orderId, { returnStatus: 'Rejected' }, { new: true });
 
         if (!updatedOrder) {

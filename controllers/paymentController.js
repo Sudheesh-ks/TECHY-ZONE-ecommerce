@@ -18,14 +18,12 @@ const placeOrder = async (req, res) => {
 
         const userId = req.session.user.id;
 
-        // Fetch the selected address
         const userAddresses = await Address.findOne({ userId });
         const selectedAddress = userAddresses?.address.find(addr => addr._id.toString() === addressId);
         if (!selectedAddress) {
             return res.status(404).send('Address not found.');
         }
 
-        // Fetch cart or single product
         const { productId, quantity } = req.query;
         let orderProducts = [];
         let totalPrice = 0;
@@ -62,7 +60,6 @@ const placeOrder = async (req, res) => {
             totalPrice = cart.totalPrice;
         }
 
-        // Apply coupon if available
         let discountAmount = 0;
         if (couponCode) {
             const coupon = await Coupon.findOne({ 
@@ -92,10 +89,8 @@ const placeOrder = async (req, res) => {
             await coupon.save();
         }
 
-        // Calculate final total price after applying the coupon
         const finalTotalPrice = totalPrice - discountAmount;
 
-        // Create the order
         const order = new Order({
             userId,
             products: orderProducts,
@@ -110,7 +105,6 @@ const placeOrder = async (req, res) => {
 
         await order.save();
 
-        // Decrease stock
         for (const item of orderProducts) {
             const product = await Product.findById(item.productId);
             if (product) {
@@ -122,12 +116,18 @@ const placeOrder = async (req, res) => {
             }
         }
 
-        // Clear cart if needed
         if (!productId) {
             await Cart.deleteOne({ userId });
         }
 
-        // Payment handling
+        if (req.session.appliedCoupon) {
+            delete req.session.appliedCoupon;
+            console.log('Coupon removed from session after order.');
+        } else {
+            console.log('Coupon not found in session.');
+        }
+
+
         if (paymentMethod === 'Cash on Delivery') {
             return res.redirect(`/order-confirmation/${order._id}`);
         } else if (paymentMethod === 'Razorpay') {
@@ -155,16 +155,13 @@ const placeOrder = async (req, res) => {
 
 
 
-
-
-
 const verifyPayment = async (req, res) => {
     try {
         const { orderId, paymentId, razorpayOrderId, razorpaySignature } = req.body;
 
         const body = razorpayOrderId + "|" + paymentId;
         const expectedSignature = crypto
-            .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET) // Use the secret key from .env
+            .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
             .update(body.toString())
             .digest('hex');
 
@@ -175,7 +172,6 @@ const verifyPayment = async (req, res) => {
                 order.status = 'Pending';
                 await order.save();
 
-                // Clear cart after successful payment
                 await Cart.deleteOne({ userId: order.userId });
 
                 res.status(200).send('Payment verified.');

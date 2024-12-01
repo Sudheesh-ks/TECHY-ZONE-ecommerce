@@ -10,32 +10,27 @@
     <div class="col-lg-6">
       <div class="card mb-4">
         <div class="card-body">
-          <!-- Update product form -->
           <form  class="forms-sample" id="editProductForm" enctype="multipart/form-data" novalidate>
-            <!-- Hidden input for editing existing images -->
             <input style="display: none" type="file" name="existingImages" class="product-image" multiple />
             
-            <!-- Product Name -->
             <div class="form-group">
               <label for="productName">Name</label>
               <input type="text" class="form-control product-name" id="productName" name="name" value="<%= product.name %>" placeholder="Product Name" required />
               <p class="error-message" id="productNameError"></p>
             </div>
           
-           <!-- Product Images -->
-<div class="form-group">
-  <label for="productImages">Images</label>
-  <% for (let i = 0; i < 3; i++) { %>
-    <input 
-      type="file" 
-      class="form-control product-image" 
-      id="productImage<%= i + 1 %>" 
-      accept="image/*" 
-      onchange="previewAndCrop(event, <%= i %>)"
-      name="croppedImage<%= i + 1 %>"  
-    />
+            <div class="form-group">
+              <label for="productImages">Images</label>
+              <% for (let i = 0; i < 3; i++) { %>
+                <input 
+                  type="file" 
+                  class="form-control product-image" 
+                  id="productImage<%= i + 1 %>" 
+                  accept="image/*" 
+                  onchange="previewAndCrop(event, <%= i %>)"
+                  name="croppedImage<%= i + 1 %>"  
+                />
 
-    <!-- Show existing images if they are available -->
     <div class="cropPreviewSection" id="cropPreviewSection<%= i %>" style="display: <%= product.images && product.images[i] ? 'block' : 'none' %>;">
       <% if (product.images && product.images[i]) { %>
         <img id="cropPreview<%= i %>" src="/<%= product.images[i] %>" style="max-width: 100%; height: auto;" />
@@ -45,7 +40,6 @@
       <button  class="btn btn-primary btn-sm" type="button" onclick="startCropping(<%= i %>)">Crop Image <%= i + 1 %></button>
     </div>
 
-    <!-- Cropped Image Preview -->
     <div id="croppedImagePreview<%= i %>" class="cropped-image-preview">
       <% if (product.images && product.images[i]) { %>
         <img src="/uploads/<%= product.images[i] %>" style="max-width: 100%; height: auto;" />

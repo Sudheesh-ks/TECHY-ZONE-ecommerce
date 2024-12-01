@@ -1,10 +1,144 @@
 <%- include("../../views/partials/admin/header") %>
+
 <section class="content-main">
     <div class="content-header">
         <div>
-            <h2 class="content-title card-title">Dashboard </h2>
+            <h2 class="content-title card-title">Dashboard</h2>
         </div>
-       
+    </div>
+
+    <!-- Dashboard Summary -->
+    <div class="row">
+        <div class="col-md-3">
+            <div class="card card-body">
+                <h5>Total Users</h5>
+                <h2><%= totalUsers %></h2>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card card-body">
+                <h5>Total Sales</h5>
+                <h2>₹<%= totalSales.toLocaleString() %></h2>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card card-body">
+                <h5>Total Products</h5>
+                <h2><%= totalProducts %></h2>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card card-body">
+                <h5>Total Orders</h5>
+                <h2><%= totalOrders %></h2>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mt-4">
+        <div class="card-body d-flex justify-content-center">
+            <button class="btn btn-success" onclick="window.location.href='/admin/download-sales-report'">Download Sales Report</button>
+            </div>
+            </div>
+
+    <!-- Filter Section -->
+    <div class="card mt-4">
+        <div class="card-body">
+            <h5 class="card-title">Filter Sales Data</h5>
+            <form id="filter-form" method="GET" action="/admin/dashboard">
+                <div class="row">
+                    <!-- Filter Dropdown -->
+                    <div class="col-md-3">
+                        <label for="filter" class="form-label">Filter By</label>
+                        <select name="filter" id="filter" class="form-select" onchange="toggleCustomDateRange()">
+                            <option value="daily" <%= filter === 'daily' ? 'selected' : '' %>>Daily</option>
+                            <option value="weekly" <%= filter === 'weekly' ? 'selected' : '' %>>Weekly</option>
+                            <option value="monthly" <%= filter === 'monthly' ? 'selected' : '' %>>Monthly</option>
+                            <option value="custom" <%= filter === 'custom' ? 'selected' : '' %>>Custom</option>
+                        </select>
+                    </div>
+
+                    <!-- Custom Date Range -->
+                    <div class="col-md-3" id="custom-date-range" style="display: <%= filter === 'custom' ? 'block' : 'none' %>;">
+                        <label for="startDate" class="form-label">Start Date</label>
+                        <input type="date" name="startDate" id="startDate" class="form-control" value="<%= startDate || '' %>">
+                    </div>
+                    <div class="col-md-3" id="custom-date-range-end" style="display: <%= filter === 'custom' ? 'block' : 'none' %>;">
+                        <label for="endDate" class="form-label">End Date</label>
+                        <input type="date" name="endDate" id="endDate" class="form-control" value="<%= endDate || '' %>">
+                    </div>
+
+                    <!-- Apply Button -->
+                    <div class="col-md-3 align-self-end">
+                        <button type="submit" class="btn btn-primary">Apply</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Sales Graph -->
+    <div class="card mt-4">
+        <div class="card-body">
+            <h5 class="card-title">Top-Selling Products</h5>
+            <% if (salesData && salesData.labels.length > 0 && salesData.values.length > 0) { %>
+                <canvas id="salesChart" style="width: 100%; height: 400px;"></canvas>
+                <script>
+                    document.addEventListener('DOMContentLoaded', function () {
+                        const ctx = document.getElementById('salesChart').getContext('2d');
+                        new Chart(ctx, {
+                            type: 'bar',
+                            data: {
+                                labels: <%- JSON.stringify(salesData.labels) %>,
+                                datasets: [{
+                                    label: 'Units Sold',
+                                    data: <%- JSON.stringify(salesData.values) %>,
+                                    backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                                    borderColor: 'rgba(54, 162, 235, 1)',
+                                    borderWidth: 1
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                plugins: {
+                                    legend: {
+                                        display: true,
+                                        position: 'top'
+                                    }
+                                },
+                                scales: {
+                                    y: {
+                                        beginAtZero: true
+                                    }
+                                }
+                            }
+                        });
+                    });
+                </script>
+            <% } else { %>
+                <p>No sales data available for top-selling products.</p>
+            <% } %>
+        </div>
     </div>
 </section>
+
 <%- include("../../views/partials/admin/footer") %>
+
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    function toggleCustomDateRange() {
+        const filter = document.getElementById('filter').value;
+        const customDateRange = document.getElementById('custom-date-range');
+        const customDateRangeEnd = document.getElementById('custom-date-range-end');
+
+        if (filter === 'custom') {
+            customDateRange.style.display = 'block';
+            customDateRangeEnd.style.display = 'block';
+        } else {
+            customDateRange.style.display = 'none';
+            customDateRangeEnd.style.display = 'none';
+        }
+    }
+</script>

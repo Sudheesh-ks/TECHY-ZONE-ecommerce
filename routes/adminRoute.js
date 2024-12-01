@@ -6,6 +6,7 @@ const categoryController = require('../controllers/categoryController');
 const productController = require('../controllers/productController');
 const orderController = require('../controllers/orderController');
 const couponController = require('../controllers/couponController');
+const { generateSalesReport } = require('../controllers/adminController');
 const {isLogin,isAuthenticated} = require('../middlewares/adminAuth');
 
 
@@ -15,7 +16,11 @@ const upload = require('../utils/multerConfig');
 router.get('/pageerror',adminController.pageerror);
 router.get('/login',isLogin,adminController.loadLogin);
 router.post('/login', adminController.login);
+
+// Dashboard Management
 router.get('/dashboard',isAuthenticated,adminController.loadDashboard);
+router.get('/download-sales-report', adminController.generateSalesReport);
+
 router.get('/logout',isAuthenticated,adminController.logout);
 
 // Customer Management

@@ -575,64 +575,64 @@ Copyright &copy;<script>document.write(new Date().getFullYear());</script> All r
 
 <script>
     
-    document.querySelectorAll('.btn-remove').forEach(button => {
-        button.addEventListener('click', async (e) => {
-            e.preventDefault(); 
+	document.querySelectorAll('.btn-remove').forEach(button => {
+    button.addEventListener('click', async (e) => {
+        e.preventDefault();
 
-            
-            Swal.fire({
-                title: 'Are you sure?',
-                text: 'Do you want to remove this product from your cart?',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#d33',
-                cancelButtonColor: '#3085d6',
-                confirmButtonText: 'Yes, remove it!',
-                cancelButtonText: 'Cancel'
-            }).then(async (result) => {
-                if (result.isConfirmed) {
-                    const productId = e.target.closest('button').getAttribute('data-product-id');
+        Swal.fire({
+            title: 'Are you sure?',
+            text: 'Do you want to remove this product from your cart?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Yes, remove it!',
+            cancelButtonText: 'Cancel'
+        }).then(async (result) => {
+            if (result.isConfirmed) {
+                const productId = e.target.closest('button').getAttribute('data-product-id');
 
-                    try {
-                        
-                        const response = await fetch(`/cart/remove/${productId}`, {
-                            method: 'DELETE', 
-                            headers: {
-                                'Content-Type': 'application/json',
-                            },
-                        });
+                try {
+                    const response = await fetch(`/cart/remove/${productId}`, {
+                        method: 'DELETE',
+                        headers: { 'Content-Type': 'application/json' },
+                    });
 
-                        const result = await response.json();
+                    const data = await response.json();
 
-                        if (result.success) {
+                    if (data.success) {
+                        Swal.fire(
+                            'Removed!',
+                            data.message,
+                            'success'
+                        ).then(() => {
+                            // Update the subtotal dynamically
+                            const totalElement = document.querySelector('.mtext-110.cl2');
+                            totalElement.textContent = `₹ ${data.totalPrice}`;
                             
-                            Swal.fire(
-                                'Removed!',
-                                result.message,
-                                'success'
-                            ).then(() => {
-                                location.reload(); 
-                            });
-                        } else {
-                           
-                            Swal.fire(
-                                'Error',
-                                result.message,
-                                'error'
-                            );
-                        }
-                    } catch (error) {
-                        console.error('Error removing product:', error);
+                            // Optionally remove the product row from the DOM
+                            e.target.closest('tr').remove();
+                        });
+                    } else {
                         Swal.fire(
                             'Error',
-                            'An error occurred while removing the product.',
+                            data.message,
                             'error'
                         );
                     }
+                } catch (error) {
+                    console.error('Error removing product:', error);
+                    Swal.fire(
+                        'Error',
+                        'An error occurred while removing the product.',
+                        'error'
+                    );
                 }
-            });
+            }
         });
     });
+});
+
 </script>
 
 

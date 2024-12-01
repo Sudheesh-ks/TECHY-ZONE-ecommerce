@@ -12,15 +12,15 @@ const couponSchema = new mongoose.Schema({
         type: Number,
         required: true,
         min: 1,
-        max: 100, // Example: discount as a percentage
+        max: 100,
     },
     minAmount: {
         type: Number,
-        required: true, // Example: minimum order amount for the coupon to apply
+        required: true, 
     },
     maxDiscount: {
         type: Number,
-        required: true, // Example: maximum discount that can be applied
+        required: true, 
     },
     expiryDate: {
         type: Date,
@@ -32,7 +32,7 @@ const couponSchema = new mongoose.Schema({
     },
     maxUsage: {
         type: Number,
-        required: true, // Example: maximum number of times the coupon can be used
+        required: true,
     },
     userUsed: {
         type: Number,
