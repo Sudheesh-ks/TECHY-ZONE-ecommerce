@@ -120,7 +120,6 @@
     </div>
   </div>
 
-  <!-- Return Status Management -->
 <!-- Return Status Management -->
 <div class="card mt-4">
   <div class="card-body">
@@ -130,10 +129,10 @@
               <p><h5 class="fw-bold"><strong>Reason for Return:</strong></h5> <%= order.returnReason || 'No reason provided' %></p>
           </div>
           <form action="/admin/approve-return/<%= order._id %>" method="POST" style="display: inline-block; margin-right: 10px;">
-              <button class="btn btn-success btn-sm" type="submit">Approve</button>
+              <button class="btn btn-success btn" type="submit">Approve</button>
           </form>
           <form action="/admin/reject-return/<%= order._id %>" method="POST" style="display: inline-block;">
-              <button class="btn btn-danger btn-sm" type="submit">Reject</button>
+              <button class="btn btn-danger btn" type="submit">Reject</button>
           </form>
       <% } else { %>
           <p class="card-text">
@@ -142,6 +141,32 @@
       <% } %>
   </div>
 </div>
+
+
+<!-- Product Return Status Management -->
+<div class="card mt-4">
+  <div class="card-body">
+      <h3 class="card-title">Product Return Status</h3>
+      <% order.products.forEach(product => { %>
+        <div class="mb-4 border-bottom pb-3">
+            <h5 class="fw-bold"><%= product.name %></h5>
+            <p><strong>Status:</strong> <%= product.returnStatus || 'N/A' %></p>
+            <% if (product.returnStatus === 'Requested') { %>
+                <div class="mb-3">
+                    <p><strong>Reason for Return:</strong> <%= product.returnReason || 'No reason provided' %></p>
+                </div>
+                <form action="/admin/approve-return/<%= order._id %>/<%= product.productId %>" method="POST" style="display: inline-block; margin-right: 10px;">
+                    <button class="btn btn-success btn" type="submit">Approve</button>
+                </form>
+                <form action="/admin/reject-return/<%= order._id %>/<%= product.productId %>" method="POST" style="display: inline-block;">
+                    <button class="btn btn-danger btn" type="submit">Reject</button>
+                </form>
+            <% } %>
+        </div>
+      <% }); %> 
+  </div>
+</div>
+
 
   
   <!-- Include Bootstrap JS & Popper.js -->

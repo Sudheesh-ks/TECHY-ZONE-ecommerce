@@ -185,21 +185,10 @@ const getEditProductPage = async (req, res) => {
 
 const updateProduct = async (req, res) => {
   try {
+    console.log('Starting product update...');
+    
     const productId = req.params.id;
-    const { name, description, category, price, offerPrice, stock, warranty, returnPolicy } = req.body;
-
-    console.log('Request Data:', req.body);
-    console.log('Files:', req.files);
-
-    const imagePaths = [];
-    if (req.files) {
-      for (const key in req.files) {
-        req.files[key].forEach((file) => {
-          console.log(`Processing file: ${file.path}`);
-          imagePaths.push(path.relative(path.join(__dirname, "..", "public"), file.path));
-        });
-      }
-    }
+    console.log('Product ID:', productId);
 
     if (!productId) {
       console.log('Invalid Product ID');
@@ -207,47 +196,58 @@ const updateProduct = async (req, res) => {
     }
 
     const product = await productModel.findById(productId);
-
     if (!product) {
-      console.log(`Product with ID ${productId} not found`); 
+      console.log(`Product with ID ${productId} not found`);
       return res.status(404).json({ val: false, msg: "Product not found" });
     }
+    console.log('Product found:', product);
 
-    
-    console.log('Existing Product:', product);
-
-    
-    const categoryData = await categoryModel.findOne({ name: category });
+    const categoryData = await categoryModel.findOne({ name: req.body.category });
     if (!categoryData) {
-      console.log(`Category ${category} not found`);
-      return res.status(404).json({ val: false, msg: `Category ${category} not found` });
+      console.log(`Category ${req.body.category} not found`);
+      return res.status(404).json({ val: false, msg: `Category ${req.body.category} not found` });
+    }
+    console.log('Category validated:', categoryData);
+
+    let finalImages;
+    if (req.files && Object.keys(req.files).length > 0) {
+      console.log('Processing uploaded files...');
+      const imagePaths = [];
+      for (const key in req.files) {
+        req.files[key].forEach((file) => {
+          console.log(`Processing file: ${file.path}`);
+          imagePaths.push(path.relative(path.join(__dirname, "..", "public"), file.path));
+        });
+      }
+      finalImages = imagePaths;
+    } else {
+      console.log('No new files uploaded, using existing images...');
+      finalImages = product.images;
     }
 
-    
-    product.name = name;
-    product.description = description;
-    product.category = categoryData._id; 
-    product.price = price;
-    product.offerPrice = offerPrice;
-    product.stock = stock;
-    product.warranty = warranty;
-    product.returnPolicy = returnPolicy;
-    product.images = imagePaths; 
+    finalImages = [...new Set(finalImages)]; // Remove duplicates
+    console.log('Final Images:', finalImages);
 
-    
+    product.name = req.body.name;
+    product.description = req.body.description;
+    product.category = categoryData._id;
+    product.price = req.body.price;
+    product.offerPrice = req.body.offerPrice;
+    product.stock = req.body.stock;
+    product.warranty = req.body.warranty;
+    product.returnPolicy = req.body.returnPolicy;
+    product.images = finalImages;
+
     await product.save();
 
-
-    
-    console.log('Updated Product:', product);
-
-    res.redirect('/admin/products');
-
+    return res.json({ success: true, message: "Product updated successfully!" });
   } catch (error) {
-    console.error("Error updating product:", error); 
+    console.error("Error in updateProduct controller:", error);
     return res.status(500).json({ val: false, msg: "Internal server error", error: error.message });
   }
 };
+
+
 
 
 

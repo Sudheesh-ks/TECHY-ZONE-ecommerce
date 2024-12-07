@@ -1,11 +1,11 @@
 const userModel = require('../models/userModel');
 
 let checkBan = async (req, res, next) => {
-    console.log('Ban trigered');
+    // console.log('Ban trigered');
 
     if (req.session.user) { 
         const session = req.session.user;
-        console.log(session.email); 
+        // console.log(session.email); 
 
         const user = await userModel.findOne({ email: session.email });
 

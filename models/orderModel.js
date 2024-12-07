@@ -16,7 +16,27 @@ const orderSchema = new mongoose.Schema({
             name: String,
             price: Number,
             quantity: Number,
-            image: String
+            image: String,
+            status: {
+                type: String,
+                enum: ['Pending', 'Cancelled', 'Delivered'],
+                default: 'Pending' // Default status for new products
+            },
+            returnStatus: {
+                type: String,
+                enum: ['Not Requested', 'Requested', 'Approved', 'Rejected'],
+                default: 'Not Requested'
+            },
+            returnReason: {
+                type: String,
+                default: ''
+            },
+            returnRequestedAt: {
+                type: Date
+            },
+            returnApprovedAt: {
+                type: Date
+            }
         }
     ],
     totalPrice: {
@@ -45,7 +65,7 @@ const orderSchema = new mongoose.Schema({
     },
     status: {
         type: String,
-        enum: ['Pending', 'Delivered', 'Cancelled'],
+        enum: ['Pending', 'Delivered', 'Cancelled', 'Returned'],
         default: 'Pending'
     },
     createdAt: {

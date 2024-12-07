@@ -16,7 +16,7 @@ user_route.post('/register',userController.insertUser);
 
 user_route.get('/auth/google',passport.authenticate('google',{scope:['profile','email']}));
 user_route.get('/auth/google/callback',passport.authenticate('google',{failureRedirect:'/register'}),(req,res) => {
-    req.session.user=true
+    req.session.user= true;
     res.redirect('/')
 });
 
@@ -52,6 +52,12 @@ user_route.get('/orders-list',userController.loadOrdersList);
 user_route.get('/order-listview/:id',userController.orderListView);
 user_route.post('/order-cancel/:id', userController.cancelOrder);
 user_route.post('/order-return/:orderId', userController.requestReturn);
+// Route to cancel a product in an order
+user_route.post('/product-cancel/:orderId/:productId',userController.cancelProduct);
+
+// Route to request a return for a product in an order
+user_route.post('/product-return/:orderId/:productId',userController.requestProductReturn);
+
 user_route.get('/myaddress',userController.loadMyAddress);
 user_route.get('/addaddress',userController.loadAddAddress);
 user_route.post('/addaddress',userController.postAddAddress);
@@ -65,6 +71,7 @@ user_route.get('/contact',userController.loadContact);
 user_route.get('/shopping-cart',userController.loadShoppingCart);
 user_route.put('/update-cart', userController.addToCart);
 user_route.post('/cart/add', userController.addToCart);
+user_route.post('/update-cartquantity', userController.updateCartItemQuantity);
 user_route.delete('/cart/remove/:productId', userController.removeFromCart);
 
 user_route.get('/checkout',userController.loadCheckout);

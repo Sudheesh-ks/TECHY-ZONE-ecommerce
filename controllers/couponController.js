@@ -85,7 +85,7 @@ const applyCoupon = async (req, res) => {
         if (cartTotal < coupon.minAmount) {
             return res.status(400).json({
                 success: false,
-                message: `Coupon requires a minimum spend of $${coupon.minAmount}.`,
+                message: `Coupon requires a minimum spend of ₹${coupon.minAmount}.`,
             });
         }
 

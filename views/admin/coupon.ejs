@@ -35,8 +35,8 @@
                 <tr>
                     <td><%= coupon.couponCode %></td>
                     <td><%= coupon.discount %>%</td>
-                    <td>$<%= coupon.minAmount %></td>
-                    <td>$<%= coupon.maxDiscount %></td>
+                    <td>₹<%= coupon.minAmount %></td>
+                    <td>₹<%= coupon.maxDiscount %></td>
                     <td><%= coupon.expiryDate.toISOString().split('T')[0] %></td>
                     <td><%= coupon.isActive ? 'Active' : 'Inactive' %></td>
                     <td>

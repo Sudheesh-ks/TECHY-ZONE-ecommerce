@@ -19,9 +19,14 @@ router.post('/login', adminController.login);
 
 // Dashboard Management
 router.get('/dashboard',isAuthenticated,adminController.loadDashboard);
-router.get('/download-sales-report', adminController.generateSalesReport);
+// router.get('/download-sales-report', adminController.generateSalesReport);
 
 router.get('/logout',isAuthenticated,adminController.logout);
+
+// Sales Management
+router.get('/sales',isAuthenticated,adminController.loadSalesData);
+router.get('/sales-report/export/pdf', adminController.exportSalesToPDF);
+router.get('/sales-report/export/excel', adminController.exportSalesToExcel);
 
 // Customer Management
 router.get('/users',isAuthenticated,customerController.customerInfo);
@@ -60,11 +65,13 @@ router.put(
 
 
 // Order Management
-router.get('/orders',orderController.getAllOrders);
+router.get('/orders',isAuthenticated,orderController.getAllOrders);
 router.get('/order-detail/:id',orderController.loadOrderDetails);
 router.post('/update-order-status/:id', orderController.updateOrderStatus);
 router.post('/approve-return/:id', orderController.approveReturn);
 router.post('/reject-return/:id', orderController.rejectReturn);
+router.post('/approve-return/:id/:productId', orderController.approveProductReturn);
+router.post('/reject-return/:id/:productId', orderController.rejectProductReturn);
 
 // Coupon Management
 router.get('/coupon',couponController.loadCoupon);

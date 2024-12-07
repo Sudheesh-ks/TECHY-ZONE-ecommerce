@@ -18,7 +18,8 @@
               <input type="text" class="form-control product-name" id="productName" name="name" value="<%= product.name %>" placeholder="Product Name" required />
               <p class="error-message" id="productNameError"></p>
             </div>
-          
+
+          <!-- Product Images -->
             <div class="form-group">
               <label for="productImages">Images</label>
               <% for (let i = 0; i < 3; i++) { %>
@@ -138,7 +139,7 @@
 
 <%- include("../../views/partials/admin/footer") %>
 
-
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.js"></script>
 <script>
 
 const cropperInstances = [];
@@ -146,7 +147,7 @@ const croppedImages = [];
 let currentImageIndex = null;
 
 
-// Function to preview and initialize the cropping tool
+
 function previewAndCrop(event, index) {
   const file = event.target.files[0];
   if (!file) return;
@@ -157,14 +158,14 @@ function previewAndCrop(event, index) {
   cropPreview.src = URL.createObjectURL(file);
   cropPreviewSection.style.display = "block";
 
-  // Destroy any existing cropper instance for this index
+  
   if (cropperInstances[index]) {
     cropperInstances[index].destroy();
   }
 
-  // Create a new Cropper instance
+ 
   cropperInstances[index] = new Cropper(cropPreview, {
-    aspectRatio: 1, // You can adjust the aspect ratio as needed
+    aspectRatio: 1,
     viewMode: 1,
     autoCropArea: 1,
     scalable: true,
@@ -175,7 +176,6 @@ function previewAndCrop(event, index) {
   currentImageIndex = index;
 }
 
-// Function to handle the cropping action
 function startCropping(index) {
   if (cropperInstances[index]) {
     const cropper = cropperInstances[index];
@@ -189,7 +189,6 @@ function startCropping(index) {
         });
         croppedImages[index] = croppedImageFile;
 
-        // Display the cropped image preview
         const croppedPreviewContainer = document.getElementById(`croppedImagePreview${index}`);
         croppedPreviewContainer.innerHTML = "";
         const croppedImgElement = document.createElement("img");
@@ -280,12 +279,26 @@ updateButtons.addEventListener('click', async (event) => {
       method:'PUT',
       body:formData
     });
-    console.log(response)
     const data = await response.json();
-    if(!data.val){
-      console.log(data.msg);
-    }else{
-      console.log(data.msg);
+
+    if (data.success) {
+      // Display success SweetAlert
+      Swal.fire({
+        icon: 'success',
+        title: 'Success!',
+        text: data.message,
+        confirmButtonText: 'Go to Products',
+      }).then(() => {
+        // Redirect manually after SweetAlert
+        window.location.href = '/admin/products';
+      });
+    } else {
+      // Display error SweetAlert
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: data.message,
+      });
     }
   }catch(err){
     console.log(err);

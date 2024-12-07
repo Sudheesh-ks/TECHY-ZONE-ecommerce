@@ -268,7 +268,7 @@ const loadHome = async (req, res) => {
 const loadShop = async (req, res) => {
     try {
         const categories = await Category.find({ isListed: true });
-        const { category, priceRange, sortBy, search } = req.query;
+        const { category, priceRange, sortBy, search, page = 1, limit = 16 } = req.query;
 
         let filter = { isDeleted: false };
 
@@ -288,7 +288,16 @@ const loadShop = async (req, res) => {
             filter.name = { $regex: search, $options: 'i' };
         }
 
-        let productData = await Product.find(filter);
+        const totalProducts = await Product.countDocuments(filter);
+
+        // Calculate pagination details
+        const currentPage = parseInt(page);
+        const itemsPerPage = parseInt(limit);
+        const totalPages = Math.ceil(totalProducts / itemsPerPage);
+
+        let productData = await Product.find(filter)
+        .skip((currentPage - 1) * itemsPerPage)
+        .limit(itemsPerPage);
 
         
         if (sortBy) {
@@ -333,6 +342,8 @@ const loadShop = async (req, res) => {
             selectedCategory: category,
             priceRange,
             products: productData,
+            currentPage,
+            totalPages,
             cart,
         });
 
@@ -485,13 +496,35 @@ const loadOrdersList = async (req, res) => {
     try {
         const userId = req.session.user.id;
 
+         // Get the current page from the query string (default to 1)
+         let page = parseInt(req.query.page) || 1;
+         const limit = 5; // Number of orders per page
+         const skip = (page - 1) * limit;
+ 
+         // Get total count of orders for the user
+         const totalOrders = await Order.countDocuments({ userId });
+ 
+         // Fetch orders for the current page
+         const orders = await Order.find({ userId })
+             .sort({ createdAt: -1 })
+             .skip(skip)
+             .limit(limit)
+             .lean();
+
        
-        const orders = await Order.find({ userId }).sort({ createdAt: -1 }).lean();
+        // const orders = await Order.find({ userId }).sort({ createdAt: -1 }).lean();
         
         
         if (!orders || orders.length === 0) {
             console.log('No orders found for the user');
-            return res.render('users/orders-list', { user: req.session.user, orders: [] });
+            return res.render('users/orders-list',
+                 {
+                     user: req.session.user,
+                    orders: [] ,
+                    currentPage: page, 
+                    totalPages: Math.ceil(totalOrders / limit), 
+                    cart: null 
+                });
         }
 
         
@@ -520,7 +553,14 @@ const loadOrdersList = async (req, res) => {
             cart = await Cart.findOne({ userId: req.session.user.id }).populate('items.productId');
         }
 
-        res.render('users/orders-list', { user: req.session.user, orders, cart });
+        res.render('users/orders-list',
+             {
+                 user: req.session.user,
+                orders,
+                currentPage: page,
+                totalPages: Math.ceil(totalOrders / limit), 
+                cart 
+            });
     } catch (error) {
         console.error('Error fetching orders:', error.message);
         res.status(500).send('Internal Server Error');
@@ -553,6 +593,7 @@ const orderListView = async (req, res) => {
         const shippingAddress = order.address;
 
         res.render('users/order-listView', { user: req.session.user, order});
+        
     } catch (error) {
         console.log(error.message);
         res.status(500).send('Server error');
@@ -592,7 +633,10 @@ const cancelOrder = async (req, res) => {
 
         console.log(`Stock updated for canceled order ${orderId}.`);
 
-        const refundAmount = order.totalPrice;
+        let refundAmount = 0;
+
+        if (order.paymentMethod !== 'Cash on Delivery') {
+        refundAmount = order.totalPrice;
 
         let wallet = await Wallet.findOne({ userId });
 
@@ -618,6 +662,7 @@ const cancelOrder = async (req, res) => {
         }
 
         await wallet.save();
+        }
 
         console.log(`Refund of ₹${refundAmount} added to wallet for user ${userId}.`);
         res.redirect('/orders-list');
@@ -662,6 +707,151 @@ const requestReturn = async (req, res) => {
 };
 
 
+const cancelProduct = async (req, res) => {
+    try {
+        if (!req.session.user || !req.session.user.id) {
+            console.log('User not logged in or session not set');
+            return res.status(401).json({ message: 'Unauthorized' });
+        }
+
+        const userId = req.session.user.id;
+        const { orderId, productId } = req.params;
+
+        console.log('User ID from session:', userId);
+        console.log('Order ID:', orderId);
+        console.log('Product ID:', productId);
+
+        const order = await Order.findOne({ _id: orderId, userId });
+
+        if (!order) {
+            console.log('Order not found or unauthorized attempt');
+            return res.status(404).json({ message: 'Order not found or unauthorized attempt' });
+        }
+
+        console.log('Order found:', order);
+
+        const productIndex = order.products.findIndex(p => p.productId.toString() === productId);
+        console.log('Product index:', productIndex);
+
+        if (productIndex === -1) {
+            console.log('Product not found in order');
+            return res.status(404).json({ message: 'Product not found in order' });
+        }
+
+        // Get the price of the product to be canceled
+        const canceledProduct = order.products[productIndex];
+        const canceledProductPrice = canceledProduct.price * canceledProduct.quantity;
+
+        // Update the product status to 'Cancelled'
+        order.products[productIndex].status = 'Cancelled';
+
+        // Update the order's total price by subtracting the canceled product's price
+        order.totalPrice -= canceledProductPrice;
+
+        // If the total price becomes negative due to a coupon, reset it to zero
+        if (order.totalPrice < 0) {
+            console.log(`Total price became negative (${order.totalPrice}). Resetting to zero.`);
+            order.totalPrice = 0;
+        }
+
+        // Save the updated order
+        await order.save();
+        console.log('Order updated successfully:', order);
+
+        // Update the product stock
+        const product = await Product.findById(productId);
+        if (product) {
+            console.log('Product found for stock update:', product);
+            product.stock += canceledProduct.quantity;
+            await product.save();
+            console.log('Product stock updated:', product);
+        }
+
+        if (order.paymentMethod !== 'Cash on Delivery') {
+        let wallet = await Wallet.findOne({ userId });
+        if (!wallet) {
+            wallet = new Wallet({
+                userId,
+                balance: canceledProductPrice,
+                transactions: [
+                    {
+                        amount: canceledProductPrice,
+                        type: 'Credit',
+                        description: `Refund for cancelled product ${canceledProduct.name} in order ${orderId}`,
+                    },
+                ],
+            });
+        } else {
+            wallet.balance += canceledProductPrice;
+            wallet.transactions.push({
+                amount: canceledProductPrice,
+                type: 'Credit',
+                description: `Refund for cancelled product ${canceledProduct.name} in order ${orderId}`,
+            });
+        }
+
+        await wallet.save();
+        console.log(`Refund of ₹${canceledProductPrice} added to wallet for user ${userId}.`);
+        }
+
+         // Check if all products in the order are cancelled
+         const allProductsCancelled = order.products.every(p => p.status === 'Cancelled');
+
+         // Update the order's status to 'Cancelled' if all products are cancelled
+         if (allProductsCancelled) {
+             order.status = 'Cancelled';
+             await order.save();
+             console.log(`Order ${orderId} has been fully cancelled.`);
+         }
+
+        res.status(200).json({ message: 'Product cancelled successfully, and wallet updated' });
+    } catch (error) {
+        console.error('Error cancelling product:', error.message);
+        res.status(500).send({ message: 'Internal Server Error' });
+    }
+};
+
+
+
+const requestProductReturn = async (req, res) => {
+    try {
+        const { orderId, productId } = req.params;
+        const { reason } = req.body;
+
+        console.log('Received orderId:', orderId);
+        console.log('Received productId:', productId);
+        console.log('Received reason:', reason);
+
+        const order = await Order.findById(orderId);
+        if (!order) {
+            console.log('Order not found');
+            return res.status(404).json({ message: 'Order not found' });
+        }
+
+        const product = order.products.find(p => p.productId.toString() === productId);
+        if (!product) {
+            console.log('Product not found in order');
+            return res.status(404).json({ message: 'Product not found in order' });
+        }
+
+        if (product.returnStatus !== 'Not Requested') {
+            console.log('Return request already exists or product is not eligible');
+            return res.status(400).json({ message: 'Return request already exists for this product' });
+        }
+
+        product.returnStatus = 'Requested';
+        product.returnReason = reason;
+        product.returnRequestedAt = new Date();
+
+        await order.save();
+        console.log('Order updated successfully:', order);
+
+        res.status(200).json({ message: 'Return request submitted successfully' });
+    } catch (error) {
+        console.error('Error processing product return request:', error.message);
+        res.status(500).send({ message: 'Internal Server Error' });
+    }
+};
 
 
 
@@ -678,9 +868,15 @@ const loadMyAddress = async (req, res) => {
 
         const addresses = userAddresses ? userAddresses.address : [];
 
+        let cart = null;
+        if (req.session.user) {
+            cart = await Cart.findOne({ userId: req.session.user.id }).populate('items.productId');
+        }
+
         res.render('users/myaddress', {
             user: req.session.user,
-            addresses
+            addresses,
+            cart
         });
     } catch (error) {
         console.error("Error in loadMyAddress:", error.message);
@@ -859,12 +1055,31 @@ const deleteAddress = async (req, res) => {
 const loadWallet = async (req, res) => {
     try {
         const userId = req.session.user.id;
+        const { page = 1, limit = 5 } = req.query;
+
+        let cart = null;
+        if (req.session.user) {
+            cart = await Cart.findOne({ userId: req.session.user.id }).populate('items.productId');
+        }
+
         const wallet = await Wallet.findOne({ userId });
+
+        const totalTransactions = wallet?.transactions.length || 0;
+
+        const currentPage = parseInt(page);
+        const itemsPerPage = parseInt(limit);
+        const totalPages = Math.ceil(totalTransactions / itemsPerPage);
+
+        const transactions = wallet?.transactions.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage) || [];
 
         res.render('users/wallet', {
             user: req.session.user,
             walletBalance: wallet?.balance || 0,
-            transactions: wallet?.transactions || [], 
+            transactions,
+            currentPage,
+            totalPages,
+            limit,
+            cart
         });
     } catch (error) {
         console.error('Error loading wallet:', error.message);
@@ -1013,6 +1228,52 @@ const addToCart = async (req, res) => {
         res.status(500).json({ success: false, message: 'Internal server error.' });
     }
 };
+
+const updateCartItemQuantity = async (req, res) => {
+    
+    const { productId, quantity } = req.body;
+
+    if (!productId || !quantity || quantity < 1) {
+        console.log('Invalid data received:', productId, quantity);
+        return res.status(400).json({ success: false, message: 'Invalid data' });
+    }
+
+    try {
+
+        if (!req.session.user || !req.session.user.id) {
+                return res.status(401).json({ success: false, message: 'User not authenticated' });
+            }
+
+
+        const cart = await Cart.findOne({ userId: req.session.user.id });
+        if (!cart) {
+            console.log('Cart not found');
+            return res.status(404).json({ success: false, message: 'Cart not found' });
+        }
+
+        const item = cart.items.find(item => item.productId.toString() === productId);
+        if (!item) {
+            console.log('Item not found in cart');
+            return res.status(404).json({ success: false, message: 'Item not found in cart' });
+        }
+
+        item.quantity = quantity;
+        await cart.save();
+
+        // Calculate the updated total price for the item and the cart
+        const updatedPrice = (item.price * item.quantity).toFixed(2);
+        const totalCartPrice = cart.items.reduce((total, item) => total + item.price * item.quantity, 0).toFixed(2);
+
+        console.log('Updated price for item:', updatedPrice);
+        console.log('Updated total cart price:', totalCartPrice);
+
+        return res.json({ success: true, updatedPrice, totalCartPrice });
+    } catch (error) {
+        console.error('Error updating cart:', error);
+        res.status(500).json({ success: false, message: 'Internal server error' });
+    }
+};
+
 
 
 
@@ -1284,6 +1545,7 @@ const loadOrderConfirmation = async (req, res) => {
 
 const loadWishlist = async (req, res) => {
     try {
+
         console.log("Start: loadWishlist controller");
 
         if (!req.session.user) {
@@ -1294,12 +1556,18 @@ const loadWishlist = async (req, res) => {
         const userId = req.session.user.id;
         console.log("User ID:", userId);
 
+        let cart = null;
+        if (req.session.user) {
+            cart = await Cart.findOne({ userId: req.session.user.id }).populate('items.productId');
+        }
+
         const wishlist = await Wishlist.findOne({ userId }).populate('products.productId', 'name description price offerPrice images stock');
         console.log("Wishlist loaded:", wishlist);
 
         res.render('users/wishlist', {
             user: req.session.user,
-            wishlist: wishlist ? wishlist.products : [],  
+            wishlist: wishlist ? wishlist.products : [],
+            cart  
         });
 
         
@@ -1514,6 +1782,8 @@ module.exports = {
     orderListView,
     cancelOrder,
     requestReturn,
+    cancelProduct,
+    requestProductReturn,
     loadMyAddress,
     loadAddAddress,
     postAddAddress,
@@ -1525,6 +1795,7 @@ module.exports = {
     loadContact,
     loadShoppingCart,
     addToCart,
+    updateCartItemQuantity,
     removeFromCart,
     loadCheckout,
     addCheckoutAddress,

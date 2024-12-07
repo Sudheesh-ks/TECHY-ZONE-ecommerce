@@ -37,8 +37,14 @@
         <tbody>
             <% if (orders && orders.length > 0) { %>
                 <% orders.forEach((order, index) => { %>
-                    <tr>
-                        <td>#000<%= index+1 %></td>
+                    <tr class="<%= order.isReturnRequested ? 'table-warning' : '' %>">
+                        <td>#<%= order._id.toString().slice(-6) %></td>
+                        <td>
+                            <%= order.user.name %>
+                            <% if (order.isReturnRequested) { %>
+                                <span class="badge bg-danger ms-2">Return Requested</span>
+                            <% } %>
+                        </td>
                         <td><%= order.user.name %></td>
                         <td><%= new Date(order.createdAt).toLocaleString() %></td>
                         <td>₹<%= order.totalPrice %></td>

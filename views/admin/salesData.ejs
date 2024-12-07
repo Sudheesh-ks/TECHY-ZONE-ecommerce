@@ -1,0 +1,98 @@
+<%- include("../../views/partials/admin/header") %>
+
+<section class="content-main">
+    <div class="content-header">
+        <div>
+            <h2 class="content-title card-title">Sales Report</h2>
+        </div>
+    </div>
+
+    <!-- Filter Section -->
+    <div class="card mt-4">
+        <div class="card-body">
+            <h5 class="card-title">Filter Sales Data</h5>
+            <form id="filter-form" method="GET" action="/admin/sales">
+                <div class="row">
+                    <div class="col-md-3">
+                        <label for="filter" class="form-label">Filter By</label>
+                        <select name="filter" id="filter" class="form-select" onchange="toggleCustomDateRange()">
+                            <option value="daily" <%= filter === 'daily' ? 'selected' : '' %>>Daily</option>
+                            <option value="weekly" <%= filter === 'weekly' ? 'selected' : '' %>>Weekly</option>
+                            <option value="monthly" <%= filter === 'monthly' ? 'selected' : '' %>>Monthly</option>
+                            <option value="custom" <%= filter === 'custom' ? 'selected' : '' %>>Custom</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3" id="custom-date-range" style="display: <%= filter === 'custom' ? 'block' : 'none' %>;">
+                        <label for="startDate" class="form-label">Start Date</label>
+                        <input type="date" name="startDate" id="startDate" class="form-control" value="<%= startDate || '' %>">
+                    </div>
+                    <div class="col-md-3" id="custom-date-range-end" style="display: <%= filter === 'custom' ? 'block' : 'none' %>;">
+                        <label for="endDate" class="form-label">End Date</label>
+                        <input type="date" name="endDate" id="endDate" class="form-control" value="<%= endDate || '' %>">
+                    </div>
+                    <div class="col-md-3 align-self-end">
+                        <button type="submit" class="btn btn-primary">Apply</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Sales Report Table -->
+    <div class="card mt-4">
+        <div class="card-body">
+            <h5 class="card-title">Sales Report Table</h5>
+            <div class="table-responsive">
+                <table id="salesTable" class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Order ID</th>
+                            <th>Total Price</th>
+                            <th>Order Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% if (orders && orders.length > 0) { %>
+                            <% orders.forEach(order => { %>
+                                <tr>
+                                    <td>#<%= order._id.toString().slice(-6) %></td>
+                                    <td>₹<%= order.totalPrice %></td>
+                                    <td><%= order.createdAt.toISOString().split('T')[0] %></td>
+                                </tr>
+                            <% }) %>
+                        <% } else { %>
+                            <tr>
+                                <td colspan="3">No orders found for the selected filter.</td>
+                            </tr>
+                        <% } %>
+                    </tbody>
+                </table>
+
+            </div>
+        </div>
+    </div>
+
+        <!-- Export Buttons -->
+        <div class="mt-4">
+            <a href="/admin/sales-report/export/pdf?filter=<%= encodeURIComponent(filter) %>&startDate=<%= encodeURIComponent(startDate) %>&endDate=<%= encodeURIComponent(endDate) %>" class="btn btn-success">Download PDF</a>
+            <a href="/admin/sales-report/export/excel?filter=<%= filter %>&startDate=<%= startDate %>&endDate=<%= endDate %>" class="btn btn-primary">Download Excel</a>
+        </div>
+</section>
+
+<%- include("../../views/partials/admin/footer") %>
+
+<script>
+    function toggleCustomDateRange() {
+        const filter = document.getElementById('filter').value;
+        const customDateRange = document.getElementById('custom-date-range');
+        const customDateRangeEnd = document.getElementById('custom-date-range-end');
+
+        if (filter === 'custom') {
+            customDateRange.style.display = 'block';
+            customDateRangeEnd.style.display = 'block';
+        } else {
+            customDateRange.style.display = 'none';
+            customDateRangeEnd.style.display = 'none';
+        }
+    }
+</script>

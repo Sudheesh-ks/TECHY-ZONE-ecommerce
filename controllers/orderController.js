@@ -47,6 +47,8 @@ const getAllOrders = async (req, res) => {
 
             
             order.totalQuantity = totalQuantity;
+
+            order.isReturnRequested = order.returnStatus === 'Requested';
         }
              
         
@@ -148,27 +150,11 @@ const approveReturn = async (req, res) => {
     try {
         const orderId = req.params.id;
 
-        const updatedOrder = await Order.findByIdAndUpdate(orderId, { returnStatus: 'Approved' }, { new: true });
+        const updatedOrder = await Order.findByIdAndUpdate(orderId, { returnStatus: 'Approved', status: 'Returned' }, { new: true });
 
         if (!updatedOrder) {
             return res.status(404).json({ message: 'Order not found' });
         }
-
-
-        for (let item of updatedOrder.products) {
-            const product = await Product.findById(item.productId);
-            if (product) {
-                await Product.findByIdAndUpdate(item.productId, {
-                    $inc: { stock: item.quantity },
-                });
-                console.log(`Stock updated for product ${product.name}: +${item.quantity}`);
-            } else {
-                console.error(`Product with ID ${item.productId} not found.`);
-            }
-        }
-
-        console.log(`Stock updated for returned order ${orderId}.`);
-
 
          const userId = updatedOrder.userId;
          const refundAmount = updatedOrder.totalPrice;
@@ -229,11 +215,110 @@ const rejectReturn = async (req, res) => {
 };
 
 
+const approveProductReturn = async (req, res) => {
+    const { id: orderId, productId } = req.params;
+
+    try {
+        // Find the order
+        const order = await Order.findById(orderId);
+        if (!order) {
+            req.flash('error', 'Order not found');
+            return res.redirect('back');
+        }
+
+        // Find the product in the order
+        const product = order.products.find(p => p.productId.toString() === productId);
+        if (!product || product.returnStatus !== 'Requested') {
+            req.flash('error', 'Invalid product return request');
+            return res.redirect('back');
+        }
+
+        // Update product return status
+        product.returnStatus = 'Approved';
+        product.returnApprovedAt = new Date();
+
+        // Calculate refund amount
+        const refundAmount = product.price * product.quantity;
+
+        // Find or create the user's wallet
+        let wallet = await Wallet.findOne({ userId: order.userId });
+        if (!wallet) {
+            wallet = new Wallet({
+                userId: order.userId,
+                balance: refundAmount,
+                transactions: [
+                    {
+                        amount: refundAmount,
+                        type: 'Credit',
+                        description: `Refund for returned product ${productId} in order ${orderId}`,
+                    },
+                ],
+            });
+        } else {
+            // Update existing wallet balance and transaction history
+            wallet.balance += refundAmount;
+            wallet.transactions.push({
+                amount: refundAmount,
+                type: 'Credit',
+                description: `Refund for returned product ${productId} in order ${orderId}`,
+            });
+        }
+
+        // Save updates to wallet and order
+        await wallet.save();
+
+        // Check if all products in the order have returnStatus 'Approved'
+        const allApproved = order.products.every(p => p.returnStatus === 'Approved');
+        if (allApproved) {
+            order.status = 'Returned'; // Update the order status to 'Returned'
+        }
+
+
+        await order.save();
+
+        // Notify admin of success
+        req.flash('success', 'Product return approved and wallet credited successfully!');
+        res.redirect(`/admin/order-detail/${orderId}`);
+    } catch (error) {
+        // Handle errors
+        console.error('Error approving return:', error);
+        req.flash('error', 'Failed to approve return. Please try again.');
+        res.redirect('back');
+    }
+};
+
+
+
+const rejectProductReturn = async (req, res) => {
+    try {
+        const { id: orderId, productId } = req.params;
+
+        const order = await Order.findById(orderId);
+        if (!order) {
+            return res.status(404).json({ message: 'Order not found' });
+        }
+
+        const product = order.products.find(p => p.productId.toString() === productId);
+        if (!product || product.returnStatus !== 'Requested') {
+            return res.status(400).json({ message: 'Invalid product return request' });
+        }
+
+        product.returnStatus = 'Rejected';
+
+        await order.save();
+
+        res.redirect(`/admin/order-detail/${orderId}`);
+    } catch (error) {
+        res.status(500).json({ message: 'Internal Server Error' });
+    }
+};
 
 module.exports = {
     getAllOrders,
     loadOrderDetails,
     updateOrderStatus,
     approveReturn,
-    rejectReturn
+    rejectReturn,
+    approveProductReturn,
+    rejectProductReturn
 };
