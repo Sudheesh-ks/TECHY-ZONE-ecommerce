@@ -427,8 +427,16 @@
 					  </a>
 			
 					  <span class="stext-105 cl3">
-						₹<%= products[i].offerPrice.toFixed(2) %>
+						₹<%= (typeof products[i].offerPrice === 'number' && !isNaN(products[i].offerPrice) && products[i].offerPrice !== null)
+     ? products[i].offerPrice.toFixed(2)
+     : (typeof products[i].price === 'number' && !isNaN(products[i].price) && products[i].price !== null
+        ? products[i].price.toFixed(2)
+        : '0.00') %>
+
+
+
 					  </span>
+										
 					</div>
 					<div class="block2-txt-child2 flex-r p-t-3">
 						<a href="/wishlist" class="btn-addwish-b2 dis-block pos-relative js-addwish-b2">

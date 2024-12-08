@@ -63,92 +63,88 @@ const login = async (req, res) => {
 };
   
 const loadDashboard = async (req, res) => {
-  try {
-      
-      const totalUsers = await User.countDocuments();
-      const totalProducts = await Product.countDocuments();
-      const totalOrders = await Order.countDocuments();
+    try {
+        const totalUsers = await User.countDocuments();
+        const totalProducts = await Product.countDocuments();
+        const totalOrders = await Order.countDocuments();
 
-      const totalSales = await Order.aggregate([
-          { $match: { paymentStatus: 'Completed' } },
-          { $group: { _id: null, total: { $sum: "$totalPrice" } } }
-      ]);
-      const totalSalesValue = totalSales.length > 0 ? totalSales[0].total : 0;
+        const totalSales = await Order.aggregate([
+            { $match: { paymentStatus: 'Completed' } },
+            { $group: { _id: null, total: { $sum: "$totalPrice" } } }
+        ]);
+        const totalSalesValue = totalSales.length > 0 ? totalSales[0].total : 0;
 
-      const filter = req.query.filter || 'daily';
-      const startDate = req.query.startDate ? new Date(req.query.startDate) : null;
-      const endDate = req.query.endDate ? new Date(req.query.endDate) : null;
+        const filter = req.query.filter || 'daily';
+        const startDate = req.query.startDate ? new Date(req.query.startDate) : null;
+        const endDate = req.query.endDate ? new Date(req.query.endDate) : null;
 
-      if (filter === 'custom' && startDate && endDate && startDate > endDate) {
-          throw new Error("Invalid date range: Start date must be before End date.");
-      }
+        if (filter === 'custom' && startDate && endDate && startDate > endDate) {
+            throw new Error("Invalid date range: Start date must be before End date.");
+        }
 
-      let matchCriteria = { paymentStatus: 'Completed' };
-      const now = new Date();
+        let matchCriteria = { paymentStatus: 'Completed' };
+        const now = new Date();
 
-      if (filter === 'daily') {
-          matchCriteria.createdAt = { $gte: new Date(now.setHours(0, 0, 0, 0)) };
-      } else if (filter === 'weekly') {
-          const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay()));
-          matchCriteria.createdAt = { $gte: startOfWeek };
-      } else if (filter === 'monthly') {
-          matchCriteria.createdAt = { $gte: new Date(now.getFullYear(), now.getMonth(), 1) };
-      } else if (filter === 'custom' && startDate && endDate) {
-          matchCriteria.createdAt = { $gte: startDate, $lte: endDate };
-      }
+        if (filter === 'daily') {
+            matchCriteria.createdAt = { $gte: new Date(now.setHours(0, 0, 0, 0)) };
+        } else if (filter === 'weekly') {
+            const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay()));
+            matchCriteria.createdAt = { $gte: startOfWeek };
+        } else if (filter === 'monthly') {
+            matchCriteria.createdAt = { $gte: new Date(now.getFullYear(), now.getMonth(), 1) };
+        } else if (filter === 'custom' && startDate && endDate) {
+            matchCriteria.createdAt = { $gte: startDate, $lte: endDate };
+        }
 
-      const topProductsData = await Order.aggregate([
-          { $match: matchCriteria },
-          { $unwind: "$products" }, 
-          {
-              $group: {
-                  _id: "$products.productId",
-                  totalSold: { $sum: "$products.quantity" }, 
-                  totalRevenue: { $sum: { $multiply: ["$products.quantity", "$products.price"] } } 
-              }
-          },
-          { $sort: { totalSold: -1 } }, 
-          { $limit: 10 }, 
-          {
-              $lookup: {
-                  from: "products",
-                  localField: "_id",
-                  foreignField: "_id",
-                  as: "productInfo"
-              }
-          },
-          {
-              $project: {
-                  productName: { $arrayElemAt: ["$productInfo.name", 0] },
-                  totalSold: 1,
-                  totalRevenue: 1
-              }
-          }
-      ]);
+        const topProductsData = await Order.aggregate([
+            { $match: matchCriteria },
+            { $unwind: "$products" },
+            {
+                $group: {
+                    _id: "$products.productId",
+                    totalSold: { $sum: "$products.quantity" },
+                }
+            },
+            { $sort: { totalSold: -1 } },
+            { $limit: 10 },
+            {
+                $lookup: {
+                    from: "products",
+                    localField: "_id",
+                    foreignField: "_id",
+                    as: "productInfo"
+                }
+            },
+            {
+                $project: {
+                    productName: { $arrayElemAt: ["$productInfo.name", 0] },
+                    totalSold: 1
+                }
+            }
+        ]);
 
-      const productLabels = topProductsData.map(data => data.productName || "Unknown Product");
-      const productValues = topProductsData.map(data => data.totalSold);
-      const revenueValues = topProductsData.map(data => data.totalRevenue);
+        const productLabels = topProductsData.map(data => data.productName || "Unknown Product");
+        const productValues = topProductsData.map(data => data.totalSold);
 
-      res.render('admin/dashboard', {
-          totalUsers,
-          totalProducts,
-          totalOrders,
-          totalSales: totalSalesValue,
-          filter, 
-          salesData: {
-              labels: productLabels,
-              values: productValues,
-              revenueValues 
-          },
-          startDate: req.query.startDate || '',
-          endDate: req.query.endDate || ''
-      });
-  } catch (error) {
-      console.error("Error loading dashboard:", error.message);
-      res.status(500).send("Internal Server Error. Please try again later.");
-  }
+        res.render('admin/dashboard', {
+            totalUsers,
+            totalProducts,
+            totalOrders,
+            totalSales: totalSalesValue,
+            filter,
+            salesData: {
+                labels: productLabels,
+                values: productValues
+            },
+            startDate: req.query.startDate || '',
+            endDate: req.query.endDate || ''
+        });
+    } catch (error) {
+        console.error("Error loading dashboard:", error.message);
+        res.status(500).send("Internal Server Error. Please try again later.");
+    }
 };
+
 
 
 // const generateSalesReport = async (req, res) => {

@@ -521,7 +521,7 @@ Copyright &copy;<script>document.write(new Date().getFullYear());</script> All r
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
 <script>
-		document.addEventListener('DOMContentLoaded', () => {
+	document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.quantity-input').forEach(input => {
         input.addEventListener('input', async (event) => {
             const input = event.target;
@@ -546,7 +546,8 @@ Copyright &copy;<script>document.write(new Date().getFullYear());</script> All r
                 });
 
                 const data = await response.json();
-				console.log('Server response:', data);
+                console.log('Server response:', data);
+
                 if (data.success) {
                     // Update the total price for the current product
                     totalElement.textContent = `₹ ${data.updatedPrice}`;
@@ -566,10 +567,7 @@ Copyright &copy;<script>document.write(new Date().getFullYear());</script> All r
     });
 });
 
-
 </script>
-	
-
 
 
 </body>

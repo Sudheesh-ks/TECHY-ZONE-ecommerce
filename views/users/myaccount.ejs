@@ -331,8 +331,12 @@ footer ul li {
                       <div class="card-body text-center">
                         <h5 class="card-title font-weight-bold"><%= user.name %></h5>
                         <p class="card-text">
-							<strong style="color: green;">Phone:</strong> <%= userData.phno%>
-
+							<strong style="color: green;">Phone:</strong> 
+								<% if (userData && userData.phno) { %>
+									<%= userData.phno %>
+								<% } else { %>
+									<span class="text-danger">Not provided</span>
+								<% } %>
                         </p>
                         <p class="card-text">
                           <strong style="color: green;">Email:</strong>  <%= user.email %>

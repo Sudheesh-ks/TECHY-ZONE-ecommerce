@@ -37,7 +37,10 @@ router.get('/unblockCustomer',customerController.customerunBlocked);
 router.get('/category',isAuthenticated,categoryController.categoryInfo);
 router.post('/addCategory', categoryController.addCategory);
 router.post('/toggleListStatus/:id', categoryController.toggleListStatus);
-router.post('/category/edit/:id', categoryController.editCategory); 
+router.post('/category/edit/:id', categoryController.editCategory);
+router.post('/apply-category-offer', categoryController.applyCategoryOffer); 
+router.post('/remove-category-offer', categoryController.removeCategoryOffer);
+
 
 // Product Management
 router.get('/addProducts',isAuthenticated,productController.getProductAddPage);

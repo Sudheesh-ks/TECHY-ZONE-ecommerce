@@ -16,8 +16,12 @@ user_route.post('/register',userController.insertUser);
 
 user_route.get('/auth/google',passport.authenticate('google',{scope:['profile','email']}));
 user_route.get('/auth/google/callback',passport.authenticate('google',{failureRedirect:'/register'}),(req,res) => {
-    req.session.user= true;
-    res.redirect('/')
+    req.session.user= {
+        id: req.user._id,
+        name: req.user.name,
+        email: req.user.email,
+    };
+    res.redirect('/');
 });
 
 user_route.get('/verify-otp', userController.loadOTPVerification);

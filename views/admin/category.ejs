@@ -47,6 +47,7 @@
                     <th>Description</th>
                     <th>Status</th>
                     <th>List/Unlist</th>
+                    <th>Offer</th>
                     <th class="text-start">Edit</th>
                   </tr>
                 </thead>
@@ -67,6 +68,21 @@
                               <%= category.isListed ? 'Unlist' : 'List' %>
                             </button>
                           </td>
+                          <td class="text-start">
+                            <% if (category.categoryOffer && category.categoryOffer > 0) { %>
+                              <form action="/admin/remove-category-offer" method="POST" class="d-flex align-items-center">
+                                <input type="hidden" name="categoryId" value="<%= category.id %>">
+                                <input type="number" name="offerValue" class="form-control form-control-sm mr-2" placeholder="Offer Value">
+                                <button type="submit" class="btn btn-danger btn">Remove</button>
+                              </form>
+                            <% } else { %>
+                              <form action="/admin/apply-category-offer" method="POST" class="d-flex align-items-center">
+                                <input type="hidden" name="categoryId" value="<%= category.id %>">
+                                <input type="number" name="offerValue" class="form-control form-control-sm mr-2" placeholder="Offer Value" min="0" max="100" required>
+                                <button type="submit" class="btn btn-success btn">Apply</button>
+                              </form>
+                            <% } %>
+                          </td>                          
                           <td class="text-start">
                             <a href="javascript:void(0);" onclick="openEditModal('<%= category._id %>', '<%= category.name %>', '<%= category.description %>', '<%=category.offerPrice%>,<%=category.categoryOffer%>')" class="btn btn-info text-white">Edit</a>
                           </td>

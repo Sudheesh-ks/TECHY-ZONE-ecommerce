@@ -24,6 +24,10 @@ const categorySchema = new mongoose.Schema({
         enum: ["Listed", "Unlisted"],
         default: "Listed" 
     },
+    categoryOffer: {
+        type: Number, // The percentage or fixed amount of the offer
+        default: 0,
+    },
 
 })
 

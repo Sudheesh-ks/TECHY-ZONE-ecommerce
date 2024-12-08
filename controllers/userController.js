@@ -297,7 +297,7 @@ const loadShop = async (req, res) => {
 
         let productData = await Product.find(filter)
         .skip((currentPage - 1) * itemsPerPage)
-        .limit(itemsPerPage);
+        .limit(itemsPerPage)
 
         
         if (sortBy) {
@@ -401,6 +401,11 @@ const loadMyAccount = async (req, res) => {
         const userData = await User.findById(req.session.user.id);
         
         
+        if (!userData) {
+            req.flash('error', 'User not found. Please complete your profile.');
+            return res.redirect('/updateprofile'); // Redirect to a profile update page
+        }
+
         const addressData = await Address.find({ user: req.session.user.id });
 
         let cart = null;
@@ -408,7 +413,10 @@ const loadMyAccount = async (req, res) => {
             cart = await Cart.findOne({ userId: req.session.user.id }).populate('items.productId');
         }
 
-        res.render('users/myaccount',{user: req.session.user, userData, addressData, cart});
+        const showPhoneField = !!userData.phno; // Check if phone number exists
+        const isGoogleUser = userData.isGoogleAuth; // Check if user signed in via Google
+
+        res.render('users/myaccount',{user: req.session.user, userData, addressData, cart, showPhoneField, isGoogleUser});
 
     } catch (error) {
         console.log(error.message);
@@ -1230,7 +1238,6 @@ const addToCart = async (req, res) => {
 };
 
 const updateCartItemQuantity = async (req, res) => {
-    
     const { productId, quantity } = req.body;
 
     if (!productId || !quantity || quantity < 1) {
@@ -1239,11 +1246,10 @@ const updateCartItemQuantity = async (req, res) => {
     }
 
     try {
-
         if (!req.session.user || !req.session.user.id) {
-                return res.status(401).json({ success: false, message: 'User not authenticated' });
-            }
-
+            console.log('User not authenticated');
+            return res.status(401).json({ success: false, message: 'User not authenticated' });
+        }
 
         const cart = await Cart.findOne({ userId: req.session.user.id });
         if (!cart) {
@@ -1258,22 +1264,34 @@ const updateCartItemQuantity = async (req, res) => {
         }
 
         item.quantity = quantity;
+
+        // Recalculate the total price and total quantity
+        let totalQuantity = 0;
+        let totalPrice = 0;
+        cart.items.forEach(item => {
+            totalQuantity += item.quantity;
+            totalPrice += item.price * item.quantity;
+        });
+
+        cart.totalQuantity = totalQuantity;
+        cart.totalPrice = totalPrice.toFixed(2);
+
+        // Save the updated cart
         await cart.save();
 
-        // Calculate the updated total price for the item and the cart
-        const updatedPrice = (item.price * item.quantity).toFixed(2);
-        const totalCartPrice = cart.items.reduce((total, item) => total + item.price * item.quantity, 0).toFixed(2);
+        console.log('Updated item quantity:', quantity);
+        console.log('Updated total cart price:', totalPrice.toFixed(2));
 
-        console.log('Updated price for item:', updatedPrice);
-        console.log('Updated total cart price:', totalCartPrice);
-
-        return res.json({ success: true, updatedPrice, totalCartPrice });
+        return res.json({ 
+            success: true, 
+            updatedPrice: (item.price * quantity).toFixed(2), // Total price for updated item
+            totalCartPrice: totalPrice.toFixed(2)
+        });
     } catch (error) {
         console.error('Error updating cart:', error);
         res.status(500).json({ success: false, message: 'Internal server error' });
     }
 };
-
 
 
 
