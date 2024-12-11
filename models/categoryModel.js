@@ -25,7 +25,7 @@ const categorySchema = new mongoose.Schema({
         default: "Listed" 
     },
     categoryOffer: {
-        type: Number, // The percentage or fixed amount of the offer
+        type: Number, 
         default: 0,
     },
 

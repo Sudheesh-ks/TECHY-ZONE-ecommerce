@@ -19,7 +19,6 @@ router.post('/login', adminController.login);
 
 // Dashboard Management
 router.get('/dashboard',isAuthenticated,adminController.loadDashboard);
-// router.get('/download-sales-report', adminController.generateSalesReport);
 
 router.get('/logout',isAuthenticated,adminController.logout);
 

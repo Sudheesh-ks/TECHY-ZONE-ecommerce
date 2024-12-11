@@ -38,6 +38,17 @@
 <!--===============================================================================================-->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
 
+<style>
+	.product-image {
+    transition: transform 0.3s ease-in-out;
+}
+
+.product-image:hover {
+    transform: scale(1.5); /* Adjust the zoom factor as needed */
+}
+
+</style>
+
 </head>
 <body class="animsition">
 	
@@ -273,7 +284,7 @@
 							<div class="slick3 gallery-lb">
 								<div class="item-slick3" data-thumb="/<%=product.images[0] ? `${product.images[0]}` : '/user/images/default-product.png'%>">
 									<div class="wrap-pic-w pos-relative">
-										<img src="/<%=product.images[0] ? `${product.images[0]}` : '/user/images/default-product.png'%>" alt="IMG-PRODUCT">
+										<img class="product-image" src="/<%=product.images[0] ? `${product.images[0]}` : '/user/images/default-product.png'%>" alt="IMG-PRODUCT">
 
 										<a class="flex-c-m size-108 how-pos1 bor0 fs-16 cl10 bg0 hov-btn3 trans-04" href="/<%=product.images[0] ? `${product.images[0]}` : '/user/images/default-product.png'%>">
 											<i class="fa fa-expand"></i>
@@ -283,7 +294,7 @@
 
 								<div class="item-slick3" data-thumb="/<%=product.images[1] ? `${product.images[1]}` : '/user/images/default-product.png'%>">
 									<div class="wrap-pic-w pos-relative">
-										<img src="/<%=product.images[1] ? `${product.images[1]}` : '/user/images/default-product.png'%>" alt="IMG-PRODUCT">
+										<img class="product-image" src="/<%=product.images[1] ? `${product.images[1]}` : '/user/images/default-product.png'%>" alt="IMG-PRODUCT">
 
 										<a class="flex-c-m size-108 how-pos1 bor0 fs-16 cl10 bg0 hov-btn3 trans-04" href="/<%=product.images[1] ? `${product.images[1]}` : '/user/images/default-product.png'%>">
 											<i class="fa fa-expand"></i>
@@ -293,7 +304,7 @@
 
 								<div class="item-slick3" data-thumb="/<%=product.images[2] ? `${product.images[2]}` : '/user/images/default-product.png'%>">
 									<div class="wrap-pic-w pos-relative">
-										<img src="/<%=product.images[2] ? `${product.images[2]}` : '/user/images/default-product.png'%>" alt="IMG-PRODUCT">
+										<img class="product-image" src="/<%=product.images[2] ? `${product.images[2]}` : '/user/images/default-product.png'%>" alt="IMG-PRODUCT">
 
 										<a class="flex-c-m size-108 how-pos1 bor0 fs-16 cl10 bg0 hov-btn3 trans-04" href="/<%=product.images[2] ? `${product.images[2]}` : '/user/images/default-product.png'%>">
 											<i class="fa fa-expand"></i>
@@ -816,90 +827,18 @@ Copyright &copy;<script>document.write(new Date().getFullYear());</script> All r
 <!--===============================================================================================-->
 	<script src="/user/js/main.js"></script>
 	<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+	
 
 	<script>
-		// Function to initialize zoom 
-function initZoom(mainImage) {
-  
-    let zoomCircle = document.getElementById('zoom-circle');
-    if (!zoomCircle) {
-        zoomCircle = document.createElement('div');
-        zoomCircle.id = 'zoom-circle';
-        zoomCircle.style.position = 'absolute';
-        zoomCircle.style.width = '150px';
-        zoomCircle.style.height = '150px';
-        zoomCircle.style.borderRadius = '50%';
-        zoomCircle.style.overflow = 'hidden';
-        zoomCircle.style.pointerEvents = 'none';
-        zoomCircle.style.border = '2px solid #ccc';
-        zoomCircle.style.display = 'none';
-        document.body.appendChild(zoomCircle);
-    }
 
-   
-    function updateZoom(event) {
-        const rect = mainImage.getBoundingClientRect();
-        const x = event.clientX - rect.left;
-        const y = event.clientY - rect.top;
-        const bgX = (x / mainImage.offsetWidth) * 100;
-        const bgY = (y / mainImage.offsetHeight) * 100;
-
-        zoomCircle.style.backgroundImage = `url(${mainImage.src})`;
-        zoomCircle.style.backgroundSize = `${mainImage.offsetWidth * 2}px ${mainImage.offsetHeight * 2}px`;
-        zoomCircle.style.backgroundPosition = `${bgX}% ${bgY}%`;
-        zoomCircle.style.left = `${event.pageX - zoomCircle.offsetWidth / 2}px`;
-        zoomCircle.style.top = `${event.pageY - zoomCircle.offsetHeight / 2}px`;
-        zoomCircle.style.display = 'block';
-    }
-
-    
-    mainImage.removeEventListener('mousemove', updateZoom);
-    mainImage.removeEventListener('mouseleave', hideZoom);
-
-   
-    mainImage.addEventListener('mousemove', updateZoom);
-
-  
-    function hideZoom() {
-        zoomCircle.style.display = 'none';
-    }
-    mainImage.addEventListener('mouseleave', hideZoom);
-}
-
-
-const imageFields = [
-    "<%= product.images[0] ? product.images[0] : '/user/images/default-product.png' %>",
-    "<%= product.images[1] ? product.images[1] : '/user/images/default-product.png' %>",
-    "<%= product.images[2] ? product.images[2] : '/user/images/default-product.png' %>"
-];
-
-
-function switchImage(index) {
-    const mainImageContainer = document.querySelector('.item-slick3 img');
-    
-   
-    if (mainImageContainer && imageFields[index]) {
-        mainImageContainer.src = `/${imageFields[index]}`;
-        
-        
-        mainImageContainer.onload = () => initZoom(mainImageContainer);
-    }
-}
-
-
-const mainImage = document.querySelector('.item-slick3 img');
-if (mainImage) {
-    initZoom(mainImage);
-}
-
-
-const thumbnails = document.querySelectorAll('.item-slick3');
-thumbnails.forEach((thumbnail, index) => {
-    thumbnail.addEventListener('click', function () {
-        switchImage(index);
-    });
-});
-
+		document.querySelectorAll('.product-image').forEach((image) => {
+			image.addEventListener('mouseover', () => {
+				image.style.transform = 'scale(1.5)';
+			});
+			image.addEventListener('mouseout', () => {
+				image.style.transform = 'scale(1)';
+			});
+		});
 
 
 // Add to Cart

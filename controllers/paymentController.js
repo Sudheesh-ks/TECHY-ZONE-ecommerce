@@ -91,16 +91,26 @@ const placeOrder = async (req, res) => {
 
         const finalTotalPrice = totalPrice - discountAmount;
 
+         // Add delivery charge for orders below ₹500
+         const deliveryCharge = finalTotalPrice < 500 ? 30 : 0;
+         const totalAmountWithDelivery = finalTotalPrice + deliveryCharge;
+
+         // Restrict COD for orders above ₹1000
+        if (paymentMethod === 'Cash on Delivery' && finalTotalPrice > 1000) {
+            return res.status(400).send('Cash on Delivery is not available for orders above ₹1000.');
+        }
+
         const order = new Order({
             userId,
             products: orderProducts,
-            totalPrice: finalTotalPrice,
+            totalPrice: totalAmountWithDelivery,
             address: selectedAddress,
             paymentMethod,
             paymentStatus: 'Pending',
             status: 'Pending',
             couponCode: couponCode || null,
             discountAmount,
+            deliveryCharge,
         });
 
         await order.save();
@@ -129,10 +139,15 @@ const placeOrder = async (req, res) => {
 
 
         if (paymentMethod === 'Cash on Delivery') {
-            return res.redirect(`/order-confirmation/${order._id}`);
+            return res.status(200).json({
+                success: true,
+                message: 'Order placed successfully!',
+                orderId: order._id,
+                redirectUrl: `/order-confirmation/${order._id}`,
+            });
         } else if (paymentMethod === 'Razorpay') {
             const razorpayOrder = await razorpayInstance.orders.create({
-                amount: Math.round(finalTotalPrice * 100),
+                amount: Math.round(totalAmountWithDelivery * 100),
                 currency: 'INR',
                 receipt: `order_${Date.now()}`,
             });

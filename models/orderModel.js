@@ -20,7 +20,7 @@ const orderSchema = new mongoose.Schema({
             status: {
                 type: String,
                 enum: ['Pending', 'Cancelled', 'Delivered'],
-                default: 'Pending' // Default status for new products
+                default: 'Pending' 
             },
             returnStatus: {
                 type: String,
@@ -42,6 +42,10 @@ const orderSchema = new mongoose.Schema({
     totalPrice: {
         type: Number,
         required: true
+    },
+    deliveryCharge: {
+         type: Number,
+         default: 0 
     },
     address: {
         name: String,

@@ -114,6 +114,52 @@
             <% } %>
         </div>
     </div>
+
+
+    <!-- Top-Selling Categories Graph -->
+<div class="card mt-4">
+    <div class="card-body">
+        <h5 class="card-title">Top-Selling Categories</h5>
+        <% if (categoryData && categoryData.labels.length > 0 && categoryData.values.length > 0) { %>
+            <canvas id="categoriesChart" style="width: 100%; height: 400px;"></canvas>
+            <script>
+                document.addEventListener('DOMContentLoaded', function () {
+                    const ctx = document.getElementById('categoriesChart').getContext('2d');
+                    new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: <%- JSON.stringify(categoryData.labels) %>,
+                            datasets: [{
+                                label: 'Units Sold',
+                                data: <%- JSON.stringify(categoryData.values) %>,
+                                backgroundColor: 'rgba(75, 192, 192, 0.6)',
+                                borderColor: 'rgba(75, 192, 192, 1)',
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            plugins: {
+                                legend: {
+                                    display: true,
+                                    position: 'top'
+                                }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: true
+                                }
+                            }
+                        }
+                    });
+                });
+            </script>
+        <% } else { %>
+            <p>No sales data available for top-selling categories.</p>
+        <% } %>
+    </div>
+</div>
+
 </section>
 
 <%- include("../../views/partials/admin/footer") %>

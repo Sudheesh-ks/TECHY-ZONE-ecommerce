@@ -460,9 +460,15 @@ body {
 											<td class="text-end">₹<%= subtotal.toFixed(2) %></td>
 										</tr>
 										<tr>
-											<td>Free Shipping</td>
-											<td class="text-end">₹0.00</td>
-										</tr>
+											<td>Shipping</td>
+											<td class="text-end">
+												<% if (deliveryCharge > 0) { %>
+													₹<%= deliveryCharge.toFixed(2) %>
+												<% } else { %>
+													Free
+												<% } %>
+											</td>
+										</tr>										
 										<tr>
 										<!-- Coupon Code -->
 
@@ -493,7 +499,7 @@ body {
 							</div>
 										<tr>
 											<td><strong>Total</strong></td>
-											<td class="order-summary text-end"><strong>₹<span id="finalTotalTable"><%= subtotal.toFixed(2) %></span></strong></td>
+											<td class="order-summary text-end"><strong>₹<span id="finalTotalTable"><%= totalPriceWithDelivery.toFixed(2) %></span></strong></td>
 										</tr>
 									</tbody>        
 								</table>
@@ -729,7 +735,7 @@ Copyright &copy;<script>document.write(new Date().getFullYear());</script> All r
 		const paymentRadios = document.querySelectorAll('input[name="paymentMethod"]');
 		paymentRadios.forEach(radio => {
 			radio.addEventListener('click', function () {
-				// If the radio is already checked, uncheck it
+				// If the radio is already checked,To uncheck it
 				if (this.checked) {
 					const isChecked = Array.from(paymentRadios).filter(r => r.checked).length;
 					if (isChecked > 1) {
@@ -739,15 +745,20 @@ Copyright &copy;<script>document.write(new Date().getFullYear());</script> All r
 			});
 		});
 	</script>
-	
 	<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+	<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 	
 	<script>
-		document.getElementById('checkoutForm').addEventListener('submit', function (e) {
-			
+		document.getElementById('checkoutForm').addEventListener('submit', async (event) => {
+			event.preventDefault(); // Stop default form submission
+	
+			// Get selected address and payment method
 			const addressSelected = document.querySelector('input[name="addressId"]:checked');
+			const paymentSelected = document.querySelector('input[name="paymentMethod"]:checked');
+			const finalTotalPrice = parseFloat(document.getElementById('finalTotalSummary').innerText);
+	
+			// Validate address selection
 			if (!addressSelected) {
-				e.preventDefault();
 				Swal.fire({
 					icon: 'error',
 					title: 'Address Required',
@@ -757,9 +768,8 @@ Copyright &copy;<script>document.write(new Date().getFullYear());</script> All r
 				return;
 			}
 	
-			const paymentSelected = document.querySelector('input[name="paymentMethod"]:checked');
+			// Validate payment method selection
 			if (!paymentSelected) {
-				e.preventDefault();
 				Swal.fire({
 					icon: 'error',
 					title: 'Payment Method Required',
@@ -768,78 +778,140 @@ Copyright &copy;<script>document.write(new Date().getFullYear());</script> All r
 				});
 				return;
 			}
-		});
-	</script>
 	
-	<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
-	<script>
-		document.getElementById('checkoutForm').addEventListener('submit', async (event) => {
-			event.preventDefault();
+			const paymentMethod = paymentSelected.value;
 	
-			const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
-			if (paymentMethod === 'Razorpay') {
-				const response = await fetch('/place-order', {
-					method: 'POST',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({
-						addressId: document.querySelector('input[name="addressId"]:checked').value,
-						paymentMethod: 'Razorpay',
-					}),
+			// COD Restriction: Validate price limit for COD
+			if (paymentMethod === 'Cash on Delivery' && finalTotalPrice > 1000) {
+				Swal.fire({
+					icon: 'error',
+					title: 'Payment Method Restriction',
+					text: 'Cash on Delivery is not available for orders above ₹1000.',
+					confirmButtonColor: '#d33'
 				});
-				
-				const data = await response.json();
-				if (data.razorpayOrderId) {
-					const options = {
-						key: data.razorpayKey,
-						amount: data.amount,
-						currency: data.currency,
-						order_id: data.razorpayOrderId,
-						handler: async function (response) {
-							const paymentVerification = await fetch('/verify-payment', {
-								method: 'POST',
-								headers: { 'Content-Type': 'application/json' },
-								body: JSON.stringify({
-									orderId: data.orderId,
-									paymentId: response.razorpay_payment_id,
-									razorpayOrderId: response.razorpay_order_id,
-									razorpaySignature: response.razorpay_signature,
-								}),
-							});
-							if (paymentVerification.ok) {
-								Swal.fire({
-									icon: 'success',
-									title: 'Order Placed Successfully',
-									text: 'Your order has been placed successfully. Redirecting...',
-									showConfirmButton: false,
-									timer: 3000,
+				return;
+			}
+	
+			// Handle Razorpay Payment
+			if (paymentMethod === 'Razorpay') {
+				try {
+					const response = await fetch('/place-order', {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify({
+							addressId: addressSelected.value,
+							paymentMethod: 'Razorpay',
+						}),
+					});
+	
+					const data = await response.json();
+	
+					if (data.razorpayOrderId) {
+						const options = {
+							key: data.razorpayKey,
+							amount: data.amount,
+							currency: data.currency,
+							order_id: data.razorpayOrderId,
+							handler: async function (response) {
+								// Verify payment with server
+								const paymentVerification = await fetch('/verify-payment', {
+									method: 'POST',
+									headers: { 'Content-Type': 'application/json' },
+									body: JSON.stringify({
+										orderId: data.orderId,
+										paymentId: response.razorpay_payment_id,
+										razorpayOrderId: response.razorpay_order_id,
+										razorpaySignature: response.razorpay_signature,
+									}),
 								});
-								setTimeout(() => {
-									window.location.href = `/order-confirmation/${data.orderId}`;
-								}, 3000);
-							} else {
-								Swal.fire({
-									icon: 'error',
-									title: 'Payment Verification Failed',
-									text: 'Payment verification failed. Please contact support.',
-								});
+	
+								if (paymentVerification.ok) {
+									Swal.fire({
+										icon: 'success',
+										title: 'Order Placed Successfully',
+										text: 'Your order has been placed successfully. Redirecting...',
+										showConfirmButton: false,
+										timer: 3000,
+									});
+									setTimeout(() => {
+										window.location.href = `/order-confirmation/${data.orderId}`;
+									}, 3000);
+								} else {
+									Swal.fire({
+										icon: 'error',
+										title: 'Payment Verification Failed',
+										text: 'Payment verification failed. Please contact support.',
+										confirmButtonColor: '#d33',
+									});
+								}
+							},
+							theme: {
+								color: '#3399cc'
 							}
-						},
-					};
-					const rzp = new Razorpay(options);
-					rzp.open();
-				} else {
+						};
+	
+						const rzp = new Razorpay(options);
+						rzp.open();
+					} else {
+						Swal.fire({
+							icon: 'error',
+							title: 'Order Creation Failed',
+							text: 'Unable to create a Razorpay order. Please try again.',
+							confirmButtonColor: '#d33'
+						});
+					}
+				} catch (error) {
 					Swal.fire({
 						icon: 'error',
-						title: 'Order Creation Failed',
-						text: 'Unable to create a Razorpay order. Please try again.',
+						title: 'Error',
+						text: 'An error occurred while processing your Razorpay payment. Please try again.',
+						confirmButtonColor: '#d33'
 					});
-					return;
 				}
 			} else {
-				document.getElementById('checkoutForm').submit();
+				// Handle COD or other payment methods
+				try {
+					const response = await fetch('/place-order', {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify({
+							addressId: addressSelected.value,
+							paymentMethod: paymentMethod,
+						}),
+					});
+	
+					if (response.ok) {
+						const data = await response.json();
+            Swal.fire({
+                icon: 'success',
+                title: 'Order Placed Successfully!',
+                text: data.message,
+                showConfirmButton: false,
+                timer: 3000,
+            });
+
+            setTimeout(() => {
+                window.location.href = data.redirectUrl;
+            }, 3000);
+        } else {
+            const error = await response.text();
+            Swal.fire({
+                icon: 'error',
+                title: 'Order Failed',
+                text: error,
+            });
+        }
+				} catch (error) {
+					Swal.fire({
+						icon: 'error',
+						title: 'Error',
+						text: 'An error occurred while placing your order. Please try again.',
+						confirmButtonColor: '#d33',
+					});
+				}
 			}
 		});
-
+	
 
 
 		// Coupon  Integration
@@ -864,13 +936,11 @@ Copyright &copy;<script>document.write(new Date().getFullYear());</script> All r
         const data = await response.json();
 
         if (response.ok) {
-            // Update the UI with the discounted values
             document.getElementById('discount').innerText = data.discount.toFixed(2);
 			document.getElementById('finalTotalSummary').innerText = data.discountedTotal.toFixed(2);
             document.getElementById('finalTotalTable').innerText = data.discountedTotal.toFixed(2);
             document.getElementById('couponMessage').innerText = data.message;
 
-            // Toggle buttons
             document.getElementById('applyCouponBtn').style.display = 'none';
             document.getElementById('removeCouponBtn').style.display = 'block';
         } else {
@@ -892,14 +962,12 @@ document.getElementById('removeCouponBtn').addEventListener('click', async () =>
         const data = await response.json();
 
         if (response.ok) {
-            // Reset the UI
             document.getElementById('discount').innerText = '0';
             const cartTotal = parseFloat(document.getElementById('cartTotal').innerText);
             document.getElementById('finalTotalSummary').innerText = cartTotal.toFixed(2);
             document.getElementById('finalTotalTable').innerText = cartTotal.toFixed(2); 
             document.getElementById('couponMessage').innerText = data.message;
 
-            // Toggle buttons
             document.getElementById('applyCouponBtn').style.display = 'block';
             document.getElementById('removeCouponBtn').style.display = 'none';
         } else {

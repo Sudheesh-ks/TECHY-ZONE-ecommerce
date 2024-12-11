@@ -23,9 +23,6 @@ const loadLogin = (req, res) => {
     if (req.session.user && req.session.user.isAdmin) {
       return res.redirect('/admin/dashboard');
     }
-    // }else if(!req.session.user.isAdmin){
-    //   return res.redirect('/')
-    // }
     res.render('admin/admin-login', { message: null });
   };
 
@@ -41,7 +38,6 @@ const login = async (req, res) => {
 
     const passwordMatch = await bcrypt.compare(password, admin.password);
     if (passwordMatch) {
-     // req.session.user = true; 
      req.session.user = {
       id: admin._id,
       name: admin.name,
@@ -123,8 +119,48 @@ const loadDashboard = async (req, res) => {
             }
         ]);
 
+        const topCategoriesData = await Order.aggregate([
+            { $match: matchCriteria },
+            { $unwind: "$products" },
+            {
+                $lookup: {
+                    from: "products",
+                    localField: "products.productId",
+                    foreignField: "_id",
+                    as: "productInfo"
+                }
+            },
+            { $unwind: "$productInfo" },
+            {
+                $group: {
+                    _id: "$productInfo.category",
+                    totalSold: { $sum: "$products.quantity" },
+                }
+            },
+            { $sort: { totalSold: -1 } },
+            { $limit: 10 },
+            {
+                $lookup: {
+                    from: "categories",
+                    localField: "_id",
+                    foreignField: "_id",
+                    as: "categoryInfo"
+                }
+            },
+            {
+                $project: {
+                    categoryName: { $arrayElemAt: ["$categoryInfo.name", 0] },
+                    totalSold: 1
+                }
+            }
+        ]);
+
         const productLabels = topProductsData.map(data => data.productName || "Unknown Product");
         const productValues = topProductsData.map(data => data.totalSold);
+
+
+        const categoryLabels = topCategoriesData.map(data => data.categoryName || "Unknown Category");
+        const categoryValues = topCategoriesData.map(data => data.totalSold);
 
         res.render('admin/dashboard', {
             totalUsers,
@@ -135,6 +171,10 @@ const loadDashboard = async (req, res) => {
             salesData: {
                 labels: productLabels,
                 values: productValues
+            },
+            categoryData: {
+                labels: categoryLabels,
+                values: categoryValues
             },
             startDate: req.query.startDate || '',
             endDate: req.query.endDate || ''
@@ -147,87 +187,12 @@ const loadDashboard = async (req, res) => {
 
 
 
-// const generateSalesReport = async (req, res) => {
-//   try {
-      
-//       const salesData = await Order.find({}).lean(); 
-
-//       if (salesData.length === 0) {
-//           return res.status(404).send('No sales data found.');
-//       }
-
-//       const reportsDir = path.join(__dirname, '../public/reports');
-//       if (!fs.existsSync(reportsDir)) {
-//           fs.mkdirSync(reportsDir, { recursive: true });
-//       }
-
-//       const filePath = path.join(reportsDir, 'sales-report.pdf');
-//       const doc = new PDFDocument();
-
-//       doc.pipe(fs.createWriteStream(filePath));
-
-//       doc.fontSize(20).text('Sales Report', { align: 'center' }).moveDown();
-//       const currentDate = new Date().toLocaleDateString();
-//       doc.fontSize(12).text(`Generated on: ${currentDate}`).moveDown(2);
-
-//       const tableHeaders = ['Product Name', 'Units Sold', 'Total Revenue (₹)'];
-//       const headerWidth = [150, 80, 120]; 
-
-//       doc.fontSize(14).font('Helvetica-Bold');
-//       tableHeaders.forEach((header, i) => {
-//           doc.text(header, 50 + (i * headerWidth[i]), doc.y, { width: headerWidth[i], align: 'center' });
-//       });
-//       doc.moveDown();
-
-//       const productDataMap = {};
-
-//       salesData.forEach((order) => {
-//           order.products.forEach((product) => {
-//               const productName = product.name || 'Unnamed Product';
-//               const productRevenue = product.price * product.quantity;
-
-//               if (!productDataMap[productName]) {
-//                   productDataMap[productName] = {
-//                       unitsSold: 0,
-//                       totalRevenue: 0
-//                   };
-//               }
-
-//               productDataMap[productName].unitsSold += product.quantity;
-//               productDataMap[productName].totalRevenue += productRevenue;
-//           });
-//       });
-
-//       doc.fontSize(12).font('Helvetica');
-//       Object.keys(productDataMap).forEach((productName) => {
-//           const { unitsSold, totalRevenue } = productDataMap[productName];
-
-//           doc.text(productName, 50, doc.y, { width: headerWidth[0], align: 'center' });
-//           doc.text(unitsSold, 50 + headerWidth[0], doc.y, { width: headerWidth[1], align: 'center' });
-//           doc.text(totalRevenue.toLocaleString(), 50 + headerWidth[0] + headerWidth[1], doc.y, { width: headerWidth[2], align: 'center' });
-//           doc.moveDown();
-//       });
-
-//       doc.end();
-
-//       res.download(filePath, 'sales-report.pdf', (err) => {
-//           if (err) {
-//               console.error('Error downloading file:', err);
-//               res.status(500).send('Could not download the file.');
-//           }
-//       });
-//   } catch (error) {
-//       console.error('Error generating sales report:', error.stack);
-//       res.status(500).send('Failed to generate sales report.');
-//   }
-// };
-
 
 const loadSalesData = async (req, res) => {
     try {
         const { filter, startDate, endDate } = req.query;
 
-        // Filter logic
+        // Sales Data Filter
         let filterCondition = {};
         if (filter === 'daily') {
             filterCondition = { createdAt: { $gte: new Date().setHours(0, 0, 0, 0) } };
@@ -243,12 +208,11 @@ const loadSalesData = async (req, res) => {
             filterCondition = { createdAt: { $gte: new Date(startDate), $lte: new Date(endDate) } };
         }
 
-        // Fetch filtered order data
+        // Fetching filtered order data
         const orders = await Order.find(filterCondition)
             .sort({ createdAt: -1 })
             .select('userId products totalPrice createdAt');
 
-        // Render the page with the filtered data
         res.render('admin/salesData', {
             orders,
             filter,
@@ -261,7 +225,7 @@ const loadSalesData = async (req, res) => {
     }
 };
 
-// Route to export data to PDF
+// Conttroller to export data to PDF
 const exportSalesToPDF = async (req, res) => {
     try {
         const { filter, startDate, endDate } = req.query;
@@ -284,13 +248,14 @@ const exportSalesToPDF = async (req, res) => {
 
         const orders = await Order.find(filterCondition)
             .sort({ createdAt: -1 })
-            .select('userId products totalPrice createdAt');
+            .populate('userId', 'name')
+            .select('userId products paymentMethod totalPrice createdAt');
 
         if (orders.length === 0) {
             return res.status(404).send('No data available to export.');
         }
 
-        // Generate HTML content for the PDF
+        // HTML Design for PDF
         const html = `
             <html>
             <head>
@@ -309,6 +274,9 @@ const exportSalesToPDF = async (req, res) => {
                     <thead>
                         <tr>
                             <th>Order ID</th>
+                            <th>User Name</th>
+                            <th>Products</th>
+                            <th>Payment Method</th>
                             <th>Total Price</th>
                             <th>Order Date</th>
                         </tr>
@@ -317,6 +285,9 @@ const exportSalesToPDF = async (req, res) => {
                         ${orders.map(order => `
                             <tr>
                                 <td>#${order._id.toString().slice(-6)}</td>
+                                <td>${order.userId.name}</td>
+                                <td>${order.products.map(product => product.name).join(', ')}</td>
+                                <td>${order.paymentMethod}</td>
                                 <td>₹${order.totalPrice.toFixed(2)}</td>
                                 <td>${order.createdAt.toISOString().split('T')[0]}</td>
                             </tr>
@@ -327,7 +298,7 @@ const exportSalesToPDF = async (req, res) => {
             </html>
         `;
 
-        // Create the PDF from the HTML
+        // Creating the PDF from the HTML
         pdf.create(html, { format: 'A4' }).toStream((err, stream) => {
             if (err) {
                 console.error('Error generating PDF:', err.message);
@@ -343,12 +314,12 @@ const exportSalesToPDF = async (req, res) => {
     }
 };
 
-// Route to export data to Excel
+// Controller to export data to Excel
 const exportSalesToExcel = async (req, res) => {
     try {
         const { filter, startDate, endDate } = req.query;
 
-        // Apply the same filter conditions as in the loadSalesData function
+        // Filtering for the Excel exporting
         let filterCondition = {};
         if (filter === 'daily') {
             filterCondition = { createdAt: { $gte: new Date().setHours(0, 0, 0, 0) } };
@@ -366,7 +337,8 @@ const exportSalesToExcel = async (req, res) => {
 
         const orders = await Order.find(filterCondition)
             .sort({ createdAt: -1 })
-            .select('userId products totalPrice createdAt');
+            .populate('userId', 'name')
+            .select('userId products paymentMethod totalPrice createdAt');
 
         if (orders.length === 0) {
             return res.status(404).send('No data available to export.');
@@ -377,6 +349,9 @@ const exportSalesToExcel = async (req, res) => {
 
         worksheet.columns = [
             { header: 'Order ID', key: 'orderId', width: 20 },
+            { header: 'User Name', key: 'userName', width: 20 },
+            { header: 'Products', key: 'products', width: 30 },
+            { header: 'Payment Method', key: 'paymentMethod', width: 15 },
             { header: 'Date', key: 'date', width: 15 },
             { header: 'Total Price', key: 'totalPrice', width: 15 },
         ];
@@ -384,6 +359,9 @@ const exportSalesToExcel = async (req, res) => {
         orders.forEach(order => {
             worksheet.addRow({
                 orderId: "#" + order._id.toString().slice(-6),
+                userName: order.userId.name,
+                products: order.products.map(product => product.name).join(', '),
+                paymentMethod: order.paymentMethod,
                 date: order.createdAt.toISOString().split('T')[0],
                 totalPrice: order.totalPrice,
             });
@@ -426,7 +404,6 @@ module.exports = {
     loadLogin,
     login,
     loadDashboard,
-    // generateSalesReport,
     pageerror,
     logout,
     loadSalesData,

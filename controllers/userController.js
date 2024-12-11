@@ -10,6 +10,7 @@ const bcrypt = require('bcrypt');
 const { generateOTP, sendOTP } = require('../utils/otp');
 const { storeOTP, verifyOTP } = require('../utils/otpStorage');
 const productModel = require('../models/productModel');
+const pdf = require('html-pdf');
 
 
 
@@ -290,7 +291,6 @@ const loadShop = async (req, res) => {
 
         const totalProducts = await Product.countDocuments(filter);
 
-        // Calculate pagination details
         const currentPage = parseInt(page);
         const itemsPerPage = parseInt(limit);
         const totalPages = Math.ceil(totalProducts / itemsPerPage);
@@ -318,7 +318,7 @@ const loadShop = async (req, res) => {
                     productData.sort((a, b) => b.price - a.price);
                     break;
                 default:
-                    productData.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)); // Default to latest sorting
+                    productData.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
             }
         } else {
             
@@ -403,7 +403,7 @@ const loadMyAccount = async (req, res) => {
         
         if (!userData) {
             req.flash('error', 'User not found. Please complete your profile.');
-            return res.redirect('/updateprofile'); // Redirect to a profile update page
+            return res.redirect('/updateprofile');
         }
 
         const addressData = await Address.find({ user: req.session.user.id });
@@ -413,8 +413,8 @@ const loadMyAccount = async (req, res) => {
             cart = await Cart.findOne({ userId: req.session.user.id }).populate('items.productId');
         }
 
-        const showPhoneField = !!userData.phno; // Check if phone number exists
-        const isGoogleUser = userData.isGoogleAuth; // Check if user signed in via Google
+        const showPhoneField = !!userData.phno; 
+        const isGoogleUser = userData.isGoogleAuth; 
 
         res.render('users/myaccount',{user: req.session.user, userData, addressData, cart, showPhoneField, isGoogleUser});
 
@@ -504,23 +504,17 @@ const loadOrdersList = async (req, res) => {
     try {
         const userId = req.session.user.id;
 
-         // Get the current page from the query string (default to 1)
          let page = parseInt(req.query.page) || 1;
-         const limit = 5; // Number of orders per page
+         const limit = 5; 
          const skip = (page - 1) * limit;
  
-         // Get total count of orders for the user
          const totalOrders = await Order.countDocuments({ userId });
  
-         // Fetch orders for the current page
          const orders = await Order.find({ userId })
              .sort({ createdAt: -1 })
              .skip(skip)
              .limit(limit)
              .lean();
-
-       
-        // const orders = await Order.find({ userId }).sort({ createdAt: -1 }).lean();
         
         
         if (!orders || orders.length === 0) {
@@ -746,27 +740,21 @@ const cancelProduct = async (req, res) => {
             return res.status(404).json({ message: 'Product not found in order' });
         }
 
-        // Get the price of the product to be canceled
         const canceledProduct = order.products[productIndex];
         const canceledProductPrice = canceledProduct.price * canceledProduct.quantity;
 
-        // Update the product status to 'Cancelled'
         order.products[productIndex].status = 'Cancelled';
 
-        // Update the order's total price by subtracting the canceled product's price
         order.totalPrice -= canceledProductPrice;
 
-        // If the total price becomes negative due to a coupon, reset it to zero
         if (order.totalPrice < 0) {
             console.log(`Total price became negative (${order.totalPrice}). Resetting to zero.`);
             order.totalPrice = 0;
         }
 
-        // Save the updated order
         await order.save();
         console.log('Order updated successfully:', order);
 
-        // Update the product stock
         const product = await Product.findById(productId);
         if (product) {
             console.log('Product found for stock update:', product);
@@ -802,10 +790,8 @@ const cancelProduct = async (req, res) => {
         console.log(`Refund of ₹${canceledProductPrice} added to wallet for user ${userId}.`);
         }
 
-         // Check if all products in the order are cancelled
          const allProductsCancelled = order.products.every(p => p.status === 'Cancelled');
 
-         // Update the order's status to 'Cancelled' if all products are cancelled
          if (allProductsCancelled) {
              order.status = 'Cancelled';
              await order.save();
@@ -1265,7 +1251,6 @@ const updateCartItemQuantity = async (req, res) => {
 
         item.quantity = quantity;
 
-        // Recalculate the total price and total quantity
         let totalQuantity = 0;
         let totalPrice = 0;
         cart.items.forEach(item => {
@@ -1276,7 +1261,6 @@ const updateCartItemQuantity = async (req, res) => {
         cart.totalQuantity = totalQuantity;
         cart.totalPrice = totalPrice.toFixed(2);
 
-        // Save the updated cart
         await cart.save();
 
         console.log('Updated item quantity:', quantity);
@@ -1284,7 +1268,7 @@ const updateCartItemQuantity = async (req, res) => {
 
         return res.json({ 
             success: true, 
-            updatedPrice: (item.price * quantity).toFixed(2), // Total price for updated item
+            updatedPrice: (item.price * quantity).toFixed(2),
             totalCartPrice: totalPrice.toFixed(2)
         });
     } catch (error) {
@@ -1377,13 +1361,18 @@ const loadCheckout = async (req, res) => {
                 checkoutProduct.total -= discount;
             }
 
+            // Calculate delivery charge if total is below ₹500
+            const deliveryCharge = checkoutProduct.total < 500 ? 30 : 0;
+            checkoutProduct.total += deliveryCharge;
+
             return res.render('users/checkout', {
                 user: req.session.user,
                 addresses,
                 cart: null,
                 product: checkoutProduct,
                 appliedCoupon,
-                discount
+                discount,
+                deliveryCharge
             });
         }
 
@@ -1397,6 +1386,10 @@ const loadCheckout = async (req, res) => {
             cart.totalPrice -= discount;
         }
 
+        // Add delivery charge for the cart if total is below ₹500
+        const deliveryCharge = cart && cart.totalPrice < 500 ? 30 : 0;
+        const totalPriceWithDelivery = (cart ? cart.totalPrice : 0) + deliveryCharge;
+
         res.render('users/checkout', {
             user: req.session.user,
             addresses,
@@ -1404,12 +1397,15 @@ const loadCheckout = async (req, res) => {
             product: null,
             appliedCoupon,
             discount,
+            deliveryCharge,
+            totalPriceWithDelivery
         });
     } catch (error) {
-        console.error(error.message);
+        console.error('Error in loading checkout:', error.message);
         res.status(500).send('Internal Server Error');
     }
 };
+
 
 
 const addCheckoutAddress = async (req, res) => {
@@ -1560,6 +1556,93 @@ const loadOrderConfirmation = async (req, res) => {
     }
 };
 
+
+const downloadInvoice = async (req, res) => {
+    try {
+        const { orderId } = req.params; // Assuming the order ID is passed in the route params
+
+        // Fetch the order details from the database
+        const order = await Order.findById(orderId)
+            .populate('userId', 'name email') // Populate user details if needed
+            .select('userId products paymentMethod deliveryCharge totalPrice createdAt');
+
+        if (!order) {
+            return res.status(404).send('Order not found.');
+        }
+
+        // HTML Design for PDF
+        const html = `
+            <html>
+            <head>
+                <style>
+                    body { font-family: Arial, sans-serif; margin: 20px; }
+                    .container { width: 100%; }
+                    .table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+                    th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+                    th { background-color: #f4f4f4; }
+                    .total-row { font-weight: bold; text-align: right; padding-top: 15px; }
+                    .footer { margin-top: 30px; text-align: center; font-size: 0.9em; }
+                </style>
+            </head>
+            <body>
+                <h2 style="text-align: center;">Invoice</h2>
+                <p><strong>Order ID:</strong> #${order._id.toString().slice(-6)}</p>
+                <p><strong>Order Date:</strong> ${order.createdAt.toISOString().split('T')[0]}</p>
+                <p><strong>Customer Name:</strong> ${order.userId ? order.userId.name : 'N/A'}</p>
+                <p><strong>Email:</strong> ${order.userId ? order.userId.email : 'N/A'}</p>
+
+                <h3 style="margin-top: 20px;">Order Details</h3>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Product Name</th>
+                            <th>Quantity</th>
+                            <th>Payment Method</th>
+                            <th>Price (₹)</th>
+                            <th>Total (₹)</th>
+                            <th>Delivery Charge (₹)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${order.products.map(product => `
+                            <tr>
+                                <td>${product.name}</td>
+                                <td>${product.quantity}</td>
+                                <td>${order.paymentMethod}</td>
+                                <td>₹${product.price.toFixed(2)}</td>
+                                <td>₹${(product.price * product.quantity).toFixed(2)}</td>
+                                <td>${order.deliveryCharge}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+
+                <div class="total-row">
+                    <span>Total Amount:</span> ₹${order.totalPrice.toFixed(2)}
+                </div>
+
+                <div class="footer">
+                    <p>Thank you for your purchase!</p>
+                </div>
+            </body>
+            </html>
+        `;
+
+        // Creating the PDF from the HTML
+        pdf.create(html, { format: 'A4' }).toStream((err, stream) => {
+            if (err) {
+                console.error('Error generating PDF:', err.message);
+                return res.status(500).send('An error occurred while generating the PDF.');
+            }
+            res.setHeader('Content-Disposition', 'attachment; filename=invoice.pdf');
+            res.setHeader('Content-Type', 'application/pdf');
+            stream.pipe(res);
+        });
+    } catch (error) {
+        console.error('Error exporting invoice data to PDF:', error.message);
+        res.status(500).send('An error occurred while exporting the invoice data.');
+    }
+};
 
 const loadWishlist = async (req, res) => {
     try {
@@ -1821,6 +1904,7 @@ module.exports = {
     editCheckoutAddress,
     postEditCheckoutAddress,
     loadOrderConfirmation,
+    downloadInvoice,
     loadWishlist,
     addToWishlist,
     addToCartFromWishlist,

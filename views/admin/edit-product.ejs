@@ -282,18 +282,15 @@ updateButtons.addEventListener('click', async (event) => {
     const data = await response.json();
 
     if (data.success) {
-      // Display success SweetAlert
       Swal.fire({
         icon: 'success',
         title: 'Success!',
         text: data.message,
         confirmButtonText: 'Go to Products',
       }).then(() => {
-        // Redirect manually after SweetAlert
         window.location.href = '/admin/products';
       });
     } else {
-      // Display error SweetAlert
       Swal.fire({
         icon: 'error',
         title: 'Error',

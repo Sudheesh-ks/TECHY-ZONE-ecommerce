@@ -588,7 +588,7 @@ document.querySelectorAll('.remove-from-wishlist').forEach((button) => {
 
     document.querySelectorAll('.add-to-cart').forEach(button => {
         button.addEventListener('click', async (e) => {
-            const productId = e.target.getAttribute('data-id'); // Get the product ID
+            const productId = e.target.getAttribute('data-id');
 
             try {
                 const response = await fetch('/add-to-cart', {
