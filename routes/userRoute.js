@@ -53,6 +53,7 @@ user_route.get('/myaccount',userController.loadMyAccount);
 user_route.get('/updateprofile',userController.loadUpdateProfile);
 user_route.post('/updateprofile',userController.updateProfile);
 user_route.get('/orders-list',userController.loadOrdersList);
+user_route.post("/retry-payment/:orderId", paymentController.retryPayment);
 user_route.get('/order-listview/:id',userController.orderListView);
 user_route.post('/order-cancel/:id', userController.cancelOrder);
 user_route.post('/order-return/:orderId', userController.requestReturn);

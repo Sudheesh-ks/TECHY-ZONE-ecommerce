@@ -1,3 +1,4 @@
+const razorpayInstance = require('../config/razorpayConfig');
 const User = require('../models/userModel');
 const Category = require('../models/categoryModel');
 const Product = require('../models/productModel');
@@ -11,7 +12,7 @@ const { generateOTP, sendOTP } = require('../utils/otp');
 const { storeOTP, verifyOTP } = require('../utils/otpStorage');
 const productModel = require('../models/productModel');
 const pdf = require('html-pdf');
-
+const crypto = require('crypto');
 
 
 const saltRounds = 10;
@@ -504,70 +505,70 @@ const loadOrdersList = async (req, res) => {
     try {
         const userId = req.session.user.id;
 
-         let page = parseInt(req.query.page) || 1;
-         const limit = 5; 
-         const skip = (page - 1) * limit;
- 
-         const totalOrders = await Order.countDocuments({ userId });
- 
-         const orders = await Order.find({ userId })
-             .sort({ createdAt: -1 })
-             .skip(skip)
-             .limit(limit)
-             .lean();
-        
-        
-        if (!orders || orders.length === 0) {
-            console.log('No orders found for the user');
-            return res.render('users/orders-list',
-                 {
-                     user: req.session.user,
-                    orders: [] ,
-                    currentPage: page, 
-                    totalPages: Math.ceil(totalOrders / limit), 
-                    cart: null 
-                });
-        }
+        let page = parseInt(req.query.page) || 1;
+        const limit = 5;
+        const skip = (page - 1) * limit;
 
-        
-        for (let order of orders) {
-            
-            for (let item of order.products) {
-                const product = await Product.findById(item.productId).lean();
-                if (product) {
-                    item.productDetails = product; 
-                } else {
-                    console.log(`Product with ID ${item.productId} not found.`);
-                }
-            }
+        // Fetch total orders count for pagination
+        const totalOrders = await Order.countDocuments({ userId });
 
-            
-            const shippingAddress = await Address.findOne({ userId }).lean();
-            if (shippingAddress) {
-                order.address = shippingAddress.address;  
-            } else {
-                console.log('Shipping address not found for user');
-            }
-        }
+        // Fetch orders with pagination
+        const orders = await Order.find({ userId })
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit)
+            .lean();
 
-        let cart = null;
-        if (req.session.user) {
-            cart = await Cart.findOne({ userId: req.session.user.id }).populate('items.productId');
-        }
-
-        res.render('users/orders-list',
-             {
-                 user: req.session.user,
-                orders,
+        if (!orders.length) {
+            return res.render('users/orders-list', {
+                user: req.session.user,
+                orders: [],
                 currentPage: page,
-                totalPages: Math.ceil(totalOrders / limit), 
-                cart 
+                totalPages: Math.ceil(totalOrders / limit),
+                cart: null,
+                razorpayKey: process.env.RAZORPAY_KEY_ID,
+                message: "No orders found. Start shopping now!",
             });
+        }
+
+        // Fetch all product IDs from the orders
+        const productIds = orders.flatMap(order => order.products.map(item => item.productId));
+
+        // Fetch product details in one query
+        const products = await Product.find({ _id: { $in: productIds } }).lean();
+        const productMap = Object.fromEntries(products.map(product => [product._id.toString(), product]));
+
+        // Attach product details and addresses to orders
+        for (let order of orders) {
+            order.products.forEach(item => {
+                item.productDetails = productMap[item.productId] || { name: "Product not found" };
+            });
+
+            const shippingAddress = await Address.findById(order.addressId).lean(); // Use order-specific address
+            order.address = shippingAddress ? shippingAddress.address : "No address found";
+        }
+
+        // Fetch cart data only if user is logged in
+        const cart = req.session.user
+            ? await Cart.findOne({ userId: req.session.user.id }).populate('items.productId').lean()
+            : null;
+
+        // Render the orders page
+        res.render('users/orders-list', {
+            user: req.session.user,
+            orders,
+            currentPage: page,
+            totalPages: Math.ceil(totalOrders / limit),
+            cart,
+            razorpayKey: process.env.RAZORPAY_KEY_ID,
+        });
     } catch (error) {
         console.error('Error fetching orders:', error.message);
         res.status(500).send('Internal Server Error');
     }
 };
+
+
 
 
 const orderListView = async (req, res) => {
@@ -637,7 +638,7 @@ const cancelOrder = async (req, res) => {
 
         let refundAmount = 0;
 
-        if (order.paymentMethod !== 'Cash on Delivery') {
+        if (order.paymentMethod !== 'Cash on Delivery' && order.paymentStatus !== 'Pending') {
         refundAmount = order.totalPrice;
 
         let wallet = await Wallet.findOne({ userId });

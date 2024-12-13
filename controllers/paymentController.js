@@ -189,7 +189,7 @@ const verifyPayment = async (req, res) => {
 
                 await Cart.deleteOne({ userId: order.userId });
 
-                res.status(200).send('Payment verified.');
+                return res.json({ success: true, message: 'Payment verified.' });
             } else {
                 res.status(404).send('Order not found.');
             }
@@ -202,8 +202,54 @@ const verifyPayment = async (req, res) => {
     }
 };
 
+
+const retryPayment = async (req, res) => {
+    try {
+        const orderId = req.params.orderId;
+
+        // Fetch the order details
+        const order = await Order.findById(orderId);
+
+        if (!order) {
+            return res.status(404).json({ success: false, message: 'Order not found.' });
+        }
+
+        // Check if payment is eligible for retry
+        if (order.paymentStatus !== 'Pending' || order.paymentMethod !== 'Razorpay') {
+            return res.status(400).json({ success: false, message: 'Invalid order for retry payment.' });
+        }
+
+        // Ensure totalPrice is defined
+        if (!order.totalPrice) {
+            return res.status(400).json({ success: false, message: 'Invalid order amount for retry.' });
+        }
+
+        // Create a new Razorpay order for retry
+        const razorpayOrder = await razorpayInstance.orders.create({
+            amount: Math.round(order.totalPrice * 100), // Amount in paise
+            currency: 'INR',
+            receipt: `order_${order._id}`, // Unique receipt ID
+        });
+
+        // Respond with Razorpay payment details
+        res.json({
+            success: true,
+            razorpayOrderId: razorpayOrder.id,
+            amount: razorpayOrder.amount,
+            currency: razorpayOrder.currency,
+            razorpayKey: process.env.RAZORPAY_KEY_ID,
+        });
+    } catch (error) {
+        console.error('Error in retryPayment:', error.message);
+        res.status(500).json({ success: false, message: 'Internal Server Error' });
+    }
+};
+
+
+
 module.exports = {
     placeOrder,
-    verifyPayment
+    verifyPayment,
+    retryPayment
 };
 

@@ -80,6 +80,31 @@ body {
     justify-content: center;
     align-items: center;
 }
+
+.retry-payment-btn {
+    background-color: #28a745; /* Green color */
+    color: #fff; /* White text */
+    font-size: 14px; /* Smaller text */
+    padding: 6px 12px; /* Smaller padding */
+    border-radius: 4px; /* Rounded corners */
+    border: none; /* Remove border */
+    cursor: pointer; /* Pointer cursor */
+    transition: all 0.3s ease; /* Smooth transition for hover effects */
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+}
+
+.retry-payment-btn:hover {
+    background-color: #218838; /* Darker green on hover */
+    transform: translateY(-2px); /* Slight lift effect */
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2); /* Stronger shadow on hover */
+}
+
+.retry-payment-btn:focus {
+    outline: none; /* Remove default focus outline */
+    box-shadow: 0 0 0 4px rgba(40, 167, 69, 0.3); /* Green glow effect on focus */
+}
+
+
 </style>
 </head>
 <body class="animsition">
@@ -342,7 +367,12 @@ body {
 									<td>#<%= order._id.toString().slice(-6) %></td>
 									<td><%= new Date(order.createdAt).toLocaleDateString() %></td>
 									<td><%= order.status %></td>
-									<td><%= order.paymentStatus %></td>
+									<td>
+										<%= order.paymentStatus %>
+										<% if (order.paymentStatus === 'Pending' && order.paymentMethod === 'Razorpay') { %>
+											<button class="retry-payment-btn" data-order-id="<%= order._id %>">Retry Payment</button>
+										<% } %>
+									</td>									
 									<td>₹<%= order.totalPrice %></td>
 									<td class="table-actions"><a href="/order-listview/<%= order._id %>" style="text-decoration: none; color: green;">View</a></td>
 									<td class="table-actions">
@@ -627,6 +657,8 @@ Copyright &copy;<script>document.write(new Date().getFullYear());</script> All r
 </script>
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
 
 <script>
     function showReturnPopup(orderId) {
@@ -670,6 +702,87 @@ Copyright &copy;<script>document.write(new Date().getFullYear());</script> All r
 				}
 			});
 		}
+
+
+		// For Retry Payment
+		
+
+		document.addEventListener('DOMContentLoaded', () => {
+        document.querySelectorAll('.retry-payment-btn').forEach((button) => {
+            button.addEventListener('click', async (e) => {
+                const orderId = e.target.getAttribute('data-order-id');
+                try {
+                    const response = await fetch(`/retry-payment/${orderId}`, { method: 'POST' }); // Ensure method matches the controller
+                    const data = await response.json();
+
+                    if (data.success) {
+                        if (!data.razorpayKey) {
+                            console.error('Razorpay key is missing in the response:', data);
+                            alert('Payment initialization failed.');
+                            return;
+                        }
+
+                        const options = {
+                            key: data.razorpayKey,
+                            amount: data.amount,
+                            currency: data.currency,
+                            name: "TECHY ZONE",
+                            description: "Retry Payment",
+                            order_id: data.razorpayOrderId,
+                            handler: async function (response) {
+                                const verifyResponse = await fetch('/verify-payment', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({
+                                        paymentId: response.razorpay_payment_id,
+                                        razorpayOrderId: response.razorpay_order_id,
+                                        razorpaySignature: response.razorpay_signature,
+                                        orderId: orderId,
+                                    }),
+                                });
+
+                                const verifyResult = await verifyResponse.json();
+                                if (verifyResult.success) {
+                                    Swal.fire({
+                                    icon: 'success',
+                                    title: 'Payment Successful',
+                                    text: 'Your payment was successfully processed.',
+									timer: 3000,
+		                            showConfirmButton: false 
+                                }).then(() => {
+									window.location.reload();
+                                });
+                                } else {
+									console.error('Verification failed:', verifyResult);
+									Swal.fire({
+										icon: 'error',
+										title: 'Payment Verification Failed',
+										text: 'We could not verify your payment. Please try again.'
+									});
+                                }
+                            },
+                            prefill: {
+                                name: "<%= user.name %>",
+                                email: "<%= user.email %>",
+                                contact: "<%= user.phone %>",
+                            },
+                        };
+
+                        const razorpay = new Razorpay(options);
+                        razorpay.open();
+                    } else {
+                        alert('Failed to initiate retry payment.');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Something went wrong.');
+                }
+            });
+        });
+    });
+
+
+
 </script>
 
 </body>

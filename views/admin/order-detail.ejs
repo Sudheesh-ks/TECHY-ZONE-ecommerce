@@ -107,14 +107,14 @@
     <div class="row">
       <form action="/admin/update-order-status/<%= order._id %>" method="POST">
         <div class="dropdown">
-            <select name="status" class="form-select"  <%= order.status === 'Cancelled' || order.status === 'Delivered' ? 'disabled' : '' %>>
+            <select name="status" class="form-select"  <%= (order.status === 'Cancelled' || order.status === 'Delivered') || (order.paymentMethod === 'Razorpay' && order.status === 'Pending') ? 'disabled' : '' %>>
                 <option value="Processing" <%= order.status === 'Processing' ? 'selected' : '' %>>Processing</option>
                 <option value="Shipped">Shipped</option>
                 <option value="Delivered">Delivered</option>
                 <option value="Cancelled">Cancelled</option>
             </select>
         </div>
-        <button type="submit" class="btn btn-primary"  <%= order.status === 'Cancelled' || order.status === 'Delivered' ? 'disabled' : '' %>>Update Status</button>
+        <button type="submit" class="btn btn-primary"  <%=  (order.status === 'Cancelled' || order.status === 'Delivered') || (order.paymentMethod === 'Razorpay' && order.status === 'Pending') ? 'disabled' : '' %>>Update Status</button>
     </form>
     </div>
   </div>

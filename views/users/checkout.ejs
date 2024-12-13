@@ -838,11 +838,18 @@ Copyright &copy;<script>document.write(new Date().getFullYear());</script> All r
 									}, 3000);
 								} else {
 									Swal.fire({
-										icon: 'error',
-										title: 'Payment Verification Failed',
-										text: 'Payment verification failed. Please contact support.',
-										confirmButtonColor: '#d33',
-									});
+									icon: 'error',
+									title: 'Payment Verification Failed',
+									text: 'Payment verification failed. Please contact support or retry the payment.',
+									confirmButtonColor: '#d33',
+									showCancelButton: true, // Adding the "Cancel" button to go back to the order list
+									cancelButtonText: 'Go to Orders',
+									reverseButtons: true, // To make the 'Cancel' button appear on the left
+								}).then((result) => {
+									if (result.isConfirmed) {
+										window.location.href = `/order-list`; // Redirects to the order list page if user clicks "Retry Payment"
+									}
+								});
 								}
 							},
 							theme: {
@@ -851,14 +858,26 @@ Copyright &copy;<script>document.write(new Date().getFullYear());</script> All r
 						};
 	
 						const rzp = new Razorpay(options);
+						// Handle payment failure event
+						rzp.on('payment.failed', function(response) {
+							Swal.fire({
+									icon: 'error',
+									title: 'Payment Verification Failed',
+									text: 'Payment verification failed. Please contact support or retry the payment.',
+									confirmButtonColor: '#d33',
+									showCancelButton: true, // Adding the "Cancel" button to go back to the order list
+								}).then((result) => {
+									if (result.isConfirmed) {
+										window.location.href = `/orders-list`; // Redirects to the order list page if user clicks "Retry Payment"
+									}else{
+										window.location.href = `/checkout`;
+									}
+								});
+						});
+
 						rzp.open();
 					} else {
-						Swal.fire({
-							icon: 'error',
-							title: 'Order Creation Failed',
-							text: 'Unable to create a Razorpay order. Please try again.',
-							confirmButtonColor: '#d33'
-						});
+						
 					}
 				} catch (error) {
 					Swal.fire({
