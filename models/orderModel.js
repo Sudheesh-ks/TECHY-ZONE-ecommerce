@@ -80,6 +80,10 @@ const orderSchema = new mongoose.Schema({
         type: Date,
         default: Date.now
     },
+    cancelReason: {
+        type: String,
+        default: ''
+    },
     returnStatus: {
         type: String,
         enum: ['Not Requested', 'Requested', 'Approved', 'Rejected'],

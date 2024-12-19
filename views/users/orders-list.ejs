@@ -369,7 +369,7 @@ body {
 									<td><%= order.status %></td>
 									<td>
 										<%= order.paymentStatus %>
-										<% if (order.paymentStatus === 'Pending' && order.paymentMethod === 'Razorpay') { %>
+										<% if (order.paymentStatus === 'Pending' && order.paymentMethod === 'Razorpay' && order.status !== 'Delivered' && order.status !== 'Cancelled') { %>
 											<button class="retry-payment-btn" data-order-id="<%= order._id %>">Retry Payment</button>
 										<% } %>
 									</td>									
@@ -387,16 +387,14 @@ body {
 												<span class="text-info">Return <%= order.returnStatus %></span>
 											<% } %>
 										<% } else if (order.status === 'Pending') { %>
-											<form action="/order-cancel/<%= order._id %>" method="POST" style="display: inline;">
-												<button class="btn btn-danger btn-sm cancel-order-btn" type="submit">
-													Cancel Order
-												</button>
-											</form>
-										<% } else { %>
-											<button class="btn btn-dark btn-sm cancel-order-btn" type="button" disabled>
+											<button class="btn btn-danger btn-sm cancel-order-btn" type="button" data-order-id="<%= order._id %>">
 												Cancel Order
 											</button>
-										<% } %>
+										<% } else { %>
+											<button class="btn btn-dark btn-sm" type="button" disabled>
+												Cancel Order
+											</button>
+										<% } %>										
 									</td>																		
 								</tr>
 							<% }) %>
@@ -632,29 +630,53 @@ Copyright &copy;<script>document.write(new Date().getFullYear());</script> All r
 
 
 <script>
-    
-    document.querySelectorAll('.cancel-order-btn').forEach(button => {
-        button.addEventListener('click', function (e) {
-            e.preventDefault(); 
+        document.querySelectorAll('.cancel-order-btn').forEach(button => {
+        button.addEventListener('click', function () {
+            const orderId = this.getAttribute('data-order-id');
 
-            const form = this.closest('form'); 
-
-           
             Swal.fire({
-                title: 'Are you sure?',
-                text: "Do you really want to cancel this order?",
-                icon: 'warning',
+                title: 'Enter Reason for Cancellation',
+                input: 'text',
+                inputPlaceholder: 'Type your reason here...',
                 showCancelButton: true,
-                confirmButtonText: 'Yes, Cancel Order',
-                cancelButtonText: 'No, Keep Order',
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    form.submit();
+                confirmButtonText: 'Submit',
+                cancelButtonText: 'Cancel',
+                preConfirm: (reason) => {
+                    if (!reason.trim()) {
+                        Swal.showValidationMessage('Please enter a reason for cancellation');
+                        return false;
+                    }
+
+                    return fetch(`/order-cancel/${orderId}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        body: JSON.stringify({ reason })
+                    }).then(response => {
+                        if (!response.ok) {
+                            throw new Error('Failed to cancel order');
+                        }
+                        return response.json();
+                    }).then(result => {
+                        Swal.fire({
+                            title: 'Cancelled',
+                            text: result.message,
+                            icon: 'success',
+                            timer: 3000,
+                            showConfirmButton: false
+                        });
+                        window.location.reload();
+                    }).catch(error => {
+                        Swal.fire('Error', error.message, 'error');
+                    });
                 }
             });
         });
     });
 </script>
+
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>

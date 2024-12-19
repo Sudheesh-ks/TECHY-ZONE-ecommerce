@@ -47,6 +47,8 @@
                     <thead>
                         <tr>
                             <th>Order ID</th>
+                            <th>User Name</th>
+                            <th>paymentMethod</th>
                             <th>Total Price</th>
                             <th>Order Date</th>
                         </tr>
@@ -56,6 +58,8 @@
                             <% orders.forEach(order => { %>
                                 <tr>
                                     <td>#<%= order._id.toString().slice(-6) %></td>
+                                    <td><%= order.userId.name %></td>
+                                    <td><%= order.paymentMethod %></td>
                                     <td>₹<%= order.totalPrice %></td>
                                     <td><%= order.createdAt.toISOString().split('T')[0] %></td>
                                 </tr>
@@ -67,8 +71,20 @@
                         <% } %>
                     </tbody>
                 </table>
-
             </div>
+            <% if (totalPages > 1) { %>
+                <nav>
+                    <ul class="pagination justify-content-center">
+                        <% for (let i = 1; i <= totalPages; i++) { %>
+                            <li class="page-item <%= i === currentPage ? 'active' : '' %>">
+                                <a class="page-link" href="?filter=<%= filter %>&startDate=<%= startDate %>&endDate=<%= endDate %>&page=<%= i %>&limit=<%= limit %>">
+                                    <%= i %>
+                                </a>
+                            </li>
+                        <% } %>
+                    </ul>
+                </nav>
+            <% } %>
         </div>
     </div>
 

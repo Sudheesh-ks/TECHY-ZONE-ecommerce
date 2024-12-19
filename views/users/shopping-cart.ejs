@@ -206,7 +206,7 @@
 											<td class="column-2" style="padding-right: 20px;"><%= item.name %></td>
 											<td class="column-3" style="padding-right: 20px;">₹ <%= item.price ? item.price.toFixed(2) : 'N/A' %></td>
 											<td class="product-quantity">
-												<input type="number" class="form-control form-control-sm quantity-input" value="<%= item.quantity %>" min="1">
+												<input type="number" class="form-control form-control-sm quantity-input" value="<%= item.quantity %>" min="1" max="10" oninput="validateCartQuantity(this)">
 											</td>
 											<td class="product-total">₹ <%= (item.price * item.quantity).toFixed(2) %></td>											
 											<td class="column-6" style="padding-right: 20px;">
@@ -457,6 +457,19 @@ Copyright &copy;<script>document.write(new Date().getFullYear());</script> All r
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
+
+
+	function validateCartQuantity(input) {
+		let quantity = parseInt(input.value);
+		
+		// Check if the value is a number and within the range
+		if (isNaN(quantity) || quantity < 1) {
+			input.value = 1; // Set to minimum if less than 1 or invalid
+		} else if (quantity > 10) {
+			input.value = 10; // Set to maximum if greater than 10
+		}
+	}
+
     
 	document.querySelectorAll('.btn-remove').forEach(button => {
     button.addEventListener('click', async (e) => {

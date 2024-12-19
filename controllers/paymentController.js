@@ -5,6 +5,7 @@ const Cart = require('../models/cartModel');
 const Product = require('../models/productModel');
 const User = require('../models/userModel');
 const Coupon = require('../models/couponModel');
+const Wallet = require('../models/walletModel');
 const crypto = require('crypto');
 
 const placeOrder = async (req, res) => {
@@ -91,11 +92,9 @@ const placeOrder = async (req, res) => {
 
         const finalTotalPrice = totalPrice - discountAmount;
 
-         // Add delivery charge for orders below ₹500
          const deliveryCharge = finalTotalPrice < 500 ? 30 : 0;
          const totalAmountWithDelivery = finalTotalPrice + deliveryCharge;
 
-         // Restrict COD for orders above ₹1000
         if (paymentMethod === 'Cash on Delivery' && finalTotalPrice > 1000) {
             return res.status(400).send('Cash on Delivery is not available for orders above ₹1000.');
         }
@@ -138,7 +137,28 @@ const placeOrder = async (req, res) => {
         }
 
 
-        if (paymentMethod === 'Cash on Delivery') {
+        if (paymentMethod === 'Wallet') {
+            const wallet = await Wallet.findOne({ userId });
+        
+            if (!wallet || wallet.balance < totalAmountWithDelivery) {
+                return res.status(400).send('Insufficient wallet balance to complete the order.');
+            }
+        
+            wallet.balance -= totalAmountWithDelivery;
+            wallet.transactions = wallet.transactions.concat({ amount: totalAmountWithDelivery, type: 'Debit', description: 'Order placed' })
+            await wallet.save();
+        
+            order.paymentStatus = 'Completed';
+            await order.save();
+            console.log(`Payment of ₹${totalAmountWithDelivery} completed using Wallet.`);
+            return res.status(200).json({
+                success: true,
+                message: 'Order placed successfully!',
+                orderId: order._id,
+                redirectUrl: `/order-confirmation/${order._id}`,
+            });      
+
+        } else if (paymentMethod === 'Cash on Delivery') {
             return res.status(200).json({
                 success: true,
                 message: 'Order placed successfully!',
@@ -163,7 +183,7 @@ const placeOrder = async (req, res) => {
             return res.status(400).send('Invalid payment method.');
         }
     } catch (error) {
-        console.error('Error placing order:', error.message);
+        console.error('Error placing order:', error.message, error);
         return res.status(500).send('Internal Server Error');
     }
 };
@@ -207,31 +227,26 @@ const retryPayment = async (req, res) => {
     try {
         const orderId = req.params.orderId;
 
-        // Fetch the order details
         const order = await Order.findById(orderId);
 
         if (!order) {
             return res.status(404).json({ success: false, message: 'Order not found.' });
         }
 
-        // Check if payment is eligible for retry
         if (order.paymentStatus !== 'Pending' || order.paymentMethod !== 'Razorpay') {
             return res.status(400).json({ success: false, message: 'Invalid order for retry payment.' });
         }
 
-        // Ensure totalPrice is defined
         if (!order.totalPrice) {
             return res.status(400).json({ success: false, message: 'Invalid order amount for retry.' });
         }
 
-        // Create a new Razorpay order for retry
         const razorpayOrder = await razorpayInstance.orders.create({
-            amount: Math.round(order.totalPrice * 100), // Amount in paise
+            amount: Math.round(order.totalPrice * 100),
             currency: 'INR',
-            receipt: `order_${order._id}`, // Unique receipt ID
+            receipt: `order_${order._id}`, 
         });
 
-        // Respond with Razorpay payment details
         res.json({
             success: true,
             razorpayOrderId: razorpayOrder.id,

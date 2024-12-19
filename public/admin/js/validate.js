@@ -27,7 +27,7 @@ function previewAndCrop(event, index) {
     const allowedType = ["image/png", "image/gif", "image/jpeg"]
     console.log(allowedType.includes(file.type))
     if(!allowedType.includes(file.type)){
-        console.log(event.target.files[0])
+        showError(event.target, "Invalid file type. Please select a valid image.");
         event.target.files[0]=null
         event.target.value=null
         return 
@@ -53,41 +53,14 @@ function previewAndCrop(event, index) {
 }
 
 
-const colorsOption = [];
-
-function addColor() {
-    const colorPicker = document.getElementById("colorPicker");
-    const selectedColor = colorPicker.value;
-    if (!colorsOption.includes(selectedColor)) {
-        colorsOption.push(selectedColor);
-        const colorCircle = document.createElement("div");
-        colorCircle.style.width = "20px";
-        colorCircle.style.height = "20px";
-        colorCircle.style.backgroundColor = selectedColor;
-        colorCircle.style.borderRadius = "50%";
-        colorCircle.style.display = "inline-block";
-        colorCircle.style.margin = "5px";
-        document.getElementById("showColors").appendChild(colorCircle);
-    }
-    console.log(colorsOption)
-    colorPicker.value = "#ffffff";
-}
-
-
-const selectedSizes = [];
-
-function updateSelectedSizes() {
-    selectedSizes.length = 0;
-    const checkboxes = document.querySelectorAll('.form-check-input');
-    checkboxes.forEach((checkbox) => {
-        if (checkbox.checked) {
-            selectedSizes.push(checkbox.value);
-        }
-    });
-    console.log(selectedSizes);
-}
-
 function startCropping(index) {
+
+    if (!cropperInstances[index]) {
+        showError("Please select an image to crop.");
+        return;
+    }
+
+
     if (cropperInstances[index]) {
       const cropper = cropperInstances[index];
       const canvas = cropper.getCroppedCanvas();
@@ -100,15 +73,13 @@ function startCropping(index) {
           });
           croppedImages[index] = croppedImageFile;
   
-          // Hide the cropping section after cropping
           document.getElementById(`cropPreviewSection${index}`).style.display = "none";
   
-          // Display the cropped image below the file input
           const croppedPreviewContainer = document.getElementById(`croppedImagePreview${index}`);
-          croppedPreviewContainer.innerHTML = ""; // Clear previous preview if any
+          croppedPreviewContainer.innerHTML = ""; 
           const croppedImgElement = document.createElement("img");
           croppedImgElement.src = URL.createObjectURL(croppedImageFile);
-          croppedImgElement.style.width = "100px"; // Adjust as needed
+          croppedImgElement.style.width = "100px"; 
           croppedImgElement.style.height = "100px";
           croppedImgElement.style.marginTop = "10px";
           croppedImgElement.style.border = "1px solid #ddd";
@@ -135,10 +106,14 @@ function validateAndSubmit() {
         showError(description, "Description must be at least 5 characters long.");
     } else if (categorySelect.value === "") {
         showError(categorySelect, "Please select a category.");
-        //   } else if (!textRegex.test(brand.value)) {
-        //     showError(brand, "Brand name must be alphanumeric.");
     } else if (!priceRegex.test(ogPrice.value)) {
         showError(ogPrice, "Original Price must be a valid number with up to 2 decimal places.");
+    } else if (!priceRegex.test(ogPrice.value) || parseFloat(ogPrice.value) <= 0) {
+        showError(ogPrice, "Original Price must be a positive number with up to 2 decimal places.");
+    } else if (offerPrice.value !== "" && (!priceRegex.test(offerPrice.value) || parseFloat(offerPrice.value) <= 0)) {
+        showError(offerPrice, "Offer Price must be a positive number with up to 2 decimal places.");
+    } else if (offerPrice.value !== "" && parseFloat(offerPrice.value) > parseFloat(ogPrice.value)) {
+        showError(offerPrice, "Offer Price cannot be greater than the Original Price.");
     } else if (!stockRegex.test(stock.value) || stock.value < 1) {
         showError(stock, "Stock must be a positive integer.");
     } else {
@@ -146,7 +121,6 @@ function validateAndSubmit() {
         formData.append("name", name.value);
         formData.append("description", description.value);
         formData.append("category", categorySelect.value);
-        // formData.append("brand", brand.value);
         formData.append("price", parseFloat(ogPrice.value));
         formData.append("offerPrice", offerPrice.value !== "" ? offerPrice.value : null);
         formData.append("stock", parseInt(stock.value));

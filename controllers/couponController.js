@@ -3,7 +3,7 @@ const Coupon = require('../models/couponModel');
 
 const loadCoupon = async (req, res) => {
     try {
-        const coupons = await Coupon.find().sort({ expiryDate: -1 });
+        const coupons = await Coupon.find().sort({ expiryDate: -1 });  // Sort by expiryDate in descending order
         res.render('admin/coupon', { coupons });
     } catch (error) {
         console.error(error.message);
@@ -30,7 +30,7 @@ const addCoupon = async (req, res) => {
             return res.status(400).json({ error: 'All fields are required.' });
         }
 
-        const existingCoupon = await Coupon.findOne({ couponCode });
+        const existingCoupon = await Coupon.findOne({ couponCode });  // Check if the coupon code already exists
         if (existingCoupon) {
             return res.status(400).json({ error: 'Coupon code already exists.' });
         }
@@ -59,7 +59,7 @@ const deleteCoupon = async (req, res) => {
     try {
         const { id } = req.params;
 
-        const coupon = await Coupon.findByIdAndDelete(id);
+        const coupon = await Coupon.findByIdAndDelete(id);  // Deleting coupon by ID
         if (!coupon) {
             return res.status(404).json({ error: 'Coupon not found.' });
         }
@@ -76,29 +76,39 @@ const applyCoupon = async (req, res) => {
     const { couponCode, cartTotal } = req.body;
 
     try {
-        const coupon = await Coupon.findOne({ couponCode, isActive: true });
+        const coupon = await Coupon.findOne({ couponCode, isActive: true });  // Check if the coupon is active
 
         if (!coupon) {
             return res.status(400).json({ success: false, message: "Invalid or expired coupon." });
         }
 
-        if (cartTotal < coupon.minAmount) {
+        if (cartTotal < coupon.minAmount) {  // Check if the cart total is greater than or equal to the minimum amount
             return res.status(400).json({
                 success: false,
                 message: `Coupon requires a minimum spend of ₹${coupon.minAmount}.`,
             });
         }
 
-        const discount = coupon.discount 
+        // Check if coupon can still be used
+        if (coupon.userUsed >= coupon.maxUsage) {
+            return res.status(400).json({ success: false, message: "Coupon usage limit exceeded." });
+        }
+
+        const discount = coupon.discount  // Check if the discount is less than or equal to the maximum discount
             ? (cartTotal * coupon.discount) / 100 
             : Math.min(cartTotal, coupon.maxDiscount);
 
-        const discountedTotal = Math.max(cartTotal - discount, 0); 
+        const discountedTotal = Math.max(cartTotal - discount, 0); // Ensure the discounted total is not negative
 
-        req.session.appliedCoupon = {
+        req.session.appliedCoupon = {  // Store the applied coupon in the session
             couponCode: coupon.couponCode,
             discount,
         };
+
+        // Decrease maxUsage by 1 after the coupon is applied
+        coupon.userUsed += 1;
+        coupon.maxUsage -= 1;
+        await coupon.save(); // Save the updated coupon
 
         return res.status(200).json({
             success: true,
@@ -112,12 +122,20 @@ const applyCoupon = async (req, res) => {
     }
 };
 
-
-
-const removeCoupon = (req, res) => {
+const removeCoupon = async (req, res) => {
     try {
-        if (req.session.appliedCoupon) {
-            delete req.session.appliedCoupon;
+        if (req.session.appliedCoupon) {  // Remove the applied coupon from the session
+            const { couponCode } = req.session.appliedCoupon;
+
+            // Find the coupon document and increment userUsed by 1
+            const coupon = await Coupon.findOne({ couponCode });
+            if (coupon) {
+                coupon.userUsed -= 1; // Increment userUsed by 1 when coupon is removed
+                coupon.maxUsage += 1;
+                await coupon.save(); // Save the updated coupon
+            }
+
+            delete req.session.appliedCoupon; // Remove the coupon from the session
         }
         res.status(200).json({ success: true, message: "Coupon removed successfully." });
     } catch (error) {
@@ -125,6 +143,7 @@ const removeCoupon = (req, res) => {
         res.status(500).json({ success: false, message: "Server error. Try again later." });
     }
 };
+
 
 
 

@@ -126,14 +126,14 @@ const updateOrderStatus = async (req, res) => {
 
          order.status = status;
 
-         if (status === 'Delivered' && order.paymentMethod === 'Cash on Delivery') {
+         if (status === 'Delivered') {
              order.paymentStatus = 'Completed';
          }
  
          await order.save();
  
          console.log(`Order ${orderId} status updated to ${status}`);
-         if (status === 'Delivered' && order.paymentMode === 'COD') {
+         if (status === 'Delivered' && order.paymentMethod === 'COD') {
              console.log(`Payment status for order ${orderId} updated to Completed.`);
          }
 

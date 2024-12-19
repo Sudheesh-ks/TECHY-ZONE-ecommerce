@@ -2,8 +2,8 @@ const User = require('../models/userModel');
 const Product = require('../models/productModel');
 const Order = require('../models/orderModel');
 const mongoose = require('mongoose');
-const bcrypt = require('bcrypt');
-const moment  = require('moment');
+const bcrypt = require('bcrypt'); 
+const moment  = require('moment'); // For date and Time formating
 const fs = require('fs');
 const path = require('path');
 const { log } = require('console');
@@ -12,15 +12,8 @@ const pdf = require('html-pdf');
 
 
 
-const pageerror = async(req,res) => {
-
-  res.render('admin/admin-error');
-
-}
-
-
 const loadLogin = (req, res) => {
-    if (req.session.user && req.session.user.isAdmin) {
+    if (req.session.user && req.session.user.isAdmin) {  // Check if admin is already logged in
       return res.redirect('/admin/dashboard');
     }
     res.render('admin/admin-login', { message: null });
@@ -30,51 +23,48 @@ const loadLogin = (req, res) => {
 const login = async (req, res) => {
   try {
     const { email, password } = req.body;
-    const admin = await User.findOne({ email, isAdmin: true });
+    const admin = await User.findOne({ email, isAdmin: true }); // Finding admin by email
     if (!admin) {
-      console.log("Admin not found or invalid credentials");
+      console.log("Admin not found");
       return res.render('admin/admin-login', { message: 'Invalid login credentials' });
     }
 
     const passwordMatch = await bcrypt.compare(password, admin.password);
     if (passwordMatch) {
-     req.session.user = {
+     req.session.user = { // Setting session for admin
       id: admin._id,
       name: admin.name,
       email: admin.email,
       isAdmin:admin.isAdmin
     };
-    console.log("sessionsetted",req.session.user);
-
-      console.log("Session admin set to:", req.session.admin); 
       return res.redirect('/admin/dashboard'); 
+
     } else {
       console.log("Incorrect password");
       return res.render('admin/admin-login', { message: 'Incorrect password' });
     }
   } catch (error) {
     console.error("Login error:", error);
-    return res.redirect('/pageerror');
   }
 };
   
 const loadDashboard = async (req, res) => {
     try {
-        const totalUsers = await User.countDocuments();
-        const totalProducts = await Product.countDocuments();
-        const totalOrders = await Order.countDocuments();
+        const totalUsers = await User.countDocuments(); // Counting total users
+        const totalProducts = await Product.countDocuments(); // Counting total products
+        const totalOrders = await Order.countDocuments();  // Counting total orders
 
         const totalSales = await Order.aggregate([
             { $match: { paymentStatus: 'Completed' } },
-            { $group: { _id: null, total: { $sum: "$totalPrice" } } }
+            { $group: { _id: null, total: { $sum: "$totalPrice" } } } // Calculating total sales
         ]);
-        const totalSalesValue = totalSales.length > 0 ? totalSales[0].total : 0;
+        const totalSalesValue = totalSales.length > 0 ? totalSales[0].total : 0;  // Extracting total sales value
 
         const filter = req.query.filter || 'daily';
         const startDate = req.query.startDate ? new Date(req.query.startDate) : null;
         const endDate = req.query.endDate ? new Date(req.query.endDate) : null;
 
-        if (filter === 'custom' && startDate && endDate && startDate > endDate) {
+        if (filter === 'custom' && startDate && endDate && startDate > endDate) {  // Checking if start date is before end date
             throw new Error("Invalid date range: Start date must be before End date.");
         }
 
@@ -82,17 +72,17 @@ const loadDashboard = async (req, res) => {
         const now = new Date();
 
         if (filter === 'daily') {
-            matchCriteria.createdAt = { $gte: new Date(now.setHours(0, 0, 0, 0)) };
+            matchCriteria.createdAt = { $gte: new Date(now.setHours(0, 0, 0, 0)) }; // Setting start time to 00:00:00
         } else if (filter === 'weekly') {
-            const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay()));
+            const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay()));  // Setting start of the week
             matchCriteria.createdAt = { $gte: startOfWeek };
         } else if (filter === 'monthly') {
-            matchCriteria.createdAt = { $gte: new Date(now.getFullYear(), now.getMonth(), 1) };
-        } else if (filter === 'custom' && startDate && endDate) {
+            matchCriteria.createdAt = { $gte: new Date(now.getFullYear(), now.getMonth(), 1) };  // Setting start of the month
+        } else if (filter === 'custom' && startDate && endDate) {  // Setting custom date range
             matchCriteria.createdAt = { $gte: startDate, $lte: endDate };
         }
 
-        const topProductsData = await Order.aggregate([
+        const topProductsData = await Order.aggregate([  // Aggregating top 10 sold products
             { $match: matchCriteria },
             { $unwind: "$products" },
             {
@@ -119,7 +109,7 @@ const loadDashboard = async (req, res) => {
             }
         ]);
 
-        const topCategoriesData = await Order.aggregate([
+        const topCategoriesData = await Order.aggregate([  // Aggregating top 10 sold categories
             { $match: matchCriteria },
             { $unwind: "$products" },
             {
@@ -190,7 +180,9 @@ const loadDashboard = async (req, res) => {
 
 const loadSalesData = async (req, res) => {
     try {
-        const { filter, startDate, endDate } = req.query;
+        const { filter, startDate, endDate, page = 1, limit = 10 } = req.query;
+        const currentPage = parseInt(page);
+        const itemsPerPage = parseInt(limit);
 
         // Sales Data Filter
         let filterCondition = {};
@@ -209,15 +201,23 @@ const loadSalesData = async (req, res) => {
         }
 
         // Fetching filtered order data
+        const totalOrders = await Order.countDocuments(filterCondition);
         const orders = await Order.find(filterCondition)
             .sort({ createdAt: -1 })
-            .select('userId products totalPrice createdAt');
+            .skip((currentPage - 1) * itemsPerPage)
+            .limit(itemsPerPage)
+            .populate('userId', 'name')
+            .select('userId products paymentMethod totalPrice createdAt');
 
         res.render('admin/salesData', {
             orders,
             filter,
             startDate,
-            endDate
+            endDate,
+            currentPage,
+            totalPages: Math.ceil(totalOrders / itemsPerPage),
+            limit,
+            totalOrders,
         });
     } catch (error) {
         console.error("Error loading sales data:", error.message);
@@ -269,7 +269,7 @@ const exportSalesToPDF = async (req, res) => {
                 </style>
             </head>
             <body>
-                <h2 style="text-align: center;">Sales Report</h2>
+                <h2 style="text-align: center;">Sales Report TECHY ZONE</h2>
                 <table>
                     <thead>
                         <tr>
@@ -386,7 +386,6 @@ const logout = async(req,res) => {
       req.session.destroy(err => {
         if(err){
           console.log("Error destroying session",err);
-          return res.redirect('/pageerror');
           }
           res.redirect('/admin/login')
       })
@@ -394,7 +393,6 @@ const logout = async(req,res) => {
   } catch (error) {
 
     console.log("Unexpected error during logout",error);
-    res.redirect('/pageerror')
     
   }
 }
@@ -404,7 +402,6 @@ module.exports = {
     loadLogin,
     login,
     loadDashboard,
-    pageerror,
     logout,
     loadSalesData,
     exportSalesToPDF,

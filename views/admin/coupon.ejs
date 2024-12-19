@@ -25,6 +25,8 @@
                 <th scope="col"><b>Discount</b></th>
                 <th scope="col"><b>Min Amount</b></th>
                 <th scope="col"><b>Max Discount</b></th>
+                <th scope="col"><b>Users Used</b></th>
+                <th scope="col"><b>Remaining</b></th>
                 <th scope="col"><b>Expiry Date</b></th>
                 <th scope="col"><b>Status</b></th>
                 <th scope="col"><b>Actions</b></th>
@@ -37,6 +39,8 @@
                     <td><%= coupon.discount %>%</td>
                     <td>₹<%= coupon.minAmount %></td>
                     <td>₹<%= coupon.maxDiscount %></td>
+                    <td><%= coupon.userUsed %></td>
+                    <td><%= coupon.maxUsage %></td>
                     <td><%= coupon.expiryDate.toISOString().split('T')[0] %></td>
                     <td><%= coupon.isActive ? 'Active' : 'Inactive' %></td>
                     <td>

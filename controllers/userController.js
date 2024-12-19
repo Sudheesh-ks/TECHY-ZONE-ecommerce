@@ -193,6 +193,15 @@ const loadHome = async (req, res) => {
 
         let filter = { isDeleted: false };
 
+
+        const listedCategoryIds = categories.map(cat => cat._id);
+
+        if (category && category !== 'All Categories') {
+            const selectedCategory = await Category.findOne({ name: category, isListed: true });
+            if (selectedCategory) filter.category = selectedCategory._id;
+        } else {
+            filter.category = { $in: listedCategoryIds };
+        }
         
         if (category && category !== 'All Categories') {
             const selectedCategory = await Category.findOne({ name: category });
@@ -274,6 +283,15 @@ const loadShop = async (req, res) => {
 
         let filter = { isDeleted: false };
 
+
+        const listedCategoryIds = categories.map(cat => cat._id);
+
+        if (category && category !== 'All Categories') {
+            const selectedCategory = await Category.findOne({ name: category, isListed: true });
+            if (selectedCategory) filter.category = selectedCategory._id;
+        } else {
+            filter.category = { $in: listedCategoryIds };
+        }
         
         if (category && category !== 'All Categories') {
             const selectedCategory = await Category.findOne({ name: category });
@@ -509,10 +527,8 @@ const loadOrdersList = async (req, res) => {
         const limit = 5;
         const skip = (page - 1) * limit;
 
-        // Fetch total orders count for pagination
         const totalOrders = await Order.countDocuments({ userId });
 
-        // Fetch orders with pagination
         const orders = await Order.find({ userId })
             .sort({ createdAt: -1 })
             .skip(skip)
@@ -531,29 +547,24 @@ const loadOrdersList = async (req, res) => {
             });
         }
 
-        // Fetch all product IDs from the orders
         const productIds = orders.flatMap(order => order.products.map(item => item.productId));
 
-        // Fetch product details in one query
         const products = await Product.find({ _id: { $in: productIds } }).lean();
         const productMap = Object.fromEntries(products.map(product => [product._id.toString(), product]));
 
-        // Attach product details and addresses to orders
         for (let order of orders) {
             order.products.forEach(item => {
                 item.productDetails = productMap[item.productId] || { name: "Product not found" };
             });
 
-            const shippingAddress = await Address.findById(order.addressId).lean(); // Use order-specific address
+            const shippingAddress = await Address.findById(order.addressId).lean();
             order.address = shippingAddress ? shippingAddress.address : "No address found";
         }
 
-        // Fetch cart data only if user is logged in
         const cart = req.session.user
             ? await Cart.findOne({ userId: req.session.user.id }).populate('items.productId').lean()
             : null;
 
-        // Render the orders page
         res.render('users/orders-list', {
             user: req.session.user,
             orders,
@@ -608,10 +619,11 @@ const cancelOrder = async (req, res) => {
     try {
         const userId = req.session.user.id;
         const orderId = req.params.id;
+        const { reason } = req.body;
 
         const order = await Order.findOneAndUpdate(
             { _id: orderId, userId },
-            { status: 'Cancelled' },
+            { status: 'Cancelled', cancelReason: reason },
             { new: true }
         );
 
@@ -621,12 +633,13 @@ const cancelOrder = async (req, res) => {
         }
 
         console.log(`Order ${orderId} cancelled successfully.`);
+        console.log(`Order Details:`, order);
 
         for (let item of order.products) {
             const product = await Product.findById(item.productId);
             if (product) {
                 await Product.findByIdAndUpdate(item.productId, {
-                    $inc: { stock: item.quantity }, 
+                    $inc: { stock: item.quantity },
                 });
                 console.log(`Stock updated for product ${product.name}: +${item.quantity}`);
             } else {
@@ -638,42 +651,49 @@ const cancelOrder = async (req, res) => {
 
         let refundAmount = 0;
 
+        console.log(`Payment Method: ${order.paymentMethod}`);
+        console.log(`Payment Status: ${order.paymentStatus}`);
+
         if (order.paymentMethod !== 'Cash on Delivery' && order.paymentStatus !== 'Pending') {
-        refundAmount = order.totalPrice;
+            refundAmount = order.totalPrice;
+            console.log(`Refund Amount Calculated: ₹${refundAmount}`);
 
-        let wallet = await Wallet.findOne({ userId });
-
-        if (!wallet) {
-            wallet = new Wallet({
-                userId,
-                balance: refundAmount,
-                transactions: [
-                    {
-                        amount: refundAmount,
-                        type: 'Credit',
-                        description: `Refund for cancelled order ${orderId}`,
+            const updatedWallet = await Wallet.findOneAndUpdate(
+                { userId },
+                {
+                    $inc: { balance: refundAmount },
+                    $push: {
+                        transactions: {
+                            amount: refundAmount,
+                            type: 'Credit',
+                            description: `Refund for cancelled order ${orderId}`,
+                        },
                     },
-                ],
-            });
-        } else {
-            wallet.balance += refundAmount;
-            wallet.transactions.push({
-                amount: refundAmount,
-                type: 'Credit',
-                description: `Refund for cancelled order ${orderId}`,
-            });
-        }
+                },
+                { new: true, upsert: true }
+            );
 
-        await wallet.save();
+            if (updatedWallet) {
+                console.log('Wallet successfully updated:', updatedWallet);
+            } else {
+                console.error('Failed to update wallet.');
+            }
+        } else {
+            console.log('Refund not applicable due to payment method or status.');
         }
 
         console.log(`Refund of ₹${refundAmount} added to wallet for user ${userId}.`);
-        res.redirect('/orders-list');
+        res.json({
+            success: true,
+            message: 'Order cancelled successfully',
+            refundAmount,
+        });
     } catch (error) {
         console.error('Error cancelling order:', error.message);
         res.status(500).send({ message: 'Internal Server Error' });
     }
 };
+
 
 
 const requestReturn = async (req, res) => {
@@ -1061,11 +1081,12 @@ const loadWallet = async (req, res) => {
 
         const totalTransactions = wallet?.transactions.length || 0;
 
+
         const currentPage = parseInt(page);
         const itemsPerPage = parseInt(limit);
         const totalPages = Math.ceil(totalTransactions / itemsPerPage);
 
-        const transactions = wallet?.transactions.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage) || [];
+        const transactions = wallet?.transactions.sort((a, b) => b.createdAt - a.createdAt).slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage) || [];
 
         res.render('users/wallet', {
             user: req.session.user,
@@ -1332,6 +1353,7 @@ const loadCheckout = async (req, res) => {
         const userId = req.session.user.id;
         const userAddresses = await Address.findOne({ userId });
         const addresses = userAddresses ? userAddresses.address : [];
+        const wallet = await Wallet.findOne({ userId }) || { balance: 0 };
 
         const productId = req.query.productId;
         const quantity = req.query.quantity;
@@ -1362,13 +1384,13 @@ const loadCheckout = async (req, res) => {
                 checkoutProduct.total -= discount;
             }
 
-            // Calculate delivery charge if total is below ₹500
             const deliveryCharge = checkoutProduct.total < 500 ? 30 : 0;
             checkoutProduct.total += deliveryCharge;
 
             return res.render('users/checkout', {
                 user: req.session.user,
                 addresses,
+                wallet,
                 cart: null,
                 product: checkoutProduct,
                 appliedCoupon,
@@ -1387,13 +1409,13 @@ const loadCheckout = async (req, res) => {
             cart.totalPrice -= discount;
         }
 
-        // Add delivery charge for the cart if total is below ₹500
         const deliveryCharge = cart && cart.totalPrice < 500 ? 30 : 0;
         const totalPriceWithDelivery = (cart ? cart.totalPrice : 0) + deliveryCharge;
 
         res.render('users/checkout', {
             user: req.session.user,
             addresses,
+            wallet,
             cart: cart || { items: [], totalPrice: 0, totalQuantity: 0 },
             product: null,
             appliedCoupon,
@@ -1560,18 +1582,16 @@ const loadOrderConfirmation = async (req, res) => {
 
 const downloadInvoice = async (req, res) => {
     try {
-        const { orderId } = req.params; // Assuming the order ID is passed in the route params
+        const { orderId } = req.params; 
 
-        // Fetch the order details from the database
         const order = await Order.findById(orderId)
-            .populate('userId', 'name email') // Populate user details if needed
+            .populate('userId', 'name email') 
             .select('userId products paymentMethod deliveryCharge totalPrice createdAt');
 
         if (!order) {
             return res.status(404).send('Order not found.');
         }
 
-        // HTML Design for PDF
         const html = `
             <html>
             <head>
@@ -1629,7 +1649,6 @@ const downloadInvoice = async (req, res) => {
             </html>
         `;
 
-        // Creating the PDF from the HTML
         pdf.create(html, { format: 'A4' }).toStream((err, stream) => {
             if (err) {
                 console.error('Error generating PDF:', err.message);

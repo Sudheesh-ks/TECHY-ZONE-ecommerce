@@ -124,17 +124,6 @@
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10/dist/sweetalert2.min.js"></script>
 
 
-
-  <script>
-    <% if (locals.flash && locals.flash.message) { %>
-      Swal.fire({
-        icon: '<%= flash.type %>',
-        title: '<%= flash.message %>',
-        showConfirmButton: false,
-        timer: 2000
-      });
-    <% } %>
-  </script>
   
 
 <script>
@@ -148,16 +137,30 @@
   }
 
 
-  if (name === "" || description === "") {
-      event.preventDefault(); 
+  $('form[action="/admin/addCategory"]').on('submit', function (event) {
+    event.preventDefault();
 
-      Swal.fire({
-        icon: 'error',
-        title: 'All fields are required',
-        text: 'Please fill in both the name and description fields.',
-        showConfirmButton: true
-      });
-    }
+    const formData = $(this).serialize();
+
+    $.post('/admin/addCategory', formData)
+        .done((response) => {
+            Swal.fire({
+                icon: response.type,
+                title: response.message,
+                showConfirmButton: false,
+                timer: 1500,
+            }).then(() => location.reload());
+        })
+        .fail((error) => {
+            Swal.fire({
+                icon: 'error',
+                title: error.responseJSON?.message || 'An error occurred',
+                showConfirmButton: false,
+                timer: 1500,
+            });
+        });
+});
+
 
 
 
@@ -166,48 +169,84 @@
   }
 
   function toggleListStatus(id) {
-    fetch(`/admin/toggleListStatus/${id}`, { method: 'POST' })
-      .then(() => location.reload())
-      .catch(error => console.error('Error:', error));
-  }
-
-  function toggleListStatus(id) {
-    fetch(`/admin/toggleListStatus/${id}`, { 
+    fetch(`/admin/toggleListStatus/${id}`, {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json'
-        }
+            'Content-Type': 'application/json',
+        },
     })
-    .then(response => response.json())
-    .then(data => {
-        if (data.type === 'success') {
+        .then((response) => response.json())
+        .then((data) => {
             Swal.fire({
-              icon: 'success',
-              title: data.message,
-              showConfirmButton: false,
-              timer: 1500
+                icon: data.type,
+                title: data.message,
+                showConfirmButton: false,
+                timer: 1500,
             }).then(() => {
-              location.reload();
+                if (data.type === 'success') {
+                    location.reload();
+                }
             });
-        } else {
+        })
+        .catch((error) => {
             Swal.fire({
-              icon: 'error',
-              title: data.message,
-              showConfirmButton: false,
-              timer: 1500
+                icon: 'error',
+                title: 'An error occurred',
+                text: error.message,
+                showConfirmButton: true,
             });
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        Swal.fire({
-          icon: 'error',
-          title: 'Failed to update category status',
-          showConfirmButton: false,
-          timer: 1500
         });
-    });
-  }
+}
+
+
+
+$(document).on('submit', 'form[action="/admin/apply-category-offer"]', function (event) {
+    event.preventDefault();
+    const formData = $(this).serialize();
+
+    $.post('/admin/apply-category-offer', formData)
+        .done((response) => {
+            Swal.fire({
+                icon: response.type,
+                title: response.message,
+                showConfirmButton: false,
+                timer: 1500,
+            }).then(() => location.reload());
+        })
+        .fail((error) => {
+            Swal.fire({
+                icon: 'error',
+                title: error.responseJSON?.message || 'An error occurred',
+                showConfirmButton: false,
+                timer: 1500,
+            });
+        });
+});
+
+$(document).on('submit', 'form[action="/admin/remove-category-offer"]', function (event) {
+    event.preventDefault();
+    const formData = $(this).serialize();
+
+    $.post('/admin/remove-category-offer', formData)
+        .done((response) => {
+            Swal.fire({
+                icon: response.type,
+                title: response.message,
+                showConfirmButton: false,
+                timer: 1500,
+            }).then(() => location.reload());
+        })
+        .fail((error) => {
+            Swal.fire({
+                icon: 'error',
+                title: error.responseJSON?.message || 'An error occurred',
+                showConfirmButton: false,
+                timer: 1500,
+            });
+        });
+});
+
+
 
 </script>
 

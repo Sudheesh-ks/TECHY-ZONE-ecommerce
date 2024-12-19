@@ -27,6 +27,7 @@
                     <label for="productImages">Images</label>
                     <input type="file" class="form-control product-image" id="productImage1" 
                     accept="image/png, image/gif, image/jpeg" onchange="previewAndCrop(event, 0)" />
+                    <p class="error-message" id="productNameError"></p>
                     <div class="cropPreviewSection" id="cropPreviewSection0" style="display: none" >
                       <img id="cropPreview0" style="max-width: 100%" />
                       <button type="button" class="btn btn-primary btn-sm" onclick="startCropping(0)">

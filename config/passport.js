@@ -13,9 +13,9 @@ async (accessToken, refreshToken, profile, done) => {
     try {
         let user = await User.findOne({ googleId: profile.id });
         if (user) {
-            return done(null, user);
+            return done(null, user); // User already exists
         } else {
-            user = new User({
+            user = new User({   // Create a new user
                 name: profile.displayName,
                 email: profile.emails[0].value, 
                 googleId: profile.id,

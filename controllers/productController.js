@@ -98,23 +98,21 @@ const getAllProducts = async (req,res) => {
       $or:[
 
         {name:{$regex:new RegExp(".*"+search+".*","i")}},
-      // {brand:{$regex:new RegExp(".*"+search+".*","i")}},
       ],
     }).limit(limit*1)
       .skip((page-1)*limit)
+      .sort({createdAt:-1})
       .populate('category')
       .exec();
 
       const count = await productModel.countDocuments({
         $or:[
         {name:{$regex:new RegExp(".*"+search+".*","i")}},
-        // {brand:{$regex:new RegExp(".*"+search+".*","i")}},
       ]
       });
 
 
       const category = await categoryModel.find({isListed:true});
-      // const brand = await brand.find({isBlocked:false});
 
       if(category.length > 0){
         res.render('admin/products',{

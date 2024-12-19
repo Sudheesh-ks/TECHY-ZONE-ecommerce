@@ -3,11 +3,11 @@ const Product = require('../models/productModel');
 
 const categoryInfo = async (req, res) => {
     try {
-        const page = parseInt(req.query.page) || 1;
+        const page = parseInt(req.query.page) || 1;  // Default to page 1
         const limit = 4;
         const skip = (page - 1) * limit;
 
-        const categoryData = await Category.find({})
+        const categoryData = await Category.find({})  // Find all categories
             .sort({ createdAt: -1 })
             .skip(skip)
             .limit(limit);
@@ -23,56 +23,74 @@ const categoryInfo = async (req, res) => {
         });
     } catch (error) {
         console.log(error);
-        res.redirect("/pageerror");
     }
 };
 
 const addCategory = async (req, res) => {
-    const { name, description } = req.body;
-  
-    try {
-      const existingCategory = await Category.findOne({
-        name: { $regex: new RegExp("^" + name.trim() + "$", "i") }
-    });
+  const { name, description } = req.body;
+
+  try {
+      const existingCategory = await Category.findOne({  // Check if category already exists
+          name: { $regex: new RegExp("^" + name.trim() + "$", "i") }
+      });
+
       if (existingCategory) {
-        req.flash('message', 'Category already exists');
-        req.flash('type', 'error');
-        return res.redirect('/admin/category');
+          return res.status(400).json({
+              type: 'error',
+              message: 'Category already exists',
+          });
       }
-  
+
+      if (!name.trim() || !description.trim()) {  // Check if name and description are not empty
+        return res.status(400).json({ success: false, message: 'Name and description cannot be empty or contain only spaces' });
+      }
+
       const newCategory = new Category({ name, description });
       await newCategory.save();
-  
-      req.flash('message', 'Category added successfully');
-      req.flash('type', 'success');
-      res.redirect('/admin/category');
-    } catch (error) {
+
+      res.status(200).json({
+          type: 'success',
+          message: 'Category added successfully',
+      });
+  } catch (error) {
       console.error(error);
-      req.flash('message', 'An error occurred while adding the category');
-      req.flash('type', 'error');
-      res.redirect('/admin/category');
-    }
-  };
+      res.status(500).json({
+          type: 'error',
+          message: 'An error occurred while adding the category',
+      });
+  }
+};
   
 
   const toggleListStatus = async (req, res) => {
     const { id } = req.params;
+
     try {
-      const category = await Category.findById(id);
-      if (!category) {
-        return res.status(404).json({ message: 'Category not found', type: 'error' });
-      }
-  
-      category.isListed = !category.isListed;
-      category.status = category.isListed ? 'Listed' : 'Unlisted';
-      await category.save();
-  
-      res.status(200).json({ message: 'Category status updated successfully', type: 'success' });
+        const category = await Category.findById(id);  // Find category by ID
+        if (!category) {
+            return res.status(404).json({
+                type: 'error',
+                message: 'Category not found',
+            });
+        }
+
+        category.isListed = !category.isListed;
+        category.status = category.isListed ? 'Listed' : 'Unlisted';  // Update category status
+        await category.save();
+
+        res.status(200).json({
+            type: 'success',
+            message: `Category ${category.isListed ? 'listed' : 'unlisted'} successfully`,
+        });
     } catch (error) {
-      console.error(error);
-      res.status(500).json({ message: 'Internal Server Error', type: 'error' });
+        console.error(error);
+        res.status(500).json({
+            type: 'error',
+            message: 'Failed to update category status',
+        });
     }
-  };
+};
+
   
 
 
@@ -81,7 +99,7 @@ const editCategory = async (req, res) => {
     const { name, description} = req.body;
 
     try {
-        await Category.findByIdAndUpdate(id, {
+        await Category.findByIdAndUpdate(id, {  // Update category by ID
             name,
             description,
         });
@@ -104,15 +122,15 @@ const applyCategoryOffer = async (req, res) => {
           return res.status(404).json({ success: false, message: 'Category not found' });
       }
 
-      category.categoryOffer = offerValue; // Set the fixed discount amount
+      category.categoryOffer = offerValue; // Apply the category offer
       await category.save();
 
-      // Update all products in the category
+      // Updates all products in the category
       const products = await Product.find({ category: categoryId });
       for (const product of products) {
           // Calculate the new offer price
           const basePrice = product.offerPrice || product.price; // Use offerPrice if exists, else original price
-          const discountedPrice = Math.max(0, basePrice - offerValue); // Ensure price doesn't go below 0
+          const discountedPrice = Math.max(0, basePrice - offerValue); // Ensures price doesn't go below 0
 
           product.offerPrice = discountedPrice;
           product.categoryOffer = offerValue; // Track the category offer applied
