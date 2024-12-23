@@ -1,11 +1,11 @@
 const mongoose = require('mongoose');
-mongoose.connect("mongodb://127.0.0.1:27017/Techy-Zone");
+const dotenv = require('dotenv');
+dotenv.config(); 
+mongoose.connect(process.env.MONGO_URI);
 
 const express = require('express');
 const session = require('express-session');
 const passport = require('./config/passport');
-const dotenv = require('dotenv');
-dotenv.config(); 
 const app = express();
 const nocache = require('nocache');
 const path = require('path');
@@ -62,7 +62,7 @@ app.use('/admin',adminRoute);
 
 
 
-app.listen(4001, () => {
-    console.log("Server is running on port 4001");
+app.listen(3000, () => {
+    console.log("Server is running on port 3000");
     
 })
