@@ -24,11 +24,11 @@ const forgotEmailValid = async (req, res) => {
             return res.render('users/forgot-password', { message: "User with this email does not exist." });
         }
 
-        const otp = generateOTP();
+        const otp = generateOTP(); // Generating OTP
         req.session.userOtp = otp;
         req.session.email = email;
 
-        await sendVerificationEmail(email, otp);
+        await sendVerificationEmail(email, otp); // Sending OTP
         console.log("OTP sent:", otp);
 
         res.render('users/forgot-pass-otp');
@@ -54,7 +54,7 @@ const verifyForgotPassOTP = async (req, res) => {
     try {
         const enterOtp = req.body.otp;
 
-        if(enterOtp === req.session.userOtp){
+        if(enterOtp === req.session.userOtp){  // Comparing OTP
             res.json({success:true,redirectUrl:"reset-password"});
            }else{
             res.json({success:false,message:"OTP not matching"});
@@ -90,7 +90,7 @@ function generateOTP(length = 6) {
 
 const sendVerificationEmail = async (email, otp) => {
     try {
-        const transporter = nodemailer.createTransport({
+        const transporter = nodemailer.createTransport({  // Sending OTP
             service: "gmail",
             auth: {
                 user: process.env.NODEMAILER_EMAIL,
@@ -118,7 +118,7 @@ const resendOtp = async (req,res) => {
 
     try {
         
-        const otp = generateOTP();
+        const otp = generateOTP();  // Generating OTP
         req.session.userOtp = otp;
         const email = req.session.email;
         console.log("Resending OTP to email:",email);
@@ -145,7 +145,7 @@ const postNewPassword = async (req,res) => {
         const email = req.session.email;
         if(newPass1 === newPass2){
             const passwordHash = await securePassword(newPass1);
-            await User.updateOne({email:email},{$set:{password:passwordHash}})
+            await User.updateOne({email:email},{$set:{password:passwordHash}})  // Updating password
             res.redirect('/login');
         }else{
             res.render("reset-password",{message:"Password do not match"});

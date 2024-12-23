@@ -544,8 +544,7 @@ document.querySelectorAll('.cancel-product-btn').forEach(button => {
                     console.log('Data from server:', data);
                     if (data.message) {
                         Swal.fire('Success', data.message, 'success').then(() => {
-                            // Optionally reload the page or update the UI dynamically
-                            window.location.reload(); // Or remove the product from the UI using JS
+                            window.location.reload(); 
                         });
                     }
                 })

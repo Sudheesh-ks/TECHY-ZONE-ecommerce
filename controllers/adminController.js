@@ -184,7 +184,7 @@ const loadSalesData = async (req, res) => {
         const currentPage = parseInt(page);
         const itemsPerPage = parseInt(limit);
 
-        // Sales Data Filter
+        // Filter for Sales data
         let filterCondition = {};
         if (filter === 'daily') {
             filterCondition = { createdAt: { $gte: new Date().setHours(0, 0, 0, 0) } };
@@ -200,14 +200,22 @@ const loadSalesData = async (req, res) => {
             filterCondition = { createdAt: { $gte: new Date(startDate), $lte: new Date(endDate) } };
         }
 
-        // Fetching filtered order data
         const totalOrders = await Order.countDocuments(filterCondition);
         const orders = await Order.find(filterCondition)
             .sort({ createdAt: -1 })
             .skip((currentPage - 1) * itemsPerPage)
             .limit(itemsPerPage)
             .populate('userId', 'name')
-            .select('userId products paymentMethod totalPrice createdAt');
+            .select('userId products paymentMethod totalPrice discountAmount createdAt');
+
+
+        let totalRevenue = 0;
+        let totalDiscount = 0;
+        orders.forEach(order => {
+            totalRevenue += order.totalPrice;
+            totalDiscount += order.discountAmount || 0;
+        });
+
 
         res.render('admin/salesData', {
             orders,
@@ -218,6 +226,8 @@ const loadSalesData = async (req, res) => {
             totalPages: Math.ceil(totalOrders / itemsPerPage),
             limit,
             totalOrders,
+            totalRevenue: totalRevenue.toFixed(2),
+            totalDiscount: totalDiscount.toFixed(2), 
         });
     } catch (error) {
         console.error("Error loading sales data:", error.message);
@@ -230,7 +240,7 @@ const exportSalesToPDF = async (req, res) => {
     try {
         const { filter, startDate, endDate } = req.query;
 
-        // Apply filter logic
+        // filter for Sales data to pdf
         let filterCondition = {};
         if (filter === 'daily') {
             filterCondition = { createdAt: { $gte: new Date().setHours(0, 0, 0, 0) } };
@@ -249,11 +259,21 @@ const exportSalesToPDF = async (req, res) => {
         const orders = await Order.find(filterCondition)
             .sort({ createdAt: -1 })
             .populate('userId', 'name')
-            .select('userId products paymentMethod totalPrice createdAt');
+            .select('userId products paymentMethod totalPrice discountAmount createdAt');
 
-        if (orders.length === 0) {
-            return res.status(404).send('No data available to export.');
-        }
+
+            if (orders.length === 0) {
+                return res.status(404).send('No data available to export.');
+            }
+
+
+        let totalRevenue = 0;
+        let totalDiscount = 0;
+        orders.forEach(order => {
+            totalRevenue += order.totalPrice; 
+            totalDiscount += order.discountAmount || 0; 
+        });
+
 
         // HTML Design for PDF
         const html = `
@@ -270,6 +290,9 @@ const exportSalesToPDF = async (req, res) => {
             </head>
             <body>
                 <h2 style="text-align: center;">Sales Report TECHY ZONE</h2>
+
+                <h3 style="text-align: right; color: green;">Total Revenue: ₹${totalRevenue.toFixed(2)}</h3>
+                <h3 style="text-align: right; color: red;">Total Discount: ₹${totalDiscount.toFixed(2)}</h3>
                 <table>
                     <thead>
                         <tr>
@@ -298,7 +321,7 @@ const exportSalesToPDF = async (req, res) => {
             </html>
         `;
 
-        // Creating the PDF from the HTML
+        // This is for PDF creation
         pdf.create(html, { format: 'A4' }).toStream((err, stream) => {
             if (err) {
                 console.error('Error generating PDF:', err.message);
@@ -319,7 +342,7 @@ const exportSalesToExcel = async (req, res) => {
     try {
         const { filter, startDate, endDate } = req.query;
 
-        // Filtering for the Excel exporting
+        // Filtering for Sales data to Excel
         let filterCondition = {};
         if (filter === 'daily') {
             filterCondition = { createdAt: { $gte: new Date().setHours(0, 0, 0, 0) } };
@@ -338,11 +361,19 @@ const exportSalesToExcel = async (req, res) => {
         const orders = await Order.find(filterCondition)
             .sort({ createdAt: -1 })
             .populate('userId', 'name')
-            .select('userId products paymentMethod totalPrice createdAt');
+            .select('userId products paymentMethod totalPrice discountAmount createdAt');
 
         if (orders.length === 0) {
             return res.status(404).send('No data available to export.');
         }
+
+        let totalRevenue = 0;
+        let totalDiscount = 0;
+
+        orders.forEach(order => {
+            totalRevenue += order.totalPrice;
+            totalDiscount += order.discountAmount || 0;
+        });
 
         const workbook = new ExcelJS.Workbook();
         const worksheet = workbook.addWorksheet('Sales Report');
@@ -366,6 +397,23 @@ const exportSalesToExcel = async (req, res) => {
                 totalPrice: order.totalPrice,
             });
         });
+
+        // This is for adding blank row for separation
+        worksheet.addRow({});
+
+        worksheet.addRow({
+            orderId: 'Total Revenue',
+            totalPrice: totalRevenue,
+        });
+
+        worksheet.addRow({
+            orderId: 'Total Discount',
+            totalPrice: totalDiscount,
+        });
+
+        const totalRows = worksheet.lastRow.number - 1;
+        worksheet.getRow(totalRows).font = { bold: true };
+        worksheet.getRow(totalRows + 1).font = { bold: true };
 
         res.setHeader('Content-Disposition', 'attachment; filename=sales-report.xlsx');
         res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');

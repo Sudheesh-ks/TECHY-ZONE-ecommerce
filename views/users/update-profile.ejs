@@ -546,9 +546,8 @@ Copyright &copy;<script>document.write(new Date().getFullYear());</script> All r
 
 <script>
     document.getElementById('updateBtn').addEventListener('click', function(e) {
-        e.preventDefault(); // Prevent the form from submitting immediately
+        e.preventDefault();
 
-        // Show confirmation SweetAlert
         Swal.fire({
             title: 'Are you sure?',
             text: 'Do you want to update your profile?',
@@ -558,7 +557,6 @@ Copyright &copy;<script>document.write(new Date().getFullYear());</script> All r
             cancelButtonText: 'No, cancel!',
         }).then((result) => {
             if (result.isConfirmed) {
-                // If confirmed, submit the form
                 document.getElementById('updateProfileForm').submit();
             }
         });

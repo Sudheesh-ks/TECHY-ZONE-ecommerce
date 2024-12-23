@@ -195,7 +195,21 @@ body {
     border-radius: 4px;
     font-size: 0.875rem;
 }
-    </style>
+
+.card-body .border {
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+}
+
+.card-body h6 {
+    margin: 0;
+    font-weight: bold;
+    color: #333;
+}
+
+</style>
 </head>
 <body class="animsition">
 	
@@ -406,6 +420,28 @@ body {
 					<div class="card">
 						<div class="card-body">
 							<h5 class="card-title">Cart Totals</h5>
+							<div class="available-coupons my-4">
+								<h5>Available Coupons</h5>
+								<% if (availableCoupons && availableCoupons.length > 0) { %>
+									<div class="row">
+										<% availableCoupons.forEach(coupon => { %>
+											<div class="col-md-4">
+												<div class="card mb-3">
+													<div class="card-body">
+														<h6 class="card-title"><%= coupon.couponCode %></h6>
+														<p class="card-text">
+															Discount: <%= coupon.discount %>%<br>
+														</p>
+													</div>
+												</div>
+											</div>
+										<% }); %>
+									</div>
+								<% } else { %>
+									<p>No coupons available at the moment.</p>
+								<% } %>
+							</div>
+							
 							<div class="table-responsive">
 								<table class="table">
 									<thead>
@@ -522,7 +558,7 @@ body {
 								<div class="form-check">
 									<input class="form-check-input" type="radio" name="paymentMethod" id="wallet" value="Wallet">
 									<label class="form-check-label" for="wallet">Wallet</label><br>
-									<p>Wallet Balance: ₹<span id="walletBalance" class="text-success"><%= wallet && wallet.balance ? wallet.balance : '0.00' %></span></p>
+									<p>Wallet Balance: ₹<span id="walletBalance" class="text-success"><%= wallet && wallet.balance ? wallet.balance.toFixed(2) : '0.00' %></span></p>
 								</div>
 							</div>
 							
@@ -751,14 +787,12 @@ Copyright &copy;<script>document.write(new Date().getFullYear());</script> All r
 	
 	<script>
 		document.getElementById('checkoutForm').addEventListener('submit', async (event) => {
-			event.preventDefault(); // Stop default form submission
+			event.preventDefault(); 
 	
-			// Get selected address and payment method
 			const addressSelected = document.querySelector('input[name="addressId"]:checked');
 			const paymentSelected = document.querySelector('input[name="paymentMethod"]:checked');
 			const finalTotalPrice = parseFloat(document.getElementById('finalTotalSummary').innerText);
 	
-			// Validate address selection
 			if (!addressSelected) {
 				Swal.fire({
 					icon: 'error',
@@ -769,7 +803,6 @@ Copyright &copy;<script>document.write(new Date().getFullYear());</script> All r
 				return;
 			}
 	
-			// Validate payment method selection
 			if (!paymentSelected) {
 				Swal.fire({
 					icon: 'error',
@@ -782,7 +815,6 @@ Copyright &copy;<script>document.write(new Date().getFullYear());</script> All r
 	
 			const paymentMethod = paymentSelected.value;
 	
-			// COD Restriction: Validate price limit for COD
 			if (paymentMethod === 'Cash on Delivery' && finalTotalPrice > 1000) {
 				Swal.fire({
 					icon: 'error',
@@ -793,7 +825,6 @@ Copyright &copy;<script>document.write(new Date().getFullYear());</script> All r
 				return;
 			}
 
-			// Wallet Restriction: Validate price limit for Wallet
 		if (paymentMethod === 'Wallet' && finalTotalPrice > wallet.balance) {
 			Swal.fire({
 				icon: 'error',
@@ -814,7 +845,6 @@ Copyright &copy;<script>document.write(new Date().getFullYear());</script> All r
 				return;
 			}
 	
-			// Handle Razorpay Payment
 			if (paymentMethod === 'Razorpay') {
 				try {
 					const response = await fetch('/place-order', {
@@ -835,7 +865,7 @@ Copyright &copy;<script>document.write(new Date().getFullYear());</script> All r
 							currency: data.currency,
 							order_id: data.razorpayOrderId,
 							handler: async function (response) {
-								// Verify payment with server
+								
 								const paymentVerification = await fetch('/verify-payment', {
 									method: 'POST',
 									headers: { 'Content-Type': 'application/json' },
@@ -864,12 +894,12 @@ Copyright &copy;<script>document.write(new Date().getFullYear());</script> All r
 									title: 'Payment Verification Failed',
 									text: 'Payment verification failed. Please contact support or retry the payment.',
 									confirmButtonColor: '#d33',
-									showCancelButton: true, // Adding the "Cancel" button to go back to the order list
+									showCancelButton: true, 
 									cancelButtonText: 'Go to Orders',
-									reverseButtons: true, // To make the 'Cancel' button appear on the left
+									reverseButtons: true, 
 								}).then((result) => {
 									if (result.isConfirmed) {
-										window.location.href = `/order-list`; // Redirects to the order list page if user clicks "Retry Payment"
+										window.location.href = `/order-list`; 
 									}
 								});
 								}
@@ -880,17 +910,17 @@ Copyright &copy;<script>document.write(new Date().getFullYear());</script> All r
 						};
 	
 						const rzp = new Razorpay(options);
-						// Handle payment failure event
+
 						rzp.on('payment.failed', function(response) {
 							Swal.fire({
 									icon: 'error',
 									title: 'Payment Verification Failed',
 									text: 'Payment verification failed. Please contact support or retry the payment.',
 									confirmButtonColor: '#d33',
-									showCancelButton: true, // Adding the "Cancel" button to go back to the order list
+									showCancelButton: true, 
 								}).then((result) => {
 									if (result.isConfirmed) {
-										window.location.href = `/orders-list`; // Redirects to the order list page if user clicks "Retry Payment"
+										window.location.href = `/orders-list`; 
 									}else{
 										window.location.href = `/checkout`;
 									}
@@ -910,7 +940,7 @@ Copyright &copy;<script>document.write(new Date().getFullYear());</script> All r
 					});
 				}
 			} else {
-				// Handle COD or other payment methods
+				
 				try {
 					const response = await fetch('/place-order', {
 						method: 'POST',
@@ -1019,8 +1049,8 @@ document.getElementById('removeCouponBtn').addEventListener('click', async () =>
         document.getElementById('couponMessage').innerText = 'Failed to remove the coupon.';
     }
 });
-	</script>
-  	
+	
+</script>
 
 </body>
 </html>

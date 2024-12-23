@@ -373,7 +373,7 @@ body {
 											<button class="retry-payment-btn" data-order-id="<%= order._id %>">Retry Payment</button>
 										<% } %>
 									</td>									
-									<td>₹<%= order.totalPrice %></td>
+									<td>₹<%= order.totalPrice.toFixed(2) %></td>
 									<td class="table-actions"><a href="/order-listview/<%= order._id %>" style="text-decoration: none; color: green;">View</a></td>
 									<td class="table-actions">
 										<% if (order.status === 'Delivered') { %>
@@ -734,7 +734,7 @@ Copyright &copy;<script>document.write(new Date().getFullYear());</script> All r
             button.addEventListener('click', async (e) => {
                 const orderId = e.target.getAttribute('data-order-id');
                 try {
-                    const response = await fetch(`/retry-payment/${orderId}`, { method: 'POST' }); // Ensure method matches the controller
+                    const response = await fetch(`/retry-payment/${orderId}`, { method: 'POST' }); 
                     const data = await response.json();
 
                     if (data.success) {

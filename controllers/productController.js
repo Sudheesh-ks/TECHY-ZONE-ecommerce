@@ -45,12 +45,12 @@ const productsAdd = async (req, res) => {
         .json({ val: false, msg: "No files were uploaded" });
     }
     
-    const categoryObject = await categoryModel.findOne({ name: category });
+    const categoryObject = await categoryModel.findOne({ name: category }); // Checking if category exists
     if (!categoryObject) {
       return res.status(400).json({ val: false, msg: "Category not found" });
     }
     const imagePaths = [];
-    for (const key in req.files) {
+    for (const key in req.files) { // Looping through the uploaded files
       
       req.files[key].forEach((file) => {
         imagePaths.push(
@@ -97,7 +97,7 @@ const getAllProducts = async (req,res) => {
     const productData = await productModel.find({
       $or:[
 
-        {name:{$regex:new RegExp(".*"+search+".*","i")}},
+        {name:{$regex:new RegExp(".*"+search+".*","i")}},  // searching by name
       ],
     }).limit(limit*1)
       .skip((page-1)*limit)
@@ -105,14 +105,14 @@ const getAllProducts = async (req,res) => {
       .populate('category')
       .exec();
 
-      const count = await productModel.countDocuments({
+      const count = await productModel.countDocuments({  // Counting the number of products
         $or:[
         {name:{$regex:new RegExp(".*"+search+".*","i")}},
       ]
       });
 
 
-      const category = await categoryModel.find({isListed:true});
+      const category = await categoryModel.find({isListed:true});  // Fetching all categories
 
       if(category.length > 0){
         res.render('admin/products',{

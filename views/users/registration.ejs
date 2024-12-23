@@ -70,6 +70,10 @@
                         <label for="password" class="form-label">Confirm Password</label>
                         <input type="password" class="form-control" name="confirmPassword" id="confirmPassword" placeholder="confirm Password">
                     </div>
+                    <div class="mb-3">
+                        <label for="referralCode" class="form-label">Referral Code (Optional)</label>
+                        <input type="text" class="form-control" name="referralCode" id="referralCode" placeholder="Enter referral code">
+                    </div>
                     <div class="mb-3 form-check">
                         <input type="checkbox" class="form-check-input" id="terms">
                         <label class="form-check-label" for="terms">I agree to the terms & policies</label>
@@ -135,6 +139,7 @@
         const phno = document.getElementById('phno').value.trim();
         const password = document.getElementById('password').value.trim();
         const confirmPassword = document.getElementById('confirmPassword').value.trim();
+        const referralCode = document.getElementById('referralCode').value.trim();
         const termsChecked = document.getElementById('terms').checked;
 
         const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -169,7 +174,8 @@
                             name,
                             email,
                             phno,
-                            password
+                            password,
+                            referralCode
                         })
                     });
                     const data = await response.json();

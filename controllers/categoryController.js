@@ -3,11 +3,11 @@ const Product = require('../models/productModel');
 
 const categoryInfo = async (req, res) => {
     try {
-        const page = parseInt(req.query.page) || 1;  // Default to page 1
+        const page = parseInt(req.query.page) || 1;  // Defaults to page 1
         const limit = 4;
         const skip = (page - 1) * limit;
 
-        const categoryData = await Category.find({})  // Find all categories
+        const categoryData = await Category.find({})  // Finds all categories
             .sort({ createdAt: -1 })
             .skip(skip)
             .limit(limit);

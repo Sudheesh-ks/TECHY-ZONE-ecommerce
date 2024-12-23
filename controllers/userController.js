@@ -7,6 +7,7 @@ const Cart = require('../models/cartModel');
 const Order = require('../models/orderModel');
 const Wishlist = require('../models/wishlistModel');
 const Wallet = require('../models/walletModel');
+const Coupon = require('../models/couponModel');
 const bcrypt = require('bcrypt');
 const { generateOTP, sendOTP } = require('../utils/otp');
 const { storeOTP, verifyOTP } = require('../utils/otpStorage');
@@ -28,8 +29,12 @@ const loadRegister = async (req, res) => {
     }
 }
 
+
+const generateReferralCode = () => crypto.randomBytes(3).toString('hex').toUpperCase();  // Generating a random referral code
+
+
 const insertUser = async (req, res,next) => {
-    const { name, email, phno, password } = req.body;
+    const { name, email, phno, password, referralCode } = req.body;
     try {
 
         const existingUser = await User.findOne({ email });
@@ -38,12 +43,13 @@ const insertUser = async (req, res,next) => {
             return res.status(400).json({ val: false, msg: 'Email address already exist' });
         }
 
-        const hashedPassword = await bcrypt.hash(password, saltRounds);
-        req.session.tempUserData = { name, email, phno, password: hashedPassword };
-        const otp = generateOTP();
+        const hashedPassword = await bcrypt.hash(password, saltRounds);  // Hashing the password
+
+        req.session.tempUserData = { name, email, phno, password: hashedPassword, referralCode };  // Storing user data in session for OTP verification
+        const otp = generateOTP();  // Generating OTP
         console.log(otp);
         
-        storeOTP(email, otp);
+        storeOTP(email, otp);  // Storing OTP in session
         await sendOTP(email, otp);
         console.log("into next middlwdf")
         return res.status(200).json({ val: true, msg:null });
@@ -55,11 +61,9 @@ const insertUser = async (req, res,next) => {
 
 
 const loadOTPVerification = async (req, res) => {
-    console.log("heloo")
     console.log(req.session.tempUserData)
     if(!req.session.user){
-        console.log("inside")
-        const { email } =  req.session.tempUserData;
+        const { email } =  req.session.tempUserData;  // Accessing user data from session
         res.render('users/otp-verification', { email });
     }else{
         res.redirect('/');
@@ -69,28 +73,65 @@ const loadOTPVerification = async (req, res) => {
 
 
 
+
 const verifyOTPController = async (req, res) => {
     const { otp } = req.body;
-    const { name, email, phno, password } = req.session.tempUserData;
-    const isVerified = verifyOTP(email, otp);
+    const { name, email, phno, password, referralCode } = req.session.tempUserData;
+
+    const isVerified = verifyOTP(email, otp);  // Verifying OTP
     if (isVerified) {
         try {
-            console.log(name, email, phno, password)
-            const user = new User({
+            let referrer = null;
+
+            if (referralCode) {   // Checking if avalid referral code is provided
+                referrer = await User.findOne({ referralCode });
+                if (referrer) {
+                    console.log(`Referrer found: ${referrer.name}, ID: ${referrer._id}`);
+                    
+                    let referrerWallet = await Wallet.findOne({ userId: referrer._id });  // creating the wallet for the referrer
+                    if (!referrerWallet) {
+                        referrerWallet = new Wallet({ userId: referrer._id, balance: 0 });
+                    }
+
+                    const creditAmount = 100;  // setting ₹100 for referral bonus
+                    referrerWallet.balance += creditAmount; // Adding ₹100 to wallet
+                    referrerWallet.transactions.push({
+                        amount: creditAmount,
+                        type: 'Credit',
+                        description: 'Referral bonus credited for referring a new user.'
+                    });
+
+                    await referrerWallet.save();
+                    console.log(`Wallet successfully credited for ${referrer.name}`);
+                } else {
+                    console.log("Invalid referral code. No referrer found.");
+                }
+            }
+
+            const newReferralCode = generateReferralCode();  // Generating a new referral code
+
+            const user = new User({  // Creating a new user
                 name,
                 email,
                 phno,
-                password
+                password,
+                referralCode: newReferralCode,
+                referredBy: referrer ? referrer._id : null 
             });
+
             const userDataSaved = await user.save();
-            delete req.session.tempUserData;
+
+            const newUserWallet = new Wallet({ userId: user._id, balance: 0 });  // Creating a new wallet for the user
+            await newUserWallet.save();
+
+            delete req.session.tempUserData; // Removing user data from session
+
             req.session.user = {
                 id: user._id,
                 name: user.name,
                 email: user.email,
-                isAdmin:user.isAdmin
+                isAdmin: user.isAdmin
             };
-
 
             if (userDataSaved) {
                 res.redirect('/');
@@ -98,7 +139,7 @@ const verifyOTPController = async (req, res) => {
                 res.redirect('/users/otp-verification');
             }
         } catch (error) {
-            console.log("Error during user storage:", error.message);
+            console.error("Error during user storage:", error.message);
             res.render('users/otp-verification', { message: "Error storing user data.", email });
         }
     } else {
@@ -107,14 +148,15 @@ const verifyOTPController = async (req, res) => {
 };
 
 
+
 const resendOtp = async (req, res) => {
 
     try {
 
-        const otp1 = generateOTP();
+        const otp1 = generateOTP();  // Generating OTP
         console.log(otp1);
         
-        req.session.userOtp = otp1;
+        req.session.userOtp = otp1;  // Storing OTP in session
         const email = req.session.email;
         console.log("Resending OTP:", otp1);
         console.log("Resending OTP to email:", email);
@@ -150,15 +192,15 @@ const login = async (req, res) => {
     const { email, password } = req.body;
     console.log(email, password)
     try {
-        const user = await User.findOne({ email });
+        const user = await User.findOne({ email });  // Finding user
 
         if (user) {
 
-            if (user.isBlocked) {
+            if (user.isBlocked) {  // Checking if user is blocked
                 return res.render('users/user-ban', { message: "Your account has been banned. Please contact support." });
             }
 
-            const isPasswordValid = await bcrypt.compare(password, user.password);
+            const isPasswordValid = await bcrypt.compare(password, user.password);  // Comparing password
 
             if (isPasswordValid) {
 
@@ -191,39 +233,39 @@ const loadHome = async (req, res) => {
         const categories = await Category.find({ isListed: true });
         const { category, priceRange, sortBy, search } = req.query;
 
-        let filter = { isDeleted: false };
+        let filter = { isDeleted: false };  // Default filter
 
 
-        const listedCategoryIds = categories.map(cat => cat._id);
+        const listedCategoryIds = categories.map(cat => cat._id);  // List of category IDs
 
         if (category && category !== 'All Categories') {
-            const selectedCategory = await Category.findOne({ name: category, isListed: true });
+            const selectedCategory = await Category.findOne({ name: category, isListed: true });  // Finding selected category
             if (selectedCategory) filter.category = selectedCategory._id;
         } else {
             filter.category = { $in: listedCategoryIds };
         }
         
         if (category && category !== 'All Categories') {
-            const selectedCategory = await Category.findOne({ name: category });
+            const selectedCategory = await Category.findOne({ name: category });  
             if (selectedCategory) filter.category = selectedCategory._id;
         }
 
         
-        if (priceRange) {
+        if (priceRange) {  // Filtering through specific price range
             const [min, max] = priceRange.split('-').map(Number);
             filter.price = max ? { $gte: min, $lte: max } : { $gte: min };
         }
 
         
-        if (search) {
+        if (search) {  // Filtering through search query
             filter.name = { $regex: search, $options: 'i' };
         }
 
-        let productData = await Product.find(filter);
+        let productData = await Product.find(filter);  // Finding products
 
         
         if (sortBy) {
-            switch (sortBy) {
+            switch (sortBy) {  // Sorting based on selected option
                 case 'popularity':
                     productData.sort((a, b) => b.popularity - a.popularity);
                     break;
@@ -248,11 +290,11 @@ const loadHome = async (req, res) => {
         }
 
         
-        productData = productData.slice(0, 8);
+        productData = productData.slice(0, 8);  // Limiting to 8
 
         let cart = null;
             if (req.session.user) {
-                cart = await Cart.findOne({ userId: req.session.user.id }).populate('items.productId');
+                cart = await Cart.findOne({ userId: req.session.user.id }).populate('items.productId');  // Finding cart
             }
 
         
@@ -278,13 +320,13 @@ const loadHome = async (req, res) => {
 
 const loadShop = async (req, res) => {
     try {
-        const categories = await Category.find({ isListed: true });
-        const { category, priceRange, sortBy, search, page = 1, limit = 16 } = req.query;
+        const categories = await Category.find({ isListed: true });  // Finding categories
+        const { category, priceRange, sortBy, search, page = 1, limit = 16 } = req.query;  // Destructuring query parameters
 
         let filter = { isDeleted: false };
 
 
-        const listedCategoryIds = categories.map(cat => cat._id);
+        const listedCategoryIds = categories.map(cat => cat._id);  // List of category IDs
 
         if (category && category !== 'All Categories') {
             const selectedCategory = await Category.findOne({ name: category, isListed: true });
@@ -382,17 +424,17 @@ const loadProductDetail = async (req, res) => {
         console.log(product)
 
         
-        if (!product || product.isDeleted) {
+        if (!product || product.isDeleted) {  // Checking if the product exists
             return res.status(404).render('users/product-detail', { product: null, msg: "Product not found" });
         }
 
         
-        const relatedProducts = await Product.find({
+        const relatedProducts = await Product.find({  // Finding related products
             category: product.category,
             _id: { $ne: productId },
         }).limit(8);
 
-        let cart = null;
+        let cart = null;  
         if (req.session.user) {
             cart = await Cart.findOne({ userId: req.session.user.id }).populate('items.productId');
         }
@@ -425,15 +467,15 @@ const loadMyAccount = async (req, res) => {
             return res.redirect('/updateprofile');
         }
 
-        const addressData = await Address.find({ user: req.session.user.id });
+        const addressData = await Address.find({ user: req.session.user.id });  // Find addresses for the user
 
         let cart = null;
         if (req.session.user) {
             cart = await Cart.findOne({ userId: req.session.user.id }).populate('items.productId');
         }
 
-        const showPhoneField = !!userData.phno; 
-        const isGoogleUser = userData.isGoogleAuth; 
+        const showPhoneField = !!userData.phno;   // Check if phone number is provided
+        const isGoogleUser = userData.isGoogleAuth;   // Check if the user is a Google user
 
         res.render('users/myaccount',{user: req.session.user, userData, addressData, cart, showPhoneField, isGoogleUser});
 
@@ -499,7 +541,7 @@ const updateProfile = async (req, res) => {
         if (phno) user.phno = phno;
 
        
-        if (password && password.trim().length > 0) {
+        if (password && password.trim().length > 0) {  // Check if password is provided and not empty
             user.password = await bcrypt.hash(password, 10);
         }
 
@@ -529,13 +571,13 @@ const loadOrdersList = async (req, res) => {
 
         const totalOrders = await Order.countDocuments({ userId });
 
-        const orders = await Order.find({ userId })
+        const orders = await Order.find({ userId })  // Find orders for the user
             .sort({ createdAt: -1 })
             .skip(skip)
             .limit(limit)
             .lean();
 
-        if (!orders.length) {
+        if (!orders.length) {  // If no orders found
             return res.render('users/orders-list', {
                 user: req.session.user,
                 orders: [],
@@ -547,9 +589,9 @@ const loadOrdersList = async (req, res) => {
             });
         }
 
-        const productIds = orders.flatMap(order => order.products.map(item => item.productId));
+        const productIds = orders.flatMap(order => order.products.map(item => item.productId));  
 
-        const products = await Product.find({ _id: { $in: productIds } }).lean();
+        const products = await Product.find({ _id: { $in: productIds } }).lean();  // Find products for the order
         const productMap = Object.fromEntries(products.map(product => [product._id.toString(), product]));
 
         for (let order of orders) {
@@ -557,7 +599,7 @@ const loadOrdersList = async (req, res) => {
                 item.productDetails = productMap[item.productId] || { name: "Product not found" };
             });
 
-            const shippingAddress = await Address.findById(order.addressId).lean();
+            const shippingAddress = await Address.findById(order.addressId).lean();  
             order.address = shippingAddress ? shippingAddress.address : "No address found";
         }
 
@@ -587,7 +629,7 @@ const orderListView = async (req, res) => {
         const userId = req.session.user.id;
         const orderId = req.params.id; 
 
-        const order = await Order.findOne({ _id: orderId, userId }).lean();
+        const order = await Order.findOne({ _id: orderId, userId }).lean();  // Find order for the user
 
 
         if (!order) {
@@ -621,7 +663,7 @@ const cancelOrder = async (req, res) => {
         const orderId = req.params.id;
         const { reason } = req.body;
 
-        const order = await Order.findOneAndUpdate(
+        const order = await Order.findOneAndUpdate(  // Update order status
             { _id: orderId, userId },
             { status: 'Cancelled', cancelReason: reason },
             { new: true }
@@ -635,7 +677,7 @@ const cancelOrder = async (req, res) => {
         console.log(`Order ${orderId} cancelled successfully.`);
         console.log(`Order Details:`, order);
 
-        for (let item of order.products) {
+        for (let item of order.products) {  // Update stock for canceled order
             const product = await Product.findById(item.productId);
             if (product) {
                 await Product.findByIdAndUpdate(item.productId, {
@@ -654,11 +696,11 @@ const cancelOrder = async (req, res) => {
         console.log(`Payment Method: ${order.paymentMethod}`);
         console.log(`Payment Status: ${order.paymentStatus}`);
 
-        if (order.paymentMethod !== 'Cash on Delivery' && order.paymentStatus !== 'Pending') {
+        if (order.paymentMethod !== 'Cash on Delivery' && order.paymentStatus !== 'Pending') {  // Checking if refund is applicable
             refundAmount = order.totalPrice;
             console.log(`Refund Amount Calculated: ₹${refundAmount}`);
 
-            const updatedWallet = await Wallet.findOneAndUpdate(
+            const updatedWallet = await Wallet.findOneAndUpdate(  // Updating wallet
                 { userId },
                 {
                     $inc: { balance: refundAmount },
@@ -715,7 +757,7 @@ const requestReturn = async (req, res) => {
             return res.status(400).send('Return request already exists.');
         }
 
-        order.returnStatus = 'Requested';
+        order.returnStatus = 'Requested';  // Update return status
         order.returnReason = reason || '';
         order.returnRequestedAt = new Date();
         await order.save();
@@ -756,7 +798,7 @@ const cancelProduct = async (req, res) => {
         const productIndex = order.products.findIndex(p => p.productId.toString() === productId);
         console.log('Product index:', productIndex);
 
-        if (productIndex === -1) {
+        if (productIndex === -1) {  // Product not found in order
             console.log('Product not found in order');
             return res.status(404).json({ message: 'Product not found in order' });
         }
@@ -768,7 +810,7 @@ const cancelProduct = async (req, res) => {
 
         order.totalPrice -= canceledProductPrice;
 
-        if (order.totalPrice < 0) {
+        if (order.totalPrice < 0) {  // Handle negative total price
             console.log(`Total price became negative (${order.totalPrice}). Resetting to zero.`);
             order.totalPrice = 0;
         }
@@ -779,7 +821,7 @@ const cancelProduct = async (req, res) => {
         const product = await Product.findById(productId);
         if (product) {
             console.log('Product found for stock update:', product);
-            product.stock += canceledProduct.quantity;
+            product.stock += canceledProduct.quantity;  // Increase stock
             await product.save();
             console.log('Product stock updated:', product);
         }
@@ -799,7 +841,7 @@ const cancelProduct = async (req, res) => {
                 ],
             });
         } else {
-            wallet.balance += canceledProductPrice;
+            wallet.balance += canceledProductPrice;  // Add refund to wallet
             wallet.transactions.push({
                 amount: canceledProductPrice,
                 type: 'Credit',
@@ -811,7 +853,7 @@ const cancelProduct = async (req, res) => {
         console.log(`Refund of ₹${canceledProductPrice} added to wallet for user ${userId}.`);
         }
 
-         const allProductsCancelled = order.products.every(p => p.status === 'Cancelled');
+         const allProductsCancelled = order.products.every(p => p.status === 'Cancelled');  // Check if all products are cancelled
 
          if (allProductsCancelled) {
              order.status = 'Cancelled';
@@ -923,12 +965,12 @@ const postAddAddress = async (req, res) => {
       let userAddress = await Address.findOne({ userId });
   
       if (!userAddress) {
-        userAddress = new Address({
+        userAddress = new Address({  // Create a new address for the user
           userId,
           address: [{ addressType, name, city, landMark, state, pincode, phone, altPhone }],
         });
       } else {
-        userAddress.address.push({ addressType, name, city, landMark, state, pincode, phone, altPhone });
+        userAddress.address.push({ addressType, name, city, landMark, state, pincode, phone, altPhone });  // Add address to existing user
       }
   
       await userAddress.save();
@@ -951,7 +993,7 @@ const postAddAddress = async (req, res) => {
 
         const userId = req.session.user.id;
 
-        const userAddress = await Address.findOne({
+        const userAddress = await Address.findOne({  // Finding user by ID
             userId,
             address: { $elemMatch: { _id: addressId } }
         });
@@ -961,7 +1003,7 @@ const postAddAddress = async (req, res) => {
             return res.redirect('/pagenotfound');
         }
 
-        const addressData = userAddress.address.find(item => item._id.toString() === addressId.toString());
+        const addressData = userAddress.address.find(item => item._id.toString() === addressId.toString());  // Finding address by ID
 
         if (!addressData) {
             console.log("Specific address not found in user's address list");
@@ -990,7 +1032,7 @@ const postEditAddress = async (req, res) => {
 
         const userId = req.session.user.id;
 
-        const userAddress = await Address.findOne({
+        const userAddress = await Address.findOne({  // Finding user by ID
             userId,
             address: { $elemMatch: { _id: addressId } }
         });
@@ -1000,7 +1042,7 @@ const postEditAddress = async (req, res) => {
             return res.redirect('/pagenotfound');
         }    
 
-        const addressData = userAddress.address.find(item => item._id.toString() === addressId.toString());
+        const addressData = userAddress.address.find(item => item._id.toString() === addressId.toString());  // Finding address by ID
 
         if (!addressData) {
             console.log("Specific address not found in user's address list");
@@ -1074,12 +1116,12 @@ const loadWallet = async (req, res) => {
 
         let cart = null;
         if (req.session.user) {
-            cart = await Cart.findOne({ userId: req.session.user.id }).populate('items.productId');
+            cart = await Cart.findOne({ userId: req.session.user.id }).populate('items.productId');  // Finding cart for the user
         }
 
-        const wallet = await Wallet.findOne({ userId });
+        const wallet = await Wallet.findOne({ userId });  // Finding wallet for the user
 
-        const totalTransactions = wallet?.transactions.length || 0;
+        const totalTransactions = wallet?.transactions.length || 0;  
 
 
         const currentPage = parseInt(page);
@@ -1248,13 +1290,13 @@ const addToCart = async (req, res) => {
 const updateCartItemQuantity = async (req, res) => {
     const { productId, quantity } = req.body;
 
-    if (!productId || !quantity || quantity < 1) {
+    if (!productId || !quantity || quantity < 1) {  // Checking if productId, quantity, and quantity are valid
         console.log('Invalid data received:', productId, quantity);
         return res.status(400).json({ success: false, message: 'Invalid data' });
     }
 
     try {
-        if (!req.session.user || !req.session.user.id) {
+        if (!req.session.user || !req.session.user.id) {  // Checking if user is authenticated
             console.log('User not authenticated');
             return res.status(401).json({ success: false, message: 'User not authenticated' });
         }
@@ -1265,7 +1307,7 @@ const updateCartItemQuantity = async (req, res) => {
             return res.status(404).json({ success: false, message: 'Cart not found' });
         }
 
-        const item = cart.items.find(item => item.productId.toString() === productId);
+        const item = cart.items.find(item => item.productId.toString() === productId); // Finding the item in the cart
         if (!item) {
             console.log('Item not found in cart');
             return res.status(404).json({ success: false, message: 'Item not found in cart' });
@@ -1276,7 +1318,7 @@ const updateCartItemQuantity = async (req, res) => {
         let totalQuantity = 0;
         let totalPrice = 0;
         cart.items.forEach(item => {
-            totalQuantity += item.quantity;
+            totalQuantity += item.quantity;  // Updating total quantity
             totalPrice += item.price * item.quantity;
         });
 
@@ -1325,7 +1367,7 @@ const removeFromCart = async (req, res) => {
             });
         }
 
-        cart.totalPrice = cart.items.reduce((total, item) => {
+        cart.totalPrice = cart.items.reduce((total, item) => {  // Updating total price
             return total + item.price * item.quantity;
         }, 0);
 
@@ -1361,6 +1403,12 @@ const loadCheckout = async (req, res) => {
         let appliedCoupon = req.session.appliedCoupon || null;
         let discount = 0;
 
+        // Fetching available coupons
+        const availableCoupons = await Coupon.find({  
+            isActive: true,
+        }).select('couponCode discount expiryDate');
+
+
         if (productId && quantity) {
             const product = await Product.findById(productId);
             if (!product) {
@@ -1395,7 +1443,8 @@ const loadCheckout = async (req, res) => {
                 product: checkoutProduct,
                 appliedCoupon,
                 discount,
-                deliveryCharge
+                deliveryCharge,
+                availableCoupons
             });
         }
 
@@ -1409,8 +1458,8 @@ const loadCheckout = async (req, res) => {
             cart.totalPrice -= discount;
         }
 
-        const deliveryCharge = cart && cart.totalPrice < 500 ? 30 : 0;
-        const totalPriceWithDelivery = (cart ? cart.totalPrice : 0) + deliveryCharge;
+        const deliveryCharge = cart && cart.totalPrice < 500 ? 30 : 0;  // Adding delivery charge
+        const totalPriceWithDelivery = (cart ? cart.totalPrice : 0) + deliveryCharge;  // Updating total price with delivery charge
 
         res.render('users/checkout', {
             user: req.session.user,
@@ -1421,10 +1470,11 @@ const loadCheckout = async (req, res) => {
             appliedCoupon,
             discount,
             deliveryCharge,
-            totalPriceWithDelivery
+            totalPriceWithDelivery,
+            availableCoupons
         });
     } catch (error) {
-        console.error('Error in loading checkout:', error.message);
+        console.error('Error in loading checkout:', error.message, error);
         res.status(500).send('Internal Server Error');
     }
 };
@@ -1586,12 +1636,12 @@ const downloadInvoice = async (req, res) => {
 
         const order = await Order.findById(orderId)
             .populate('userId', 'name email') 
-            .select('userId products paymentMethod deliveryCharge totalPrice createdAt');
+            .select('userId products paymentMethod deliveryCharge totalPrice discountAmount createdAt');
 
         if (!order) {
             return res.status(404).send('Order not found.');
         }
-
+        // HTML desing for the invoice
         const html = `
             <html>
             <head>
@@ -1620,6 +1670,7 @@ const downloadInvoice = async (req, res) => {
                             <th>Quantity</th>
                             <th>Payment Method</th>
                             <th>Price (₹)</th>
+                            <th>Discount (₹)</th>
                             <th>Total (₹)</th>
                             <th>Delivery Charge (₹)</th>
                         </tr>
@@ -1631,7 +1682,8 @@ const downloadInvoice = async (req, res) => {
                                 <td>${product.quantity}</td>
                                 <td>${order.paymentMethod}</td>
                                 <td>₹${product.price.toFixed(2)}</td>
-                                <td>₹${(product.price * product.quantity).toFixed(2)}</td>
+                                <td>₹${order.discountAmount.toFixed(2)}</td>
+                                <td>₹${(product.price * product.quantity - order.discountAmount).toFixed(2)}</td>
                                 <td>${order.deliveryCharge}</td>
                             </tr>
                         `).join('')}
@@ -1766,7 +1818,7 @@ const addToCartFromWishlist = async (req, res) => {
             return res.status(404).json({ success: false, message: 'Product not found.' });
         }
 
-        if (parsedQuantity > product.stock) {
+        if (parsedQuantity > product.stock) {  // Checking if the requested quantity exceeds stock
             return res.status(400).json({
                 success: false,
                 message: `Insufficient stock! Only ${product.stock} items available.`,
@@ -1785,12 +1837,12 @@ const addToCartFromWishlist = async (req, res) => {
         }
 
        
-        const existingProductIndex = cart.items.findIndex(
+        const existingProductIndex = cart.items.findIndex(  // Checking if the product is already in the cart
             item => item.productId.toString() === productId.toString()
         );
 
         if (existingProductIndex >= 0) {
-            const existingQuantity = cart.items[existingProductIndex].quantity;
+            const existingQuantity = cart.items[existingProductIndex].quantity;  // Quantity of the existing product
 
             if (existingQuantity + parsedQuantity > product.stock) {
                 return res.status(400).json({
@@ -1800,7 +1852,7 @@ const addToCartFromWishlist = async (req, res) => {
             }
 
             
-            cart.items[existingProductIndex].quantity += parsedQuantity;
+            cart.items[existingProductIndex].quantity += parsedQuantity;  // Updating the quantity
         } else {
           
             cart.items.push({
@@ -1813,10 +1865,10 @@ const addToCartFromWishlist = async (req, res) => {
         }
 
       
-        cart.items = cart.items.filter(item => item.quantity > 0);
+        cart.items = cart.items.filter(item => item.quantity > 0);  // Removing empty items
 
         cart.totalQuantity = cart.items.reduce((total, item) => total + item.quantity, 0);
-        cart.totalPrice = cart.items.reduce((total, item) => total + item.price * item.quantity, 0);
+        cart.totalPrice = cart.items.reduce((total, item) => total + item.price * item.quantity, 0);  // Calculating total price
 
         await cart.save();
 
@@ -1833,21 +1885,18 @@ const addToCartFromWishlist = async (req, res) => {
 
 const removeFromWishlist = async (req, res) => {
     try {
-        console.log("Start: removeFromWishlist controller");
 
         if (!req.session.user) {
-            console.log("User not logged in");
             return res.status(401).json({ success: false, message: 'User not logged in' });
         }
 
         const userId = req.session.user.id;
         const { productId } = req.body;
 
-        console.log("User ID:", userId);
-        console.log("Product ID to remove:", productId);
+        console.log(userId);
+        console.log(productId);
 
         const wishlist = await Wishlist.findOne({ userId });
-        console.log("Wishlist found:", wishlist);
 
         if (wishlist) {
             wishlist.products = wishlist.products.filter(
@@ -1855,11 +1904,9 @@ const removeFromWishlist = async (req, res) => {
             );
 
             await wishlist.save();
-            console.log("Product removed. Updated Wishlist:", wishlist);
 
             res.json({ success: true, message: 'Product removed from wishlist' });
         } else {
-            console.log("Wishlist not found for user");
             res.status(404).json({ success: false, message: 'Wishlist not found' });
         }
     } catch (error) {
@@ -1873,7 +1920,6 @@ const logout = (req, res) => {
     try {
         req.session.destroy((err) => {
             if (err) {
-                console.error('Error destroying session:', err);
                 return res.status(500).send('Internal Server Error');
             }
             res.redirect('/login');

@@ -462,11 +462,10 @@ Copyright &copy;<script>document.write(new Date().getFullYear());</script> All r
 	function validateCartQuantity(input) {
 		let quantity = parseInt(input.value);
 		
-		// Check if the value is a number and within the range
 		if (isNaN(quantity) || quantity < 1) {
-			input.value = 1; // Set to minimum if less than 1 or invalid
+			input.value = 1; 
 		} else if (quantity > 10) {
-			input.value = 10; // Set to maximum if greater than 10
+			input.value = 10;
 		}
 	}
 
@@ -502,11 +501,10 @@ Copyright &copy;<script>document.write(new Date().getFullYear());</script> All r
                             data.message,
                             'success'
                         ).then(() => {
-                            // Update the subtotal dynamically
+                            
                             const totalElement = document.querySelector('.mtext-110.cl2');
                             totalElement.textContent = `₹ ${data.totalPrice}`;
                             
-                            // Optionally remove the product row from the DOM
                             e.target.closest('tr').remove();
                         });
                     } else {
@@ -545,7 +543,7 @@ Copyright &copy;<script>document.write(new Date().getFullYear());</script> All r
 
             if (isNaN(newQuantity) || newQuantity < 1) {
                 alert('Invalid quantity');
-                input.value = 1; // Reset to minimum valid quantity
+                input.value = 1; 
                 return;
             }
 
@@ -562,10 +560,9 @@ Copyright &copy;<script>document.write(new Date().getFullYear());</script> All r
                 console.log('Server response:', data);
 
                 if (data.success) {
-                    // Update the total price for the current product
+                    
                     totalElement.textContent = `₹ ${data.updatedPrice}`;
 
-                    // Update the total price for the entire cart
                     const cartTotalElement = document.getElementById('cart-total-price');
                     if (cartTotalElement) {
                         cartTotalElement.textContent = `₹ ${data.totalCartPrice}`;

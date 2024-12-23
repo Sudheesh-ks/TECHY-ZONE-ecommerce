@@ -6,12 +6,12 @@ const Wallet = require('../models/walletModel');
 const getAllOrders = async (req, res) => {
     try {
 
-        let search = "";
+        let search = "";  // implementing search
         if (req.query.search) {
             search = req.query.search;
         }
 
-        let page = 1;
+        let page = 1;  // implementing pagination
         if (req.query.page) {
             page = parseInt(req.query.page);
         }
@@ -19,7 +19,7 @@ const getAllOrders = async (req, res) => {
 
         const count = await Order.countDocuments();
         
-        const orders = await Order.find().sort({ createdAt: -1 }).lean()
+        const orders = await Order.find().sort({ createdAt: -1 }).lean()  // Fetching all orders
         .sort({ createdAt: -1 })
             .limit(limit)
             .skip((page - 1) * limit)
@@ -69,7 +69,7 @@ const loadOrderDetails = async (req, res) => {
     try {
         const orderId = req.params.id;
 
-        const order = await Order.findById(orderId).lean();
+        const order = await Order.findById(orderId).lean(); // Fetching order details
 
         if (!order) {
             return res.render('admin/order-detail', { order: null, message: 'Order not found.' });
@@ -81,7 +81,7 @@ const loadOrderDetails = async (req, res) => {
         }
 
         for (let item of order.products) {
-            const product = await Product.findById(item.productId).lean();
+            const product = await Product.findById(item.productId).lean();  // Fetching product details
             if (product) {
                 item.productDetails = {
                     name: product.name,
@@ -113,7 +113,7 @@ const updateOrderStatus = async (req, res) => {
         }
 
         
-        const order = await Order.findByIdAndUpdate(
+        const order = await Order.findByIdAndUpdate(  // Updating order status
             orderId,
             { status },
             { new: true } 
@@ -126,14 +126,14 @@ const updateOrderStatus = async (req, res) => {
 
          order.status = status;
 
-         if (status === 'Delivered') {
+         if (status === 'Delivered') {  // Updating payment status
              order.paymentStatus = 'Completed';
          }
  
          await order.save();
  
          console.log(`Order ${orderId} status updated to ${status}`);
-         if (status === 'Delivered' && order.paymentMethod === 'COD') {
+         if (status === 'Delivered' && order.paymentMethod === 'COD') {  // Updating payment status
              console.log(`Payment status for order ${orderId} updated to Completed.`);
          }
 
@@ -150,7 +150,7 @@ const approveReturn = async (req, res) => {
     try {
         const orderId = req.params.id;
 
-        const updatedOrder = await Order.findByIdAndUpdate(orderId, { returnStatus: 'Approved', status: 'Returned' }, { new: true });
+        const updatedOrder = await Order.findByIdAndUpdate(orderId, { returnStatus: 'Approved', status: 'Returned' }, { new: true });  // Updating return status
 
         if (!updatedOrder) {
             return res.status(404).json({ message: 'Order not found' });
@@ -161,7 +161,7 @@ const approveReturn = async (req, res) => {
  
          let wallet = await Wallet.findOne({ userId });
  
-         if (!wallet) {
+         if (!wallet) {  
              wallet = new Wallet({
                  userId,
                  balance: refundAmount,
@@ -174,7 +174,7 @@ const approveReturn = async (req, res) => {
                  ],
              });
          } else {
-             wallet.balance += refundAmount;
+             wallet.balance += refundAmount;  // Adding refund amount
              wallet.transactions.push({
                  amount: refundAmount,
                  type: 'Credit',
@@ -251,7 +251,7 @@ const approveProductReturn = async (req, res) => {
                 ],
             });
         } else {
-            wallet.balance += refundAmount;
+            wallet.balance += refundAmount; // Adding refund amount
             wallet.transactions.push({
                 amount: refundAmount,
                 type: 'Credit',
@@ -290,12 +290,12 @@ const rejectProductReturn = async (req, res) => {
             return res.status(404).json({ message: 'Order not found' });
         }
 
-        const product = order.products.find(p => p.productId.toString() === productId);
+        const product = order.products.find(p => p.productId.toString() === productId); // Finding the product
         if (!product || product.returnStatus !== 'Requested') {
             return res.status(400).json({ message: 'Invalid product return request' });
         }
 
-        product.returnStatus = 'Rejected';
+        product.returnStatus = 'Rejected'; // Updating return status
 
         await order.save();
 

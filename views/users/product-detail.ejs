@@ -939,9 +939,9 @@ function validateQuantity() {
     let quantity = parseInt(quantityInput.value);
 
     if (isNaN(quantity) || quantity < 1) {
-        quantityInput.value = 1; // Set to minimum if below 1 or invalid
+        quantityInput.value = 1; 
     } else if (quantity > 10) {
-        quantityInput.value = 10; // Set to maximum if above 10
+        quantityInput.value = 10; 
     }
 }
 
@@ -974,14 +974,14 @@ function decrementQuantity(productId) {
 <script>
 document.querySelectorAll('.buy-now-button').forEach(button => {
     button.addEventListener('click', function (e) {
-        e.preventDefault(); // Prevent the default action (navigation)
+        e.preventDefault();
 
-        const stock = parseInt(this.getAttribute('data-stock')); // Get the available stock
-        const quantity = parseInt(document.getElementById('quantity').value) || 1; // Get the selected quantity, default to 1
-        const isLoggedIn = this.getAttribute('data-logged-in') === "true"; // Check login status
+        const stock = parseInt(this.getAttribute('data-stock')); 
+        const quantity = parseInt(document.getElementById('quantity').value) || 1; 
+        const isLoggedIn = this.getAttribute('data-logged-in') === "true"; 
 
         if (!isLoggedIn) {
-            // If the user is not logged in, show a SweetAlert2 popup
+           
             Swal.fire({
                 title: "Not Logged In",
                 text: "You need to log in to purchase products.",
@@ -989,7 +989,7 @@ document.querySelectorAll('.buy-now-button').forEach(button => {
                 confirmButtonText: "OK"
             });
         } else if (stock < quantity) {
-            // If the selected quantity is greater than available stock, show a SweetAlert2 popup
+            
             Swal.fire({
                 title: "Insufficient Stock",
                 text: `Only ${stock} item(s) are available in stock. Please reduce the quantity.`,
@@ -997,7 +997,7 @@ document.querySelectorAll('.buy-now-button').forEach(button => {
                 confirmButtonText: "OK"
             });
         } else if (stock === 0) {
-            // If the product is out of stock, show a SweetAlert2 popup
+            
             Swal.fire({
                 title: "Out of Stock",
                 text: "This product is currently unavailable.",
@@ -1005,7 +1005,7 @@ document.querySelectorAll('.buy-now-button').forEach(button => {
                 confirmButtonText: "OK"
             });
         } else {
-            // Proceed to checkout if stock is sufficient and user is logged in
+            
             window.location.href = this.href;
         }
     });
@@ -1018,7 +1018,7 @@ document.querySelectorAll('.buy-now-button').forEach(button => {
 <script>
 	document.querySelectorAll('.add-to-wishlist').forEach((button) => {
     button.addEventListener('click', async () => {
-        const productId = button.dataset.id; // Product ID from the button's data attribute
+        const productId = button.dataset.id; 
 
         try {
             const response = await fetch('/wishlist/add', {

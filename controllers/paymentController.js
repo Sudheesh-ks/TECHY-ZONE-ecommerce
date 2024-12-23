@@ -11,7 +11,7 @@ const crypto = require('crypto');
 const placeOrder = async (req, res) => {
     try {
         const { addressId, paymentMethod } = req.body;
-        const couponCode = req.session.appliedCoupon ? req.session.appliedCoupon.couponCode : req.body.couponCode;
+        const couponCode = req.session.appliedCoupon ? req.session.appliedCoupon.couponCode : req.body.couponCode; // Using the coupon code from the session
 
         if (!addressId) {
             return res.status(400).send('Address is required.');
@@ -19,7 +19,7 @@ const placeOrder = async (req, res) => {
 
         const userId = req.session.user.id;
 
-        const userAddresses = await Address.findOne({ userId });
+        const userAddresses = await Address.findOne({ userId }); // Fetching user addresses
         const selectedAddress = userAddresses?.address.find(addr => addr._id.toString() === addressId);
         if (!selectedAddress) {
             return res.status(404).send('Address not found.');
@@ -35,7 +35,7 @@ const placeOrder = async (req, res) => {
                 return res.status(404).send('Product not found.');
             }
 
-            orderProducts.push({
+            orderProducts.push({ // Adding the product to the order
                 productId: product._id,
                 name: product.name,
                 price: product.price,
@@ -50,7 +50,7 @@ const placeOrder = async (req, res) => {
                 return res.status(400).send('Your cart is empty.');
             }
 
-            orderProducts = cart.items.map(item => ({
+            orderProducts = cart.items.map(item => ({ // Adding the cart items to the order
                 productId: item.productId,
                 name: item.name,
                 price: item.price,
@@ -63,7 +63,7 @@ const placeOrder = async (req, res) => {
 
         let discountAmount = 0;
         if (couponCode) {
-            const coupon = await Coupon.findOne({ 
+            const coupon = await Coupon.findOne({  // Checking if the coupon is valid
                 couponCode: couponCode.toUpperCase(), 
                 isActive: true, 
                 expiryDate: { $gte: new Date() } 
@@ -73,15 +73,15 @@ const placeOrder = async (req, res) => {
                 return res.status(400).send('Invalid or expired coupon.');
             }
 
-            if (totalPrice < coupon.minAmount) {
+            if (totalPrice < coupon.minAmount) { // Checking if the cart total is greater than or equal to the minimum amount
                 return res.status(400).send(`Minimum cart value for this coupon is ₹${coupon.minAmount}.`);
             }
 
-            if (coupon.userUsed >= coupon.maxUsage) {
+            if (coupon.userUsed >= coupon.maxUsage) { // Checking if the coupon can still be used
                 return res.status(400).send('Coupon usage limit reached.');
             }
 
-            discountAmount = (totalPrice * coupon.discount) / 100;
+            discountAmount = (totalPrice * coupon.discount) / 100;     // Checking if the discount is less than or equal to the maximum discount
             if (coupon.maxDiscount && discountAmount > coupon.maxDiscount) {
                 discountAmount = coupon.maxDiscount;
             }
@@ -90,12 +90,12 @@ const placeOrder = async (req, res) => {
             await coupon.save();
         }
 
-        const finalTotalPrice = totalPrice - discountAmount;
+        const finalTotalPrice = totalPrice - discountAmount; // Calculating the final total price
 
-         const deliveryCharge = finalTotalPrice < 500 ? 30 : 0;
+         const deliveryCharge = finalTotalPrice < 500 ? 30 : 0; // Calculating the delivery charge
          const totalAmountWithDelivery = finalTotalPrice + deliveryCharge;
 
-        if (paymentMethod === 'Cash on Delivery' && finalTotalPrice > 1000) {
+        if (paymentMethod === 'Cash on Delivery' && finalTotalPrice > 1000) {  // Checking if Cash on Delivery is available
             return res.status(400).send('Cash on Delivery is not available for orders above ₹1000.');
         }
 
@@ -125,7 +125,7 @@ const placeOrder = async (req, res) => {
             }
         }
 
-        if (!productId) {
+        if (!productId) { // Clearing the cart if the order is placed from the cart
             await Cart.deleteOne({ userId });
         }
 
@@ -137,18 +137,18 @@ const placeOrder = async (req, res) => {
         }
 
 
-        if (paymentMethod === 'Wallet') {
+        if (paymentMethod === 'Wallet') { // Checking if the payment method is Wallet
             const wallet = await Wallet.findOne({ userId });
         
             if (!wallet || wallet.balance < totalAmountWithDelivery) {
                 return res.status(400).send('Insufficient wallet balance to complete the order.');
             }
         
-            wallet.balance -= totalAmountWithDelivery;
+            wallet.balance -= totalAmountWithDelivery; // Deducting the total amount from the wallet
             wallet.transactions = wallet.transactions.concat({ amount: totalAmountWithDelivery, type: 'Debit', description: 'Order placed' })
             await wallet.save();
         
-            order.paymentStatus = 'Completed';
+            order.paymentStatus = 'Completed';  // Updating the payment status
             await order.save();
             console.log(`Payment of ₹${totalAmountWithDelivery} completed using Wallet.`);
             return res.status(200).json({
@@ -158,7 +158,7 @@ const placeOrder = async (req, res) => {
                 redirectUrl: `/order-confirmation/${order._id}`,
             });      
 
-        } else if (paymentMethod === 'Cash on Delivery') {
+        } else if (paymentMethod === 'Cash on Delivery') {  // Checking if the payment method is Cash on Delivery
             return res.status(200).json({
                 success: true,
                 message: 'Order placed successfully!',
@@ -166,7 +166,7 @@ const placeOrder = async (req, res) => {
                 redirectUrl: `/order-confirmation/${order._id}`,
             });
         } else if (paymentMethod === 'Razorpay') {
-            const razorpayOrder = await razorpayInstance.orders.create({
+            const razorpayOrder = await razorpayInstance.orders.create({   // Creating the Razorpay order
                 amount: Math.round(totalAmountWithDelivery * 100),
                 currency: 'INR',
                 receipt: `order_${Date.now()}`,
@@ -194,20 +194,20 @@ const verifyPayment = async (req, res) => {
     try {
         const { orderId, paymentId, razorpayOrderId, razorpaySignature } = req.body;
 
-        const body = razorpayOrderId + "|" + paymentId;
-        const expectedSignature = crypto
+        const body = razorpayOrderId + "|" + paymentId;  // Concatenating the Razorpay order ID and payment ID
+        const expectedSignature = crypto  // Creating the expected signature
             .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
             .update(body.toString())
             .digest('hex');
 
-        if (expectedSignature === razorpaySignature) {
+        if (expectedSignature === razorpaySignature) {  // Verifying the signature
             const order = await Order.findById(orderId);
             if (order) {
                 order.paymentStatus = 'Completed';
                 order.status = 'Pending';
                 await order.save();
 
-                await Cart.deleteOne({ userId: order.userId });
+                await Cart.deleteOne({ userId: order.userId });  // Clearing the cart
 
                 return res.json({ success: true, message: 'Payment verified.' });
             } else {
@@ -233,15 +233,15 @@ const retryPayment = async (req, res) => {
             return res.status(404).json({ success: false, message: 'Order not found.' });
         }
 
-        if (order.paymentStatus !== 'Pending' || order.paymentMethod !== 'Razorpay') {
+        if (order.paymentStatus !== 'Pending' || order.paymentMethod !== 'Razorpay') {  // Checking if the order is pending and payment method is Razorpay
             return res.status(400).json({ success: false, message: 'Invalid order for retry payment.' });
         }
 
-        if (!order.totalPrice) {
+        if (!order.totalPrice) {  // Checking if the order total price is available
             return res.status(400).json({ success: false, message: 'Invalid order amount for retry.' });
         }
 
-        const razorpayOrder = await razorpayInstance.orders.create({
+        const razorpayOrder = await razorpayInstance.orders.create({  // Creating the Razorpay order
             amount: Math.round(order.totalPrice * 100),
             currency: 'INR',
             receipt: `order_${order._id}`, 

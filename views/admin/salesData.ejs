@@ -38,6 +38,25 @@
         </div>
     </div>
 
+    <!-- Display Total Revenue and Discount -->
+
+    <div class="row">
+        <div class="col-md-3">
+            <div class="card card-body">
+                <h5>Total Revenue</h5>
+                <h2> ₹<%= totalRevenue %></h2>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card card-body">
+                <h5>Total Discount Given</h5>
+                <h2> ₹<%= totalDiscount %></h2>
+            </div>
+        </div>
+    </div>
+
+
     <!-- Sales Report Table -->
     <div class="card mt-4">
         <div class="card-body">
@@ -60,7 +79,7 @@
                                     <td>#<%= order._id.toString().slice(-6) %></td>
                                     <td><%= order.userId.name %></td>
                                     <td><%= order.paymentMethod %></td>
-                                    <td>₹<%= order.totalPrice %></td>
+                                    <td>₹<%= order.totalPrice.toFixed(2) %></td>
                                     <td><%= order.createdAt.toISOString().split('T')[0] %></td>
                                 </tr>
                             <% }) %>
