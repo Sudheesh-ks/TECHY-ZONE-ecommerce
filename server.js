@@ -1,11 +1,12 @@
 const mongoose = require('mongoose');
-const dotenv = require('dotenv');
-dotenv.config(); 
-mongoose.connect(process.env.MONGO_URI);
+mongoose.connect("mongodb+srv://sudheeshks132:JnTju3Z0jB6tDVZT@cluster0.qzy4b.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0");
+// mongoose.connect("mongodb://127.0.0.1:27017/Techy-Zone");
 
 const express = require('express');
 const session = require('express-session');
 const passport = require('./config/passport');
+const dotenv = require('dotenv');
+dotenv.config(); 
 const app = express();
 const nocache = require('nocache');
 const path = require('path');
