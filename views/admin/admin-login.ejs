@@ -15,9 +15,9 @@
   <div class="login-container">
     <h2 class="text-center">Admin Login</h2>
     <% if (message) { %>
-    <div class="alert alert-danger text-center"><%= message %></div>
+    <div class="alert alert-danger text-center mb-4" style="color: red;"><%= message %></div>
     <% } %>
-    <form id="adminLoginForm" method="post" action="/admin/login">
+    <form class="mt-4" id="adminLoginForm" method="post" action="/admin/login">
       <div class="form-group">
         <label for="adminEmail">Email address</label>
         <input
