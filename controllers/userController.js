@@ -649,7 +649,7 @@ const orderListView = async (req, res) => {
 
         const shippingAddress = order.address;
 
-        res.render('users/order-listView', { user: req.session.user, order});
+        res.render('users/order-listview', { user: req.session.user, order});
         
     } catch (error) {
         console.log(error.message);
@@ -1722,33 +1722,27 @@ const downloadInvoice = async (req, res) => {
     try {
         const { orderId } = req.params;
 
-        // Fetch order details
         const order = await Order.findById(orderId)
-            .populate('userId', 'name email') // Populate user details
+            .populate('userId', 'name email')
             .select('userId products paymentMethod deliveryCharge totalPrice discountAmount createdAt');
 
         if (!order) {
             return res.status(404).send("Order not found.");
         }
 
-        // Create and configure a new PDF document
         const doc = new PDFDocument({ margin: 50 });
         const filename = `Invoice_${orderId}.pdf`;
 
-        // Set response headers for PDF download
         res.setHeader('Content-Disposition', `attachment; filename=${filename}`);
         res.setHeader('Content-Type', 'application/pdf');
 
-        // Pipe the PDF document to the response
         doc.pipe(res);
 
-        // Add content to the PDF
         addHeader(doc, order);
         addTable(doc, order.products, order.discountAmount);
         addSummary(doc, order.deliveryCharge, order.totalPrice);
         addFooter(doc);
 
-        // Finalize the PDF document
         doc.end();
     } catch (error) {
         console.error("Error generating invoice PDF:", error.message);
@@ -1756,7 +1750,6 @@ const downloadInvoice = async (req, res) => {
     }
 };
 
-// Function to add the header section
 const addHeader = (doc, order) => {
     doc
         .fontSize(20)
@@ -1778,7 +1771,6 @@ const addHeader = (doc, order) => {
         .moveDown(1);
 };
 
-// Function to add the product table
 const addTable = (doc, products, discountAmount) => {
     const tableTop = doc.y;
 
