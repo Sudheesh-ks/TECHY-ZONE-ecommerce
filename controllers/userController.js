@@ -13,6 +13,7 @@ const { generateOTP, sendOTP } = require('../utils/otp');
 const { storeOTP, verifyOTP } = require('../utils/otpStorage');
 const productModel = require('../models/productModel');
 const pdf = require('html-pdf');
+const PDFDocument = require("pdfkit");
 const crypto = require('crypto');
 
 
@@ -1630,90 +1631,199 @@ const loadOrderConfirmation = async (req, res) => {
 };
 
 
+// const downloadInvoice = async (req, res) => {
+//     try {
+//         const { orderId } = req.params; 
+
+//         const order = await Order.findById(orderId)
+//             .populate('userId', 'name email') 
+//             .select('userId products paymentMethod deliveryCharge totalPrice discountAmount createdAt');
+
+//         if (!order) {
+//             return res.status(404).send('Order not found.');
+//         }
+//         // HTML desing for the invoice
+//         const html = `
+//             <html>
+//             <head>
+//                 <style>
+//                     body { font-family: Arial, sans-serif; margin: 20px; }
+//                     .container { width: 100%; }
+//                     .table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+//                     th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+//                     th { background-color: #f4f4f4; }
+//                     .total-row { font-weight: bold; text-align: right; padding-top: 15px; }
+//                     .footer { margin-top: 30px; text-align: center; font-size: 0.9em; }
+//                 </style>
+//             </head>
+//             <body>
+//                 <h2 style="text-align: center;">Invoice</h2>
+//                 <p><strong>Order ID:</strong> #${order._id.toString().slice(-6)}</p>
+//                 <p><strong>Order Date:</strong> ${order.createdAt.toISOString().split('T')[0]}</p>
+//                 <p><strong>Customer Name:</strong> ${order.userId ? order.userId.name : 'N/A'}</p>
+//                 <p><strong>Email:</strong> ${order.userId ? order.userId.email : 'N/A'}</p>
+
+//                 <h3 style="margin-top: 20px;">Order Details</h3>
+//                 <table class="table">
+//                     <thead>
+//                         <tr>
+//                             <th>Product Name</th>
+//                             <th>Quantity</th>
+//                             <th>Payment Method</th>
+//                             <th>Price (₹)</th>
+//                             <th>Discount (₹)</th>
+//                             <th>Total (₹)</th>
+//                             <th>Delivery Charge (₹)</th>
+//                         </tr>
+//                     </thead>
+//                     <tbody>
+//                         ${order.products.map(product => `
+//                             <tr>
+//                                 <td>${product.name}</td>
+//                                 <td>${product.quantity}</td>
+//                                 <td>${order.paymentMethod}</td>
+//                                 <td>₹${product.price.toFixed(2)}</td>
+//                                 <td>₹${order.discountAmount.toFixed(2)}</td>
+//                                 <td>₹${(product.price * product.quantity - order.discountAmount).toFixed(2)}</td>
+//                                 <td>${order.deliveryCharge}</td>
+//                             </tr>
+//                         `).join('')}
+//                     </tbody>
+//                 </table>
+
+//                 <div class="total-row">
+//                     <span>Total Amount:</span> ₹${order.totalPrice.toFixed(2)}
+//                 </div>
+
+//                 <div class="footer">
+//                     <p>Thank you for your purchase!</p>
+//                 </div>
+//             </body>
+//             </html>
+//         `;
+
+//         pdf.create(html, { format: 'A4' }).toStream((err, stream) => {
+//             if (err) {
+//                 console.error('Error generating PDF:', err.message);
+//                 return res.status(500).send('An error occurred while generating the PDF.');
+//             }
+//             res.setHeader('Content-Disposition', 'attachment; filename=invoice.pdf');
+//             res.setHeader('Content-Type', 'application/pdf');
+//             stream.pipe(res);
+//         });
+//     } catch (error) {
+//         console.error('Error exporting invoice data to PDF:', error.message);
+//         res.status(500).send('An error occurred while exporting the invoice data.');
+//     }
+// };
+
+
 const downloadInvoice = async (req, res) => {
     try {
-        const { orderId } = req.params; 
+        const { orderId } = req.params;
 
+        // Fetch order details
         const order = await Order.findById(orderId)
-            .populate('userId', 'name email') 
+            .populate('userId', 'name email') // Populate user details
             .select('userId products paymentMethod deliveryCharge totalPrice discountAmount createdAt');
 
         if (!order) {
-            return res.status(404).send('Order not found.');
+            return res.status(404).send("Order not found.");
         }
-        // HTML desing for the invoice
-        const html = `
-            <html>
-            <head>
-                <style>
-                    body { font-family: Arial, sans-serif; margin: 20px; }
-                    .container { width: 100%; }
-                    .table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-                    th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
-                    th { background-color: #f4f4f4; }
-                    .total-row { font-weight: bold; text-align: right; padding-top: 15px; }
-                    .footer { margin-top: 30px; text-align: center; font-size: 0.9em; }
-                </style>
-            </head>
-            <body>
-                <h2 style="text-align: center;">Invoice</h2>
-                <p><strong>Order ID:</strong> #${order._id.toString().slice(-6)}</p>
-                <p><strong>Order Date:</strong> ${order.createdAt.toISOString().split('T')[0]}</p>
-                <p><strong>Customer Name:</strong> ${order.userId ? order.userId.name : 'N/A'}</p>
-                <p><strong>Email:</strong> ${order.userId ? order.userId.email : 'N/A'}</p>
 
-                <h3 style="margin-top: 20px;">Order Details</h3>
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th>Product Name</th>
-                            <th>Quantity</th>
-                            <th>Payment Method</th>
-                            <th>Price (₹)</th>
-                            <th>Discount (₹)</th>
-                            <th>Total (₹)</th>
-                            <th>Delivery Charge (₹)</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${order.products.map(product => `
-                            <tr>
-                                <td>${product.name}</td>
-                                <td>${product.quantity}</td>
-                                <td>${order.paymentMethod}</td>
-                                <td>₹${product.price.toFixed(2)}</td>
-                                <td>₹${order.discountAmount.toFixed(2)}</td>
-                                <td>₹${(product.price * product.quantity - order.discountAmount).toFixed(2)}</td>
-                                <td>${order.deliveryCharge}</td>
-                            </tr>
-                        `).join('')}
-                    </tbody>
-                </table>
+        // Create and configure a new PDF document
+        const doc = new PDFDocument({ margin: 50 });
+        const filename = `Invoice_${orderId}.pdf`;
 
-                <div class="total-row">
-                    <span>Total Amount:</span> ₹${order.totalPrice.toFixed(2)}
-                </div>
+        // Set response headers for PDF download
+        res.setHeader('Content-Disposition', `attachment; filename=${filename}`);
+        res.setHeader('Content-Type', 'application/pdf');
 
-                <div class="footer">
-                    <p>Thank you for your purchase!</p>
-                </div>
-            </body>
-            </html>
-        `;
+        // Pipe the PDF document to the response
+        doc.pipe(res);
 
-        pdf.create(html, { format: 'A4' }).toStream((err, stream) => {
-            if (err) {
-                console.error('Error generating PDF:', err.message);
-                return res.status(500).send('An error occurred while generating the PDF.');
-            }
-            res.setHeader('Content-Disposition', 'attachment; filename=invoice.pdf');
-            res.setHeader('Content-Type', 'application/pdf');
-            stream.pipe(res);
-        });
+        // Add content to the PDF
+        addHeader(doc, order);
+        addTable(doc, order.products, order.discountAmount);
+        addSummary(doc, order.deliveryCharge, order.totalPrice);
+        addFooter(doc);
+
+        // Finalize the PDF document
+        doc.end();
     } catch (error) {
-        console.error('Error exporting invoice data to PDF:', error.message);
-        res.status(500).send('An error occurred while exporting the invoice data.');
+        console.error("Error generating invoice PDF:", error.message);
+        res.status(500).send("An error occurred while generating the invoice PDF.");
     }
+};
+
+// Function to add the header section
+const addHeader = (doc, order) => {
+    doc
+        .fontSize(20)
+        .text("Invoice", { align: "center" })
+        .moveDown();
+
+    doc
+        .fontSize(12)
+        .text(`Order ID: ${order._id.toString().slice(-6)}`)
+        .text(`Order Date: ${order.createdAt.toISOString().split('T')[0]}`)
+        .text(`Customer Name: ${order.userId ? order.userId.name : "N/A"}`)
+        .text(`Email: ${order.userId ? order.userId.email : "N/A"}`)
+        .moveDown();
+
+    doc
+        .moveTo(50, doc.y)
+        .lineTo(550, doc.y)
+        .stroke()
+        .moveDown(1);
+};
+
+// Function to add the product table
+const addTable = (doc, products, discountAmount) => {
+    const tableTop = doc.y;
+
+    // Table headers
+    doc
+        .fontSize(10)
+        .text("Product Name", 50, tableTop, { bold: true })
+        .text("Quantity", 200, tableTop, { bold: true })
+        .text("Price (₹)", 300, tableTop, { bold: true })
+        .text("Discount (₹)", 400, tableTop, { bold: true })
+        .text("Total (₹)", 500, tableTop, { bold: true });
+
+    doc.moveTo(50, tableTop + 15).lineTo(550, tableTop + 15).stroke();
+
+    // Table rows
+    let currentY = tableTop + 25;
+    products.forEach((product) => {
+        const total = product.quantity * product.price - (discountAmount || 0);
+        doc
+            .fontSize(10)
+            .text(product.name, 50, currentY)
+            .text(product.quantity, 200, currentY)
+            .text(`₹${product.price.toFixed(2)}`, 300, currentY)
+            .text(`₹${(discountAmount || 0).toFixed(2)}`, 400, currentY)
+            .text(`₹${total.toFixed(2)}`, 500, currentY);
+
+        currentY += 20;
+    });
+};
+
+// Function to add the summary section
+const addSummary = (doc, deliveryCharge, totalPrice) => {
+    doc
+        .moveDown(2)
+        .fontSize(12)
+        .text(`Delivery Charge: ₹${deliveryCharge.toFixed(2)}`, { align: "right" })
+        .text(`Total Amount: ₹${totalPrice.toFixed(2)}`, { align: "right", bold: true });
+};
+
+// Function to add the footer
+const addFooter = (doc) => {
+    doc
+        .moveDown(2)
+        .fontSize(10)
+        .text("Thank you for your purchase!", { align: "center" });
 };
 
 const loadWishlist = async (req, res) => {
