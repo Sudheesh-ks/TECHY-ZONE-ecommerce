@@ -15,7 +15,7 @@ const productModel = require('../models/productModel');
 const pdf = require('html-pdf');
 const PDFDocument = require("pdfkit");
 const crypto = require('crypto');
-
+console.log('sudheesh')
 
 const saltRounds = 10;
 
