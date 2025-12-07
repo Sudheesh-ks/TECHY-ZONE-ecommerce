@@ -1,33 +1,69 @@
-
 body,
 html {
-    height: 100%;
-    margin: 0;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background-image: url('/admin/images/adminlogin.png');
-    background-size: cover;
-    background-position: center;
-    font-family: 'Nunito Sans', sans-serif;
-    color: white;
-}
-.login-container {
-    width: 100%;
-    max-width: 500px;
-    padding: 20px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    background-color: hsl(193, 80%, 17%);
-    border-radius: 8px;
-}
-.error-message {
-    color: red;
-    font-size: 0.875rem;
-}
-.text-center{
-    color: white;
+  height: 100%;
+  margin: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-image: url('/admin/images/adminlogin.png');
+  background-size: cover;
+  background-position: center;
+  font-family: 'Nunito Sans', sans-serif;
+  color: white;
 }
 
-#adminPassword{
-    margin-left: 31px;
+.login-container {
+  width: 100%;
+  max-width: 600px;
+  padding: 40px;
+  background-color: hsl(193, 80%, 17%); 
+  border-radius: 15px;
+  backdrop-filter: blur(6px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+}
+
+.text-center {
+  color: white;
+  font-size: 26px;
+  font-weight: 700;
+  margin-bottom: 25px;
+}
+
+/* FIXED ALIGNMENT FOR LABEL + INPUT */
+.form-group {
+  margin-bottom: 22px;
+}
+
+.form-group label {
+  display: block;         /* force label on separate line */
+  margin-bottom: 6px;     /* spacing between label & input */
+  font-size: 14px;        /* slightly smaller label */
+  font-weight: 600;
+  color: #eaeaea;
+}
+
+/* FULL WIDTH INPUT FIELD */
+.form-control {
+  width: 100%;
+  height: 48px;
+  font-size: 16px;
+  border-radius: 8px;
+  padding: 10px 12px;
+  box-sizing: border-box;
+}
+
+/* FULL WIDTH LOGIN BUTTON */
+.btn-primary {
+  width: 100%;
+  height: 48px;
+  margin-top: 10px;
+  font-size: 18px;
+  font-weight: 600;
+  border-radius: 8px;
+}
+
+.error-message {
+  color: #ff6b6b;
+  margin-top: 4px;
+  font-size: 13px;
 }
