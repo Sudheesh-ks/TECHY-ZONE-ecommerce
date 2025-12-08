@@ -2,7 +2,8 @@ const User = require('../models/userModel');
 const nodemailer = require('nodemailer');
 const bcrypt = require('bcrypt');
 const env = require('dotenv').config();
-const session = require('express-session');
+const { generateOTP, sendOTP } = require("../utils/otp");
+const Otp = require("../models/otpModel");
 
 
 const loadForgotPassword = async (req, res) => {
@@ -19,19 +20,24 @@ const forgotEmailValid = async (req, res) => {
     try {
         const { email } = req.body;
         const user = await User.findOne({ email });
-        
+
         if (!user) {
             return res.render('users/forgot-password', { message: "User with this email does not exist." });
         }
 
-        const otp = generateOTP(); // Generating OTP
-        req.session.userOtp = otp;
-        req.session.email = email;
+        const otp = generateOTP();
 
-        await sendVerificationEmail(email, otp); // Sending OTP
+        await Otp.deleteMany({ email });
+        await Otp.create({ email, otp });
+
+        await sendOTP(email, otp);
+
         console.log("OTP sent:", otp);
 
-        res.render('users/forgot-pass-otp');
+        req.session.resetEmail = email;
+
+        res.render('users/forgot-pass-otp', { email });
+
     } catch (error) {
         console.error("Error validating email:", error.message);
         res.redirect('/error');
@@ -53,17 +59,25 @@ const securePassword = async (password) => {
 const verifyForgotPassOTP = async (req, res) => {
     try {
         const enterOtp = req.body.otp;
+        const email = req.session.resetEmail;
 
-        if(enterOtp === req.session.userOtp){  // Comparing OTP
-            res.json({success:true,redirectUrl:"reset-password"});
-           }else{
-            res.json({success:false,message:"OTP not matching"});
-           }
-        
+        const record = await Otp.findOne({ email });
+
+        if (!record) {
+            return res.json({ success: false, message: "OTP expired. Please request a new one." });
+        }
+
+        if (record.otp !== enterOtp) {
+            return res.json({ success: false, message: "Invalid OTP" });
+        }
+
+        await Otp.deleteOne({ email });
+
+        return res.json({ success: true, redirectUrl: "reset-password" });
+
     } catch (error) {
-        res.status(500).json({success:false,message:"An error occured. Please try again"});
+        return res.status(500).json({ success: false, message: "An error occurred" });
     }
-   
 };
 
 
@@ -74,18 +88,6 @@ const resetPassword = async (req, res) => {
         res.redirect('/pageNotFound');
     }
 };
-
-
-// Function to Generate OTP
-function generateOTP(length = 6) {
-    const characters = '0123456789';
-    let otp = '';
-    for (let i = 0; i < length; i++) {
-        otp += characters.charAt(Math.floor(Math.random() * characters.length));
-    }
-    console.log(otp)
-    return otp;
-}
 
 
 const sendVerificationEmail = async (email, otp) => {
@@ -114,28 +116,24 @@ const sendVerificationEmail = async (email, otp) => {
 };
 
 
-const resendOtp = async (req,res) => {
-
+const resendOtp = async (req, res) => {
     try {
-        
-        const otp = generateOTP();  // Generating OTP
-        req.session.userOtp = otp;
-        const email = req.session.email;
-        console.log("Resending OTP to email:",email);
-        const emailSent = await sendVerificationEmail(email,otp);
-        if(emailSent){
-            console.log("Resent OTP:",otp);
-            res.status(200).json({success:true, message:"Resend OTP Successful"});
-            
-        }
+        const email = req.session.resetEmail;
 
+        const otp = generateOTP();
+
+        await Otp.deleteMany({ email });
+        await Otp.create({ email, otp });
+
+        await sendOTP(email, otp);
+
+        res.status(200).json({ success: true, message: "OTP resent successfully" });
 
     } catch (error) {
-        console.log("Error in resend otp",error);
-        res.status(500).json({success:'Internal Server Error'});
-        
+        console.log("Error in resend OTP:", error);
+        res.status(500).json({ success: false, message: "Internal Server Error" });
     }
-}
+};
 
 
 const postNewPassword = async (req,res) => {

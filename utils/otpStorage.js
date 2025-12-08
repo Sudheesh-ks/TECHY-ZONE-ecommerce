@@ -1,25 +1,25 @@
-const otpStore = {};
+const Otp = require("../models/otpModel");
 
 // Function to store OTP
-function storeOTP(email, otp) {
-    otpStore[email] = { otp, expiresAt: Date.now() + 10 * 60 * 1000 }; 
+async function storeOTP(email, otp) {
+     await Otp.deleteMany({ email });
+     await Otp.create({
+        email,
+        otp
+     });
 }
 
 // Function to verify OTP
-function verifyOTP(email, enteredOtp) {
-    const otpEntry = otpStore[email];
-    if (!otpEntry) return false;
+async function verifyOTP(email, enteredOtp) {
+    const record = await Otp.findOne({ email });
 
-    const { otp, expiresAt } = otpEntry;
-    if (Date.now() > expiresAt) {
-        delete otpStore[email]; // To remove expired OTP
-        return false;
-    }
+    if(!record) return false;
 
-    if (otp === enteredOtp) {
-        delete otpStore[email]; // To remove the stored otp after verification
+    if (record.otp === enteredOtp) {
+        await Otp.deleteOne({ email }); // To remove the stored otp after verification
         return true;
     }
+
     return false;
 }
 

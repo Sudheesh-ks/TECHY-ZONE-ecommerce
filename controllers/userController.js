@@ -8,9 +8,9 @@ const Order = require('../models/orderModel');
 const Wishlist = require('../models/wishlistModel');
 const Wallet = require('../models/walletModel');
 const Coupon = require('../models/couponModel');
+const Otp = require("../models/otpModel");  
 const bcrypt = require('bcrypt');
-const { generateOTP, sendOTP } = require('../utils/otp');
-const { storeOTP, verifyOTP } = require('../utils/otpStorage');
+const { generateOTP, sendOTP } = require("../utils/otp"); 
 const productModel = require('../models/productModel');
 const pdf = require('html-pdf');
 const PDFDocument = require("pdfkit");
@@ -50,9 +50,9 @@ const insertUser = async (req, res,next) => {
         const otp = generateOTP();  // Generating OTP
         console.log(otp);
         
-        storeOTP(email, otp);  // Storing OTP in session
+        await Otp.deleteMany({ email });  
+        await Otp.create({ email, otp });  
         await sendOTP(email, otp);
-        console.log("into next middlwdf")
         return res.status(200).json({ val: true, msg:null });
     } catch (error) {
         console.log("Error during OTP generation:", error.message);
@@ -76,105 +76,110 @@ const loadOTPVerification = async (req, res) => {
 
 
 const verifyOTPController = async (req, res) => {
-    const { otp } = req.body;
-    const { name, email, phno, password, referralCode } = req.session.tempUserData;
+    try {
+        const { otp } = req.body;
+        const { name, email, phno, password, referralCode } = req.session.tempUserData;
 
-    const isVerified = verifyOTP(email, otp);  // Verifying OTP
-    if (isVerified) {
-        try {
-            let referrer = null;
+        const record = await Otp.findOne({ email });
 
-            if (referralCode) {   // Checking if avalid referral code is provided
-                referrer = await User.findOne({ referralCode });
-                if (referrer) {
-                    console.log(`Referrer found: ${referrer.name}, ID: ${referrer._id}`);
-                    
-                    let referrerWallet = await Wallet.findOne({ userId: referrer._id });  // creating the wallet for the referrer
-                    if (!referrerWallet) {
-                        referrerWallet = new Wallet({ userId: referrer._id, balance: 0 });
-                    }
-
-                    const creditAmount = 100;  // setting ₹100 for referral bonus
-                    referrerWallet.balance += creditAmount; // Adding ₹100 to wallet
-                    referrerWallet.transactions.push({
-                        amount: creditAmount,
-                        type: 'Credit',
-                        description: 'Referral bonus credited for referring a new user.'
-                    });
-
-                    await referrerWallet.save();
-                    console.log(`Wallet successfully credited for ${referrer.name}`);
-                } else {
-                    console.log("Invalid referral code. No referrer found.");
-                }
-            }
-
-            const newReferralCode = generateReferralCode();  // Generating a new referral code
-
-            const user = new User({  // Creating a new user
-                name,
-                email,
-                phno,
-                password,
-                referralCode: newReferralCode,
-                referredBy: referrer ? referrer._id : null 
+        if (!record) {
+            return res.render("users/otp-verification", {
+                message: "OTP expired or not found.",
+                email
             });
-
-            const userDataSaved = await user.save();
-
-            const newUserWallet = new Wallet({ userId: user._id, balance: 0 });  // Creating a new wallet for the user
-            await newUserWallet.save();
-
-            delete req.session.tempUserData; // Removing user data from session
-
-            req.session.user = {
-                id: user._id,
-                name: user.name,
-                email: user.email,
-                isAdmin: user.isAdmin
-            };
-
-            if (userDataSaved) {
-                res.redirect('/');
-            } else {
-                res.redirect('/users/otp-verification');
-            }
-        } catch (error) {
-            console.error("Error during user storage:", error.message);
-            res.render('users/otp-verification', { message: "Error storing user data.", email });
         }
-    } else {
-        res.render('users/otp-verification', { message: "Invalid or expired OTP. Please try again.", email });
+
+        if (record.otp !== otp) {
+            return res.render("users/otp-verification", {
+                message: "Invalid OTP. Please try again.",
+                email
+            });
+        }
+
+        // OTP is correct
+        await Otp.deleteOne({ email });
+
+        // Continue with user registration -----
+        let referrer = null;
+
+        if (referralCode) {
+            referrer = await User.findOne({ referralCode });
+            if (referrer) {
+                let referrerWallet = await Wallet.findOne({ userId: referrer._id });
+                if (!referrerWallet) {
+                    referrerWallet = new Wallet({ userId: referrer._id, balance: 0 });
+                }
+
+                const creditAmount = 100;
+                referrerWallet.balance += creditAmount;
+
+                referrerWallet.transactions.push({
+                    amount: creditAmount,
+                    type: 'Credit',
+                    description: 'Referral bonus credited for referring a new user.'
+                });
+
+                await referrerWallet.save();
+            }
+        }
+
+        const newReferralCode = generateReferralCode();
+
+        const user = new User({
+            name,
+            email,
+            phno,
+            password,
+            referralCode: newReferralCode,
+            referredBy: referrer ? referrer._id : null
+        });
+
+        await user.save();
+
+        await new Wallet({ userId: user._id, balance: 0 }).save();
+
+        delete req.session.tempUserData;
+
+        req.session.user = {
+            id: user._id,
+            name: user.name,
+            email: user.email,
+            isAdmin: user.isAdmin
+        };
+
+        return res.redirect("/");
+
+    } catch (err) {
+        console.log("Error in OTP verification", err);
+        res.render("users/otp-verification", {
+            message: "Something went wrong.",
+            email: req.session.tempUserData.email
+        });
     }
 };
 
 
 
 const resendOtp = async (req, res) => {
-
     try {
+        const email = req.session.tempUserData.email;
 
-        const otp1 = generateOTP();  // Generating OTP
-        console.log(otp1);
-        
-        req.session.userOtp = otp1;  // Storing OTP in session
-        const email = req.session.email;
+        const otp1 = generateOTP();
         console.log("Resending OTP:", otp1);
-        console.log("Resending OTP to email:", email);
-        const emailSent = await sendVerificationEmail(email, otp1);
-        if (emailSent) {
-            console.log("Resent OTP:", otp1);
-            res.status(200).json({ success: true, message: "Resend OTP Successful" });
 
-        }
+        await Otp.deleteMany({ email });
+        await Otp.create({ email, otp: otp1 });
 
+        await sendOTP(email, otp1);
+
+        res.status(200).json({ success: true, message: "OTP resent successfully" });
 
     } catch (error) {
-        console.log("Error in resend otp", error);
-        res.status(500).json({ success: 'Internal Server Error' });
-
+        console.log("Error in resend OTP", error);
+        res.status(500).json({ success: false, message: "Internal Server Error" });
     }
-}
+};
+
 
 
 const loadLogin = async (req, res) => {
