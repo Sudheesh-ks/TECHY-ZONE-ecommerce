@@ -212,7 +212,7 @@ const updateProduct = async (req, res) => {
       for (const key in req.files) {
         req.files[key].forEach((file) => {
           console.log(`Processing file: ${file.path}`);
-          imagePaths.push(path.relative(path.join(__dirname, "..", "public"), file.path));
+          imagePaths.push(file.path);
         });
       }
       finalImages = imagePaths;
