@@ -25,7 +25,8 @@
     "pdfkit": "^0.15.2",
     "pdfkit-table": "^0.1.99",
     "razorpay": "^2.9.5",
-    "sharp": "^0.33.5"
+    "sharp": "^0.33.5",
+    "sib-api-v3-sdk": "^8.5.0"
   },
   "name": "techy-zone",
   "version": "1.0.0",
