@@ -34,7 +34,7 @@
 
     <div class="cropPreviewSection" id="cropPreviewSection<%= i %>" style="display: <%= product.images && product.images[i] ? 'block' : 'none' %>;">
       <% if (product.images && product.images[i]) { %>
-        <img id="cropPreview<%= i %>" src="/<%= product.images[i] %>" style="max-width: 100%; height: auto;" />
+        <img id="cropPreview<%= i %>" src="<%= product.images[i] %>" style="max-width: 100%; height: auto;" />
       <% } else { %>
         <img id="cropPreview<%= i %>" style="max-width: 100%; height: auto;" />
       <% } %>
@@ -43,7 +43,7 @@
 
     <div id="croppedImagePreview<%= i %>" class="cropped-image-preview">
       <% if (product.images && product.images[i]) { %>
-        <img src="/uploads/<%= product.images[i] %>" style="max-width: 100%; height: auto;" />
+        <img src="<%= product.images[i] %>" style="max-width: 100%; height: auto;" />
       <% } %>
     </div>
   <% } %>

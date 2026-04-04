@@ -211,7 +211,7 @@
 						<% cart.items.forEach(item => { %>
 							<li class="header-cart-item flex-w flex-t m-b-12">
 								<div class="header-cart-item-img">
-									<img src="/<%= item.productId.images[0] || '/default-image.jpg' %>" alt="IMG">
+									<img src="<%= item.productId.images[0] || '/default-image.jpg' %>" alt="IMG">
 								</div>
 				
 								<div class="header-cart-item-txt p-t-8">
@@ -282,31 +282,31 @@
 							<div class="wrap-slick3-arrows flex-sb-m flex-w"></div>
 
 							<div class="slick3 gallery-lb">
-								<div class="item-slick3" data-thumb="/<%=product.images[0] ? `${product.images[0]}` : '/user/images/default-product.png'%>">
+								<div class="item-slick3" data-thumb="<%=product.images[0] ? `${product.images[0]}` : '/user/images/default-product.png'%>">
 									<div class="wrap-pic-w pos-relative">
-										<img class="product-image" src="/<%=product.images[0] ? `${product.images[0]}` : '/user/images/default-product.png'%>" alt="IMG-PRODUCT">
+										<img class="product-image" src="<%=product.images[0] ? `${product.images[0]}` : '/user/images/default-product.png'%>" alt="IMG-PRODUCT">
 
-										<a class="flex-c-m size-108 how-pos1 bor0 fs-16 cl10 bg0 hov-btn3 trans-04" href="/<%=product.images[0] ? `${product.images[0]}` : '/user/images/default-product.png'%>">
+										<a class="flex-c-m size-108 how-pos1 bor0 fs-16 cl10 bg0 hov-btn3 trans-04" href="<%=product.images[0] ? `${product.images[0]}` : '/user/images/default-product.png'%>">
 											<i class="fa fa-expand"></i>
 										</a>
 									</div>
 								</div>
 
-								<div class="item-slick3" data-thumb="/<%=product.images[1] ? `${product.images[1]}` : '/user/images/default-product.png'%>">
+								<div class="item-slick3" data-thumb="<%=product.images[1] ? `${product.images[1]}` : '/user/images/default-product.png'%>">
 									<div class="wrap-pic-w pos-relative">
-										<img class="product-image" src="/<%=product.images[1] ? `${product.images[1]}` : '/user/images/default-product.png'%>" alt="IMG-PRODUCT">
+										<img class="product-image" src="<%=product.images[1] ? `${product.images[1]}` : '/user/images/default-product.png'%>" alt="IMG-PRODUCT">
 
-										<a class="flex-c-m size-108 how-pos1 bor0 fs-16 cl10 bg0 hov-btn3 trans-04" href="/<%=product.images[1] ? `${product.images[1]}` : '/user/images/default-product.png'%>">
+										<a class="flex-c-m size-108 how-pos1 bor0 fs-16 cl10 bg0 hov-btn3 trans-04" href="<%=product.images[1] ? `${product.images[1]}` : '/user/images/default-product.png'%>">
 											<i class="fa fa-expand"></i>
 										</a>
 									</div>
 								</div>
 
-								<div class="item-slick3" data-thumb="/<%=product.images[2] ? `${product.images[2]}` : '/user/images/default-product.png'%>">
+								<div class="item-slick3" data-thumb="<%=product.images[2] ? `${product.images[2]}` : '/user/images/default-product.png'%>">
 									<div class="wrap-pic-w pos-relative">
-										<img class="product-image" src="/<%=product.images[2] ? `${product.images[2]}` : '/user/images/default-product.png'%>" alt="IMG-PRODUCT">
+										<img class="product-image" src="<%=product.images[2] ? `${product.images[2]}` : '/user/images/default-product.png'%>" alt="IMG-PRODUCT">
 
-										<a class="flex-c-m size-108 how-pos1 bor0 fs-16 cl10 bg0 hov-btn3 trans-04" href="/<%=product.images[2] ? `${product.images[2]}` : '/user/images/default-product.png'%>">
+										<a class="flex-c-m size-108 how-pos1 bor0 fs-16 cl10 bg0 hov-btn3 trans-04" href="<%=product.images[2] ? `${product.images[2]}` : '/user/images/default-product.png'%>">
 											<i class="fa fa-expand"></i>
 										</a>
 									</div>
@@ -541,7 +541,7 @@
 				<div class="item-slick2 p-l-15 p-r-15 p-t-15 p-b-15">
 					<div class="block2">
 					<div class="block2-pic hov-img0">
-						<img src="/<%= relatedProduct.images[0] || 'user/images/default-product.png' %>" alt="IMG-PRODUCT">
+						<img src="<%= relatedProduct.images[0] || 'user/images/default-product.png' %>" alt="IMG-PRODUCT">
 	
 						<a href="<%= relatedProduct._id %>" class="block2-btn flex-c-m stext-103 cl2 size-102 bg0 bor2 hov-btn1 p-lr-15 trans-04">
 						View Details

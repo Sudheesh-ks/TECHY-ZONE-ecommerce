@@ -99,7 +99,7 @@
             <% if (order && order.products.length > 0) { %>
                 <% order.products.forEach(product => { %>
                     <div class="product-item">
-                        <img src="/<%= product.image %>" alt="<%= product.name %>" class="product-image">
+                        <img src="<%= product.image %>" alt="<%= product.name %>" class="product-image">
                         <div class="product-details">
                             <h3 class="h6 mb-1"><%= product.name %></h3>
                             <p>Quantity: <%= product.quantity %></p>
