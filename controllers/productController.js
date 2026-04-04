@@ -53,9 +53,7 @@ const productsAdd = async (req, res) => {
     for (const key in req.files) { // Looping through the uploaded files
       
       req.files[key].forEach((file) => {
-        imagePaths.push(
-          path.relative(path.join(__dirname, "..", "public"), file.path)
-        );
+        imagePaths.push(file.path);
       });
     }
     
