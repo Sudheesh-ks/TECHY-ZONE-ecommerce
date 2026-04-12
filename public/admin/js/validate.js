@@ -24,6 +24,8 @@ function previewAndCrop(event, index) {
     const file = event.target.files[0];
     if (!file)  return 
 
+    clearError(event.target);
+
     const allowedType = ["image/png", "image/gif", "image/jpeg"]
     console.log(allowedType.includes(file.type))
     if(!allowedType.includes(file.type)){
@@ -162,7 +164,13 @@ function validateAndSubmit() {
     }
 }
 
+function clearError(input) {
+    const existingErrors = input.parentElement.querySelectorAll('.error-message');
+    existingErrors.forEach(error => error.remove());
+}
+
 function showError(input, message) {
+    clearError(input); 
     const error = document.createElement("p");
     error.className = "error-message";
     error.style.color = "red";

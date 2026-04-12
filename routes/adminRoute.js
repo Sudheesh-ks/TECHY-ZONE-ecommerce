@@ -54,13 +54,9 @@ router.get('/unblockProduct',productController.unblockProduct);
 router.get('/products/edit/:id', productController.getEditProductPage);
 
 
-router.put(
+router.post(
   '/products/edit/:id', 
-  upload.fields([
-    { name: 'croppedImage1', maxCount: 1 },
-    { name: 'croppedImage2', maxCount: 1 },
-    { name: 'croppedImage3', maxCount: 1 }
-  ]),
+  upload.any(),
   productController.updateProduct
 );
 

@@ -198,40 +198,39 @@ const updateProduct = async (req, res) => {
     }
     console.log('Product found:', product);
 
-    const categoryData = await categoryModel.findOne({ name: req.body.category });
-    if (!categoryData) {
-      console.log(`Category ${req.body.category} not found`);
-      return res.status(404).json({ val: false, msg: `Category ${req.body.category} not found` });
-    }
-    console.log('Category validated:', categoryData);
-
-    let finalImages;
-    if (req.files && Object.keys(req.files).length > 0) {
-      console.log('Processing uploaded files...');
-      const imagePaths = [];
-      for (const key in req.files) {
-        req.files[key].forEach((file) => {
-          console.log(`Processing file: ${file.path}`);
-          imagePaths.push(file.path);
-        });
+    let categoryData;
+    if (req.body.category) {
+      categoryData = await categoryModel.findOne({ name: req.body.category });
+      if (!categoryData) {
+        console.log(`Category ${req.body.category} not found`);
+        return res.status(404).json({ val: false, msg: `Category ${req.body.category} not found` });
       }
-      finalImages = imagePaths;
-    } else {
-      console.log('No new files uploaded, using existing images...');
-      finalImages = product.images;
+      console.log('Category validated:', categoryData);
     }
 
-    finalImages = [...new Set(finalImages)]; // Remove duplicates
+    let finalImages = [...product.images]; // Start with existing images
+
+    // Update images where new files are provided
+    for (let i = 1; i <= 3; i++) {
+      const fieldName = `croppedImage${i}`;
+      const file = req.files.find(f => f.fieldname === fieldName);
+      if (file) {
+        console.log(`Updating image ${i} with new file: ${file.path}`);
+        finalImages[i - 1] = file.path;
+      }
+    }
+
     console.log('Final Images:', finalImages);
 
-    product.name = req.body.name;
-    product.description = req.body.description;
-    product.category = categoryData._id;
-    product.price = req.body.price;
-    product.offerPrice = req.body.offerPrice;
-    product.stock = req.body.stock;
-    product.warranty = req.body.warranty;
-    product.returnPolicy = req.body.returnPolicy;
+    // Handle form fields with fallbacks
+    product.name = req.body.name || product.name;
+    product.description = req.body.description || product.description;
+    product.category = categoryData ? categoryData._id : product.category;
+    product.price = req.body.price ? parseFloat(req.body.price) : product.price;
+    product.offerPrice = req.body.offerPrice ? parseFloat(req.body.offerPrice) : product.offerPrice;
+    product.stock = req.body.stock ? parseInt(req.body.stock) : product.stock;
+    product.warranty = req.body.warranty && req.body.warranty !== 'null' ? req.body.warranty : product.warranty;
+    product.returnPolicy = req.body.returnPolicy && req.body.returnPolicy !== 'null' ? req.body.returnPolicy : product.returnPolicy;
     product.images = finalImages;
 
     await product.save();
