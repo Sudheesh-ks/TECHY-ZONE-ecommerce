@@ -59,7 +59,7 @@
               <label for="productCategory">Category</label>
               <select class="form-control" id="productCategory" name="category">
                 <% for (let i = 0; i < cat.length; i++) { %>
-                  <option value="<%= cat[i].name %>" <%= cat[i].name === product.category ? 'selected' : '' %>><%= cat[i].name %></option>
+                  <option value="<%= cat[i].name %>" <%= (product.category && cat[i].name === product.category.name) || cat[i]._id.toString() === product.category?.toString() ? 'selected' : '' %>><%= cat[i].name %></option>
                 <% } %>
               </select>
               <p class="error-message" id="categoryError"></p>
