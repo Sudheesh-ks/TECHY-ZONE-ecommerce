@@ -22,6 +22,20 @@ const loadAddCoupon = async (req,res) => {
     }
 }
 
+const loadEditCoupon = async (req, res) => {
+    try {
+        const id = req.params.id;
+        const coupon = await Coupon.findById(id);
+        if(!coupon) {
+            return res.status(STATUS_CODES.NOT_FOUND).json({ error: MESSAGES.NOT_FOUND });
+        }
+        res.render('admin/editCoupon', { coupon });
+    } catch (error) {
+        console.error(error.message);
+        res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({ error: MESSAGES.INTERNAL_SERVER_ERROR });
+    }
+}
+
 
 
 const addCoupon = async (req, res) => {
@@ -49,6 +63,36 @@ const addCoupon = async (req, res) => {
         await coupon.save();
 
         res.status(STATUS_CODES.CREATED).json({ message: MESSAGES.CREATED });
+    } catch (error) {
+        console.error(error.message);
+        res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({ error: MESSAGES.INTERNAL_SERVER_ERROR });
+    }
+};
+
+const updateCoupon = async (req, res) => {
+    try {
+        const id = req.params.id;
+        const { couponCode, discount, minAmount, maxDiscount, maxUsage, expiryDate } = req.body;
+
+        if (!couponCode || !discount || !minAmount || !expiryDate) {
+            return res.status(STATUS_CODES.BAD_REQUEST).json({ error: MESSAGES.BAD_REQUEST });
+        }
+
+        const existingCoupon = await Coupon.findOne({ couponCode, _id: { $ne: id } });
+        if (existingCoupon) {
+            return res.status(STATUS_CODES.CONFLICT).json({ error: MESSAGES.CONFLICT });
+        }
+
+        await Coupon.findByIdAndUpdate(id, {
+            couponCode,
+            discount,
+            minAmount,
+            maxDiscount,
+            maxUsage,
+            expiryDate,
+        });
+
+        res.status(STATUS_CODES.OK).json({ message: "Coupon updated successfully" });
     } catch (error) {
         console.error(error.message);
         res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({ error: MESSAGES.INTERNAL_SERVER_ERROR });
@@ -153,7 +197,9 @@ const removeCoupon = async (req, res) => {
 module.exports = {
     loadCoupon,
     loadAddCoupon,
+    loadEditCoupon,
     addCoupon,
+    updateCoupon,
     deleteCoupon,
     applyCoupon,
     removeCoupon

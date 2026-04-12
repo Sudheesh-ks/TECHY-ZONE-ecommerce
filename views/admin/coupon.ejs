@@ -44,6 +44,7 @@
                     <td><%= coupon.expiryDate.toISOString().split('T')[0] %></td>
                     <td><%= coupon.isActive ? 'Active' : 'Inactive' %></td>
                     <td>
+                        <a href="/admin/editCoupon/<%= coupon._id %>" class="btn btn-primary btn-sm">Edit</a>
                         <button class="btn btn-danger btn-sm delete-btn" data-id="<%= coupon._id %>">Delete</button>
                     </td>
                 </tr>
