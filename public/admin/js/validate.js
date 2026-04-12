@@ -32,6 +32,15 @@ function previewAndCrop(event, index) {
         event.target.value=null
         return 
     }
+
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    if (file.size > maxSize) {
+        showError(event.target, "File size exceeds 5MB. Please select a smaller image.");
+        event.target.files[0] = null;
+        event.target.value = null;
+        return;
+    }
+
     const cropPreview = document.getElementById(`cropPreview${index}`);
     const cropPreviewSection = document.getElementById(`cropPreviewSection${index}`);
 
