@@ -4,6 +4,8 @@ const bcrypt = require('bcrypt');
 const env = require('dotenv').config();
 const { generateOTP, sendOTP } = require("../utils/otp");
 const Otp = require("../models/otpModel");
+const STATUS_CODES = require('../constants/status.constants');
+const MESSAGES = require('../constants/responseMessage');
 
 
 const loadForgotPassword = async (req, res) => {
@@ -64,11 +66,11 @@ const verifyForgotPassOTP = async (req, res) => {
         const record = await Otp.findOne({ email });
 
         if (!record) {
-            return res.json({ success: false, message: "OTP expired. Please request a new one." });
+            return res.json({ success: false, message: MESSAGES.BAD_REQUEST });
         }
 
         if (record.otp !== enterOtp) {
-            return res.json({ success: false, message: "Invalid OTP" });
+            return res.json({ success: false, message: MESSAGES.BAD_REQUEST });
         }
 
         await Otp.deleteOne({ email });
@@ -76,7 +78,7 @@ const verifyForgotPassOTP = async (req, res) => {
         return res.json({ success: true, redirectUrl: "reset-password" });
 
     } catch (error) {
-        return res.status(500).json({ success: false, message: "An error occurred" });
+        return res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({ success: false, message: MESSAGES.INTERNAL_SERVER_ERROR });
     }
 };
 
@@ -127,11 +129,11 @@ const resendOtp = async (req, res) => {
 
         await sendOTP(email, otp);
 
-        res.status(200).json({ success: true, message: "OTP resent successfully" });
+        res.status(STATUS_CODES.OK).json({ success: true, message: MESSAGES.SUCCESS });
 
     } catch (error) {
         console.log("Error in resend OTP:", error);
-        res.status(500).json({ success: false, message: "Internal Server Error" });
+        res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({ success: false, message: MESSAGES.INTERNAL_SERVER_ERROR });
     }
 };
 

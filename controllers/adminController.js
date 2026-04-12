@@ -8,6 +8,8 @@ const fs = require('fs');
 const path = require('path');
 const { log } = require('console');
 const ExcelJS = require('exceljs');
+const STATUS_CODES = require('../constants/status.constants');
+const MESSAGES = require('../constants/responseMessage');
 const pdf = require('html-pdf');
 const PDFDocument = require('pdfkit')
 
@@ -27,7 +29,7 @@ const login = async (req, res) => {
     const admin = await User.findOne({ email, isAdmin: true }); // Finding admin by email
     if (!admin) {
       console.log("Admin not found");
-      return res.render('admin/admin-login', { message: 'Invalid login credentials' });
+      return res.render('admin/admin-login', { message: MESSAGES.INVALID_CREDENTIALS });
     }
 
     const passwordMatch = await bcrypt.compare(password, admin.password);
@@ -42,7 +44,7 @@ const login = async (req, res) => {
 
     } else {
       console.log("Incorrect password");
-      return res.render('admin/admin-login', { message: 'Incorrect password' });
+      return res.render('admin/admin-login', { message: MESSAGES.INCORRECT_PASSWORD });
     }
   } catch (error) {
     console.error("Login error:", error);

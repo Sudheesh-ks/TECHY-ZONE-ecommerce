@@ -1,16 +1,17 @@
 const User = require('../models/userModel');
-
+const STATUS_CODES = require('../constants/status.constants');
+const MESSAGES = require('../constants/responseMessage');
 
 
 const customerInfo = async (req,res) => {
 
     try{
 
-        let search = "";  // implementing search
+        let search = "";  
         if(req.query.search){
             search=req.query.search;
         }
-        let page = 1;  // implementing pagination
+        let page = 1;
         if(req.query.page){
             page = req.query.page
         }

@@ -2,6 +2,8 @@ const Order = require('../models/orderModel');
 const Product = require('../models/productModel');
 const User = require('../models/userModel'); 
 const Wallet = require('../models/walletModel');
+const STATUS_CODES = require('../constants/status.constants');
+const MESSAGES = require('../constants/responseMessage');
 
 const getAllOrders = async (req, res) => {
     try {
@@ -60,7 +62,7 @@ const getAllOrders = async (req, res) => {
         );
     } catch (error) {
         console.error('Error fetching orders:', error);
-        res.status(500).send('An error occurred while fetching orders.');
+        res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).send(MESSAGES.INTERNAL_SERVER_ERROR);
     }
 };
 
@@ -95,7 +97,7 @@ const loadOrderDetails = async (req, res) => {
         res.render('admin/order-detail', { order });
     } catch (error) {
         console.error('Error fetching order details:', error.message);
-        res.status(500).send('An error occurred while fetching order details.');
+        res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).send(MESSAGES.INTERNAL_SERVER_ERROR);
     }
 };
 
@@ -109,7 +111,7 @@ const updateOrderStatus = async (req, res) => {
         
         const validStatuses = ['Processing', 'Shipped', 'Delivered', 'Cancelled'];
         if (!validStatuses.includes(status)) {
-            return res.status(400).send('Invalid status value');
+            return res.status(STATUS_CODES.BAD_REQUEST).send(MESSAGES.BAD_REQUEST);
         }
 
         
@@ -121,7 +123,7 @@ const updateOrderStatus = async (req, res) => {
 
         if (!order) {
             console.log(`Order with ID ${orderId} not found.`);
-            return res.status(404).send('Order not found');
+            return res.status(STATUS_CODES.NOT_FOUND).send(MESSAGES.NOT_FOUND);
         }
 
          order.status = status;
@@ -141,7 +143,7 @@ const updateOrderStatus = async (req, res) => {
         res.redirect('/admin/orders'); 
     } catch (error) {
         console.error('Error updating order status:', error.message);
-        res.status(500).send('Internal Server Error');
+        res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).send(MESSAGES.INTERNAL_SERVER_ERROR);
     }
 };
 
@@ -150,10 +152,8 @@ const approveReturn = async (req, res) => {
     try {
         const orderId = req.params.id;
 
-        const updatedOrder = await Order.findByIdAndUpdate(orderId, { returnStatus: 'Approved', status: 'Returned' }, { new: true });  // Updating return status
-
         if (!updatedOrder) {
-            return res.status(404).json({ message: 'Order not found' });
+            return res.status(STATUS_CODES.NOT_FOUND).json({ message: MESSAGES.NOT_FOUND });
         }
 
          const userId = updatedOrder.userId;
@@ -199,10 +199,8 @@ const rejectReturn = async (req, res) => {
     try {
         const orderId = req.params.id;
 
-        const updatedOrder = await Order.findByIdAndUpdate(orderId, { returnStatus: 'Rejected' }, { new: true });
-
         if (!updatedOrder) {
-            return res.status(404).json({ message: 'Order not found' });
+            return res.status(STATUS_CODES.NOT_FOUND).json({ message: MESSAGES.NOT_FOUND });
         }
 
         req.flash('success', 'Return rejected successfully!');
@@ -285,9 +283,8 @@ const rejectProductReturn = async (req, res) => {
     try {
         const { id: orderId, productId } = req.params;
 
-        const order = await Order.findById(orderId);
         if (!order) {
-            return res.status(404).json({ message: 'Order not found' });
+            return res.status(STATUS_CODES.NOT_FOUND).json({ message: MESSAGES.NOT_FOUND });
         }
 
         const product = order.products.find(p => p.productId.toString() === productId); // Finding the product

@@ -1,5 +1,7 @@
 const Category = require('../models/categoryModel');
 const Product = require('../models/productModel');
+const STATUS_CODES = require('../constants/status.constants');
+const MESSAGES = require('../constants/responseMessage');
 
 const categoryInfo = async (req, res) => {
     try {
@@ -35,28 +37,28 @@ const addCategory = async (req, res) => {
       });
 
       if (existingCategory) {
-          return res.status(400).json({
+          return res.status(STATUS_CODES.CONFLICT).json({
               type: 'error',
-              message: 'Category already exists',
+              message: MESSAGES.CONFLICT,
           });
       }
 
       if (!name.trim() || !description.trim()) {  // Check if name and description are not empty
-        return res.status(400).json({ success: false, message: 'Name and description cannot be empty or contain only spaces' });
+        return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: MESSAGES.BAD_REQUEST });
       }
 
       const newCategory = new Category({ name, description });
       await newCategory.save();
 
-      res.status(200).json({
+      res.status(STATUS_CODES.CREATED).json({
           type: 'success',
-          message: 'Category added successfully',
+          message: MESSAGES.CREATED,
       });
   } catch (error) {
       console.error(error);
-      res.status(500).json({
+      res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
           type: 'error',
-          message: 'An error occurred while adding the category',
+          message: MESSAGES.INTERNAL_SERVER_ERROR,
       });
   }
 };
@@ -68,9 +70,9 @@ const addCategory = async (req, res) => {
     try {
         const category = await Category.findById(id);  // Find category by ID
         if (!category) {
-            return res.status(404).json({
+            return res.status(STATUS_CODES.NOT_FOUND).json({
                 type: 'error',
-                message: 'Category not found',
+                message: MESSAGES.NOT_FOUND,
             });
         }
 
@@ -78,15 +80,15 @@ const addCategory = async (req, res) => {
         category.status = category.isListed ? 'Listed' : 'Unlisted';  // Update category status
         await category.save();
 
-        res.status(200).json({
+        res.status(STATUS_CODES.OK).json({
             type: 'success',
-            message: `Category ${category.isListed ? 'listed' : 'unlisted'} successfully`,
+            message: MESSAGES.SUCCESS,
         });
     } catch (error) {
         console.error(error);
-        res.status(500).json({
+        res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
             type: 'error',
-            message: 'Failed to update category status',
+            message: MESSAGES.INTERNAL_SERVER_ERROR,
         });
     }
 };
@@ -105,7 +107,7 @@ const editCategory = async (req, res) => {
         });
         res.redirect('/admin/category');
     } catch (error) {
-        return res.status(500).json({ error: "Internal Server Error" });
+        return res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({ error: MESSAGES.INTERNAL_SERVER_ERROR });
     }
 };
 
@@ -114,12 +116,12 @@ const applyCategoryOffer = async (req, res) => {
       const { categoryId, offerValue } = req.body;
 
       if (!categoryId || offerValue === undefined) {
-          return res.status(400).json({ success: false, message: 'Category ID and Offer Value are required' });
+          return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: MESSAGES.BAD_REQUEST });
       }
 
       const category = await Category.findById(categoryId);
       if (!category) {
-          return res.status(404).json({ success: false, message: 'Category not found' });
+          return res.status(STATUS_CODES.NOT_FOUND).json({ success: false, message: MESSAGES.NOT_FOUND });
       }
 
       category.categoryOffer = offerValue; // Apply the category offer
@@ -137,10 +139,10 @@ const applyCategoryOffer = async (req, res) => {
           await product.save();
       }
 
-      res.status(200).json({ success: true, message: 'Category offer applied successfully' });
+      res.status(STATUS_CODES.OK).json({ success: true, message: MESSAGES.SUCCESS });
   } catch (error) {
       console.error('Error applying category offer:', error);
-      res.status(500).json({ success: false, message: 'Internal server error' });
+      res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({ success: false, message: MESSAGES.INTERNAL_SERVER_ERROR });
   }
 };
 
@@ -150,12 +152,12 @@ const removeCategoryOffer = async (req, res) => {
       const { categoryId } = req.body;
 
       if (!categoryId) {
-          return res.status(400).json({ success: false, message: 'Category ID is required' });
+          return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: MESSAGES.BAD_REQUEST });
       }
 
       const category = await Category.findById(categoryId);
       if (!category) {
-          return res.status(404).json({ success: false, message: 'Category not found' });
+          return res.status(STATUS_CODES.NOT_FOUND).json({ success: false, message: MESSAGES.NOT_FOUND });
       }
 
       category.categoryOffer = null; // Remove the category offer
@@ -172,10 +174,10 @@ const removeCategoryOffer = async (req, res) => {
           }
       }
 
-      res.status(200).json({ success: true, message: 'Category offer removed successfully' });
+      res.status(STATUS_CODES.OK).json({ success: true, message: MESSAGES.SUCCESS });
   } catch (error) {
       console.error('Error removing category offer:', error);
-      res.status(500).json({ success: false, message: 'Internal server error' });
+      res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({ success: false, message: MESSAGES.INTERNAL_SERVER_ERROR });
   }
 };
 

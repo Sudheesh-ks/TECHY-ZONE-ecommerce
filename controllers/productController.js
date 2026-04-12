@@ -2,6 +2,8 @@ const productModel = require('../models/productModel');
 const categoryModel = require('../models/categoryModel');
 const User = require('../models/userModel');
 const path = require('path');
+const STATUS_CODES = require('../constants/status.constants');
+const MESSAGES = require('../constants/responseMessage');
 
 
 const getProductAddPage = async (req,res) => {
@@ -188,13 +190,13 @@ const updateProduct = async (req, res) => {
 
     if (!productId) {
       console.log('Invalid Product ID');
-      return res.status(400).json({ val: false, msg: "Invalid Product ID" });
+      return res.status(STATUS_CODES.BAD_REQUEST).json({ val: false, msg: MESSAGES.BAD_REQUEST });
     }
 
     const product = await productModel.findById(productId);
     if (!product) {
       console.log(`Product with ID ${productId} not found`);
-      return res.status(404).json({ val: false, msg: "Product not found" });
+      return res.status(STATUS_CODES.NOT_FOUND).json({ val: false, msg: MESSAGES.PRODUCT_NOT_FOUND });
     }
     console.log('Product found:', product);
 
@@ -203,7 +205,7 @@ const updateProduct = async (req, res) => {
       categoryData = await categoryModel.findOne({ name: req.body.category });
       if (!categoryData) {
         console.log(`Category ${req.body.category} not found`);
-        return res.status(404).json({ val: false, msg: `Category ${req.body.category} not found` });
+        return res.status(STATUS_CODES.NOT_FOUND).json({ val: false, msg: MESSAGES.CATEGORY_NOT_FOUND });
       }
       console.log('Category validated:', categoryData);
     }
@@ -235,10 +237,10 @@ const updateProduct = async (req, res) => {
 
     await product.save();
 
-    return res.json({ success: true, message: "Product updated successfully!" });
+    return res.status(STATUS_CODES.OK).json({ success: true, message: MESSAGES.PRODUCT_UPDATED });
   } catch (error) {
     console.error("Error in updateProduct controller:", error);
-    return res.status(500).json({ val: false, msg: "Internal server error", error: error.message });
+    return res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({ val: false, msg: MESSAGES.INTERNAL_SERVER_ERROR, error: error.message });
   }
 };
 

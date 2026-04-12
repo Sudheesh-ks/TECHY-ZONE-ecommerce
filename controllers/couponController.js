@@ -1,4 +1,6 @@
 const Coupon = require('../models/couponModel');
+const STATUS_CODES = require('../constants/status.constants');
+const MESSAGES = require('../constants/responseMessage');
 
 
 const loadCoupon = async (req, res) => {
@@ -7,7 +9,7 @@ const loadCoupon = async (req, res) => {
         res.render('admin/coupon', { coupons });
     } catch (error) {
         console.error(error.message);
-        res.status(500).json({ error: 'Internal Server Error' });
+        res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({ error: MESSAGES.INTERNAL_SERVER_ERROR });
     }
 }
 
@@ -16,7 +18,7 @@ const loadAddCoupon = async (req,res) => {
         res.render('admin/addCoupon');
     } catch (error) {
         console.log(error.message);
-        res.status(500).json({ error: 'Internal Server Error' });
+        res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({ error: MESSAGES.INTERNAL_SERVER_ERROR });
     }
 }
 
@@ -27,12 +29,12 @@ const addCoupon = async (req, res) => {
         const { couponCode, discount, minAmount, expiryDate, maxDiscount, maxUsage} = req.body;
 
         if (!couponCode || !discount || !minAmount || !expiryDate) {
-            return res.status(400).json({ error: 'All fields are required.' });
+            return res.status(STATUS_CODES.BAD_REQUEST).json({ error: MESSAGES.BAD_REQUEST });
         }
 
         const existingCoupon = await Coupon.findOne({ couponCode });  // Check if the coupon code already exists
         if (existingCoupon) {
-            return res.status(400).json({ error: 'Coupon code already exists.' });
+            return res.status(STATUS_CODES.CONFLICT).json({ error: MESSAGES.CONFLICT });
         }
 
         const coupon = new Coupon({
@@ -46,10 +48,10 @@ const addCoupon = async (req, res) => {
 
         await coupon.save();
 
-        res.status(200).json({ message: 'Coupon added successfully.' });
+        res.status(STATUS_CODES.CREATED).json({ message: MESSAGES.CREATED });
     } catch (error) {
         console.error(error.message);
-        res.status(500).json({ error: 'Internal Server Error' });
+        res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({ error: MESSAGES.INTERNAL_SERVER_ERROR });
     }
 };
 
@@ -61,13 +63,13 @@ const deleteCoupon = async (req, res) => {
 
         const coupon = await Coupon.findByIdAndDelete(id);  // Deleting coupon by ID
         if (!coupon) {
-            return res.status(404).json({ error: 'Coupon not found.' });
+            return res.status(STATUS_CODES.NOT_FOUND).json({ error: MESSAGES.NOT_FOUND });
         }
 
-        res.status(200).json({ message: 'Coupon deleted successfully.' });
+        res.status(STATUS_CODES.OK).json({ message: MESSAGES.SUCCESS });
     } catch (error) {
         console.error(error.message);
-        res.status(500).json({ error: 'Internal Server Error' });
+        res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({ error: MESSAGES.INTERNAL_SERVER_ERROR });
     }
 };
 
@@ -79,19 +81,19 @@ const applyCoupon = async (req, res) => {
         const coupon = await Coupon.findOne({ couponCode, isActive: true });  // Check if the coupon is active
 
         if (!coupon) {
-            return res.status(400).json({ success: false, message: "Invalid or expired coupon." });
+            return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: MESSAGES.BAD_REQUEST });
         }
 
         if (cartTotal < coupon.minAmount) {  // Check if the cart total is greater than or equal to the minimum amount
-            return res.status(400).json({
+            return res.status(STATUS_CODES.BAD_REQUEST).json({
                 success: false,
-                message: `Coupon requires a minimum spend of ₹${coupon.minAmount}.`,
+                message: MESSAGES.BAD_REQUEST,
             });
         }
 
         // Check if coupon can still be used
         if (coupon.userUsed >= coupon.maxUsage) {
-            return res.status(400).json({ success: false, message: "Coupon usage limit exceeded." });
+            return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: MESSAGES.BAD_REQUEST });
         }
 
         const discount = coupon.discount  // Check if the discount is less than or equal to the maximum discount
@@ -110,15 +112,15 @@ const applyCoupon = async (req, res) => {
         coupon.maxUsage -= 1;
         await coupon.save(); // Save the updated coupon
 
-        return res.status(200).json({
+        return res.status(STATUS_CODES.OK).json({
             success: true,
-            message: "Coupon applied successfully!",
+            message: MESSAGES.SUCCESS,
             discount,
             discountedTotal,
         });
     } catch (error) {
         console.error(error.message);
-        return res.status(500).json({ success: false, message: "Server error. Try again later." });
+        return res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({ success: false, message: MESSAGES.INTERNAL_SERVER_ERROR });
     }
 };
 
@@ -137,10 +139,10 @@ const removeCoupon = async (req, res) => {
 
             delete req.session.appliedCoupon; // Remove the coupon from the session
         }
-        res.status(200).json({ success: true, message: "Coupon removed successfully." });
+        res.status(STATUS_CODES.OK).json({ success: true, message: MESSAGES.SUCCESS });
     } catch (error) {
         console.error(error.message);
-        res.status(500).json({ success: false, message: "Server error. Try again later." });
+        res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({ success: false, message: MESSAGES.INTERNAL_SERVER_ERROR });
     }
 };
 
