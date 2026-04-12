@@ -108,38 +108,97 @@ function startCropping(index) {
   }
   
 function validateAndSubmit() {
+    // Clear all previous error messages
     const errorMsgs = document.querySelectorAll(".error-message");
-    errorMsgs.forEach((error) => error.remove());
+    errorMsgs.forEach((error) => {
+        error.textContent = "";
+    });
 
-    if (!nameRegex.test(name.value)) {
+    let isValid = true;
+
+    // --- Image validation: all 3 cropped images required ---
+    const missingImages = [];
+    for (let i = 0; i < 3; i++) {
+        if (!croppedImages[i]) {
+            missingImages.push(i + 1);
+        }
+    }
+    if (missingImages.length > 0) {
+        const imageErrorEl = document.getElementById("imageError");
+        if (imageErrorEl) {
+            imageErrorEl.style.color = "red";
+            imageErrorEl.textContent = `Please upload and crop all 3 images. Missing: Image ${missingImages.join(", Image ")}.`;
+        }
+        isValid = false;
+    }
+
+    // --- Name validation ---
+    if (!name.value.trim()) {
+        showError(name, "Product name is required.");
+        isValid = false;
+    } else if (!nameRegex.test(name.value)) {
         showError(name, "Product name must be at least 3 characters long and alphanumeric.");
-    } else if (description.value.length < 5) {
+        isValid = false;
+    }
+
+    // --- Description validation ---
+    if (!description.value.trim()) {
+        showError(description, "Description is required.");
+        isValid = false;
+    } else if (description.value.trim().length < 5) {
         showError(description, "Description must be at least 5 characters long.");
-    } else if (categorySelect.value === "") {
+        isValid = false;
+    }
+
+    // --- Category validation ---
+    if (categorySelect.value === "") {
         showError(categorySelect, "Please select a category.");
-    } else if (!priceRegex.test(ogPrice.value)) {
-        showError(ogPrice, "Original Price must be a valid number with up to 2 decimal places.");
+        isValid = false;
+    }
+
+    // --- Original Price validation ---
+    if (!ogPrice.value.trim()) {
+        showError(ogPrice, "Price is required.");
+        isValid = false;
     } else if (!priceRegex.test(ogPrice.value) || parseFloat(ogPrice.value) <= 0) {
-        showError(ogPrice, "Original Price must be a positive number with up to 2 decimal places.");
-    } else if (offerPrice.value !== "" && (!priceRegex.test(offerPrice.value) || parseFloat(offerPrice.value) <= 0)) {
+        showError(ogPrice, "Price must be a positive number with up to 2 decimal places.");
+        isValid = false;
+    }
+
+    // --- Offer Price validation (REQUIRED) ---
+    if (!offerPrice.value.trim()) {
+        showError(offerPrice, "Offer Price is required.");
+        isValid = false;
+    } else if (!priceRegex.test(offerPrice.value) || parseFloat(offerPrice.value) <= 0) {
         showError(offerPrice, "Offer Price must be a positive number with up to 2 decimal places.");
-    } else if (offerPrice.value !== "" && parseFloat(offerPrice.value) > parseFloat(ogPrice.value)) {
-        showError(offerPrice, "Offer Price cannot be greater than the Original Price.");
-    } else if (!stockRegex.test(stock.value) || stock.value < 1) {
+        isValid = false;
+    } else if (ogPrice.value.trim() && parseFloat(offerPrice.value) >= parseFloat(ogPrice.value)) {
+        showError(offerPrice, "Offer Price must be less than the Original Price.");
+        isValid = false;
+    }
+
+    // --- Stock validation ---
+    if (!stock.value.trim()) {
+        showError(stock, "Stock is required.");
+        isValid = false;
+    } else if (!stockRegex.test(stock.value) || parseInt(stock.value) < 1) {
         showError(stock, "Stock must be a positive integer.");
-    } else {
+        isValid = false;
+    }
+
+    // --- If all validations pass, submit ---
+    if (isValid) {
         const formData = new FormData();
-        formData.append("name", name.value);
-        formData.append("description", description.value);
+        formData.append("name", name.value.trim());
+        formData.append("description", description.value.trim());
         formData.append("category", categorySelect.value);
         formData.append("price", parseFloat(ogPrice.value));
-        formData.append("offerPrice", offerPrice.value !== "" ? offerPrice.value : null);
+        formData.append("offerPrice", parseFloat(offerPrice.value));
         formData.append("stock", parseInt(stock.value));
-        formData.append("warranty", warranty.value !== "" ? warranty.value : null);
-        formData.append("returnPolicy", returnPolicy.value !== "" ? returnPolicy.value : null);
-        console.log(croppedImages)
-        croppedImages.forEach((croppedImage,i) => {
-            console.log(i)
+        formData.append("warranty", warranty && warranty.value.trim() !== "" ? warranty.value.trim() : "");
+        formData.append("returnPolicy", returnPolicy && returnPolicy.value.trim() !== "" ? returnPolicy.value.trim() : "");
+
+        croppedImages.forEach((croppedImage, i) => {
             if (croppedImage) {
                 formData.append(`productImage${i + 1}`, croppedImage);
             }
@@ -153,8 +212,8 @@ function validateAndSubmit() {
                 });
                 const data = await response.json();
                 console.log(data.msg);
-                console.log(data.val)
-                if(data.val){
+                console.log(data.val);
+                if (data.val) {
                     window.location.href = "/admin/addProducts";
                 }
             } catch (err) {
@@ -166,26 +225,31 @@ function validateAndSubmit() {
 
 function clearError(input) {
     const existingErrors = input.parentElement.querySelectorAll('.error-message');
-    existingErrors.forEach(error => error.remove());
+    existingErrors.forEach(error => {
+        error.textContent = "";
+    });
 }
 
 function showError(input, message) {
-    clearError(input); 
-    const error = document.createElement("p");
-    error.className = "error-message";
-    error.style.color = "red";
-    error.textContent = message;
-    input.parentElement.appendChild(error);
+    clearError(input);
+    const existing = input.parentElement.querySelector('.error-message');
+    if (existing) {
+        existing.style.color = "red";
+        existing.textContent = message;
+    } else {
+        const error = document.createElement("p");
+        error.className = "error-message";
+        error.style.color = "red";
+        error.textContent = message;
+        input.parentElement.appendChild(error);
+    }
 }
+
 document.querySelector(".btn-CreateProduct").addEventListener("click", (event) => {
     event.preventDefault();
     validateAndSubmit();
 });
-function toggleOfferPriceInput() {
-    const offerPriceDiv = document.getElementById("offerPriceDiv");
-    const checkbox = document.getElementById("toggleOfferPrice");
-    offerPriceDiv.style.display = checkbox.checked ? "block" : "none";
-}
+
 function toggleWarrantyInput() {
     const warrantyDiv = document.getElementById("warrantyDiv");
     warrantyDiv.style.display = warrantyDiv.style.display === "none" ? "block" : "none";
@@ -194,5 +258,3 @@ function toggleReturnPolicyInput() {
     const returnPolicyDiv = document.getElementById("returnPolicyDiv");
     returnPolicyDiv.style.display = returnPolicyDiv.style.display === "none" ? "block" : "none";
 }
-
-

@@ -24,10 +24,10 @@
                     <p class="error-message" id="productNameError"></p>
                   </div>
                   <div class="form-group">
-                    <label for="productImages">Images</label>
+                    <label for="productImages">Images <span class="text-danger">*</span> <small class="text-muted">(All 3 images required)</small></label>
                     <input type="file" class="form-control product-image" id="productImage1" 
                     accept="image/png, image/gif, image/jpeg" onchange="previewAndCrop(event, 0)" />
-                    <p class="error-message" id="productNameError"></p>
+                    <p class="error-message" id="imageError"></p>
                     <div class="cropPreviewSection" id="cropPreviewSection0" style="display: none" >
                       <img id="cropPreview0" style="max-width: 100%" />
                       <button type="button" class="btn btn-primary btn-sm" onclick="startCropping(0)">
@@ -67,7 +67,8 @@
 
                   <div class="form-group">
                     <label for="productCategory">Category</label>
-                    <select class="form-control" id="productCategory" name="cta" >
+                    <select class="form-control" id="productCategory" name="cta" required>
+                      <option value="" disabled selected>Select a Category</option>
                     <%for(let i=0;i<cat.length;i++){%>
                       <option value="<%=cat[i].name%>">
                         
@@ -81,25 +82,17 @@
                   </div>
                   <div class="form-group">
                     <label for="productOgPrice">Price</label>
-                    <input type="number" class="form-control product-og-price" id="productOgPrice" placeholder="Original Price" required />
+                    <input type="number" class="form-control product-og-price" id="productOgPrice" placeholder="Original Price" min="1" required />
                     <p class="error-message" id="ogPriceError"></p>
                   </div>
                   <div class="form-group">
-                    <div class="form-check mb-3">
-                      <input type="checkbox" class="form-check-input" id="toggleOfferPrice" onclick="toggleOfferPriceInput()" />
-                      <label class="form-check-label" for="toggleOfferPrice"
-                        >Add Offer Price</label
-                      >
-                    </div>
-                    <div class="offer-price-input mt-2" id="offerPriceDiv" style="display: none" >
-                      <label for="productOfferPrice">Offer Price</label>
-                      <input type="number" class="form-control product-offer-price" id="productOfferPrice" placeholder="Offer Price" />
-                      <p class="error-message" id="offerPriceError"></p>
-                    </div>
-                  </div>
+                       <label for="productOfferPrice">Offer Price <span class="text-danger">*</span></label>
+                       <input type="number" class="form-control product-offer-price" id="productOfferPrice" placeholder="Offer Price" min="1" required />
+                       <p class="error-message" id="offerPriceError"></p>
+                   </div>
                   <div class="form-group">
                     <label for="productStock">Stock</label>
-                    <input type="number" class="form-control product-stock" id="productStock" placeholder="Stock" required />
+                    <input type="number" class="form-control product-stock" id="productStock" placeholder="Stock" min="1" required />
                     <p class="error-message" id="stockError"></p>
                   </div>
                   <div class="form-group">
