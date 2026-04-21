@@ -21,8 +21,7 @@
 
           <!-- Product Images -->
             <div class="form-group">
-              <label for="productImages">Images <span class="text-danger">*</span> <small class="text-muted">(All 3 images required)</small></label>
-              <p class="error-message" id="imageError"></p>
+              <label for="productImages">Images</label>
               <% for (let i = 0; i < 3; i++) { %>
                 <input 
                   type="file" 
@@ -59,7 +58,7 @@
               <label for="productCategory">Category</label>
               <select class="form-control" id="productCategory" name="category">
                 <% for (let i = 0; i < cat.length; i++) { %>
-                  <option value="<%= cat[i].name %>" <%= (product.category && cat[i].name === product.category.name) || cat[i]._id.toString() === product.category?.toString() ? 'selected' : '' %>><%= cat[i].name %></option>
+                  <option value="<%= cat[i].name %>" <%= cat[i].name === product.category ? 'selected' : '' %>><%= cat[i].name %></option>
                 <% } %>
               </select>
               <p class="error-message" id="categoryError"></p>
@@ -68,21 +67,27 @@
             <!-- Regular Price -->
             <div class="form-group">
               <label for="productOgPrice">Price</label>
-              <input type="number" class="form-control product-og-price" id="productOgPrice" name="price" value="<%= product.price %>" placeholder="Original Price" min="1" required />
+              <input type="number" class="form-control product-og-price" id="productOgPrice" name="regularPrice" value="<%= product.price %>" placeholder="Original Price" required />
               <p class="error-message" id="ogPriceError"></p>
             </div>
           
             <!-- Offer Price -->
             <div class="form-group">
-                <label for="productOfferPrice">Offer Price <span class="text-danger">*</span></label>
-                <input type="number" class="form-control product-offer-price" id="productOfferPrice" name="offerPrice" value="<%= product.offerPrice %>" placeholder="Offer Price" min="1" required />
+              <div class="form-check mb-3">
+                <input type="checkbox" class="form-check-input" id="toggleOfferPrice" onclick="toggleOfferPriceInput()" <%= product.offerPrice ? 'checked' : '' %> />
+                <label class="form-check-label" for="toggleOfferPrice">Add Offer Price</label>
+              </div>
+              <div class="offer-price-input mt-2" id="offerPriceDiv" style="<%= product.offerPrice ? 'display:block;' : 'display:none;' %>">
+                <label for="productOfferPrice">Offer Price</label>
+                <input type="number" class="form-control product-offer-price" id="productOfferPrice" name="offerPrice" value="<%= product.offerPrice %>" placeholder="Offer Price" />
                 <p class="error-message" id="offerPriceError"></p>
+              </div>
             </div>
           
             <!-- Stock Quantity -->
             <div class="form-group">
               <label for="productStock">Stock</label>
-              <input type="number" class="form-control product-stock" id="productStock" name="stock" value="<%= product.stock %>" placeholder="Stock" min="1" required />
+              <input type="number" class="form-control product-stock" id="productStock" name="quantity" value="<%= product.stock %>" placeholder="Stock" required />
               <p class="error-message" id="stockError"></p>
             </div>
           
@@ -136,10 +141,6 @@
 const cropperInstances = [];
 const croppedImages = [];
 let currentImageIndex = null;
-
-const nameRegex = /^[a-zA-Z0-9 ]{3,}$/;
-const priceRegex = /^\d+(\.\d{1,2})?$/;
-const stockRegex = /^\d+$/;
 
 function clearError(input) {
     const existingErrors = input.parentElement.querySelectorAll('.error-message');
@@ -235,93 +236,6 @@ function startCropping(index) {
 }
 
 function validateAndSubmit() {
-    const errorMsgs = document.querySelectorAll(".error-message");
-    errorMsgs.forEach((error) => {
-        error.textContent = "";
-    });
-
-    let isValid = true;
-    const name = document.getElementById("productName");
-    const description = document.getElementById("productDescription");
-    const categorySelect = document.getElementById("productCategory");
-    const ogPrice = document.getElementById("productOgPrice");
-    const offerPrice = document.getElementById("productOfferPrice");
-    const stock = document.getElementById("productStock");
-
-    // --- Image validation: all 3 images required (either cropped or existing) ---
-    const missingImages = [];
-    for (let i = 0; i < 3; i++) {
-        const previewContainer = document.getElementById(`croppedImagePreview${i}`);
-        const hasExistingImage = previewContainer && previewContainer.querySelector("img") !== null;
-        if (!croppedImages[i] && !hasExistingImage) {
-            missingImages.push(i + 1);
-        }
-    }
-    if (missingImages.length > 0) {
-        const imageErrorEl = document.getElementById("imageError");
-        if (imageErrorEl) {
-            imageErrorEl.style.color = "red";
-            imageErrorEl.textContent = `Please ensure all 3 images are present. Missing: Image ${missingImages.join(", Image ")}.`;
-        }
-        isValid = false;
-    }
-
-    // --- Name validation ---
-    if (!name.value.trim()) {
-        showError(name, "Product name is required.");
-        isValid = false;
-    } else if (!nameRegex.test(name.value)) {
-        showError(name, "Product name must be at least 3 characters long and alphanumeric.");
-        isValid = false;
-    }
-
-    // --- Description validation ---
-    if (!description.value.trim()) {
-        showError(description, "Description is required.");
-        isValid = false;
-    } else if (description.value.trim().length < 5) {
-        showError(description, "Description must be at least 5 characters long.");
-        isValid = false;
-    }
-
-    // --- Category validation ---
-    if (categorySelect.value === "") {
-        showError(categorySelect, "Please select a category.");
-        isValid = false;
-    }
-
-    // --- Original Price validation ---
-    if (!ogPrice.value.trim()) {
-        showError(ogPrice, "Price is required.");
-        isValid = false;
-    } else if (!priceRegex.test(ogPrice.value) || parseFloat(ogPrice.value) <= 0) {
-        showError(ogPrice, "Price must be a positive number with up to 2 decimal places.");
-        isValid = false;
-    }
-
-    // --- Offer Price validation (REQUIRED) ---
-    if (!offerPrice.value.trim()) {
-        showError(offerPrice, "Offer Price is required.");
-        isValid = false;
-    } else if (!priceRegex.test(offerPrice.value) || parseFloat(offerPrice.value) <= 0) {
-        showError(offerPrice, "Offer Price must be a positive number with up to 2 decimal places.");
-        isValid = false;
-    } else if (ogPrice.value.trim() && parseFloat(offerPrice.value) >= parseFloat(ogPrice.value)) {
-        showError(offerPrice, "Offer Price must be less than the Original Price.");
-        isValid = false;
-    }
-
-    // --- Stock validation ---
-    if (!stock.value.trim()) {
-        showError(stock, "Stock is required.");
-        isValid = false;
-    } else if (!stockRegex.test(stock.value) || parseInt(stock.value) < 1) {
-        showError(stock, "Stock must be a positive integer.");
-        isValid = false;
-    }
-
-    if (!isValid) return;
-
     const form = document.getElementById('editProductForm');
     const formData = new FormData(form);
 
@@ -379,7 +293,9 @@ function showError(input, message) {
 
 
 function toggleOfferPriceInput() {
-  // Offer price toggling removed, kept for potential leftover legacy calls
+  const offerPriceDiv = document.getElementById("offerPriceDiv");
+  const checkbox = document.getElementById("toggleOfferPrice");
+  offerPriceDiv.style.display = checkbox.checked ? "block" : "none";
 }
 
 function toggleWarrantyInput() {
