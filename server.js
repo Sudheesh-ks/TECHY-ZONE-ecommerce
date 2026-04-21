@@ -25,12 +25,29 @@ const banCheck = require('./middlewares/checkBan');
 app.use(express.json())
 app.use(express.urlencoded({extended:true}))
 
+// -----dev-----
+// app.use(session({
+//     secret: process.env.SESSION_SECRET || 'default_secret', 
+//     resave: false,
+//     saveUninitialized: true,
+//     cookie: { maxAge: 1000*60*60*24 }
+// }));
+
+// ----production-----
+const isProd = process.env.NODE_ENV === 'production';
+
+app.set('trust proxy', 1);
 
 app.use(session({
-    secret: process.env.SESSION_SECRET || 'default_secret', 
+    secret: process.env.SESSION_SECRET || 'default_secret',
     resave: false,
-    saveUninitialized: true,
-    cookie: { maxAge: 1000*60*60*24 }
+    saveUninitialized: false, 
+    cookie: {
+        maxAge: 1000 * 60 * 60 * 24,
+        secure: isProd,               
+        httpOnly: true,
+        sameSite: isProd ? 'none' : 'lax'
+    }
 }));
 
 app.use(nocache());
