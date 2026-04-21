@@ -84,9 +84,16 @@ const adminRoute = require('./routes/adminRoute');
 // for admin routes
 app.use('/admin',adminRoute);
 
+// Error handling middleware
+app.use((err, req, res, next) => {
+    console.error("Unhandled Error:", err);
+    res.status(500).send("Internal Server Error: " + err.message);
+});
 
 
-app.listen(3000, () => {
-    console.log(`Server is running on port ${process.env.PORT}`);
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
     
 })
