@@ -77,7 +77,7 @@
                             <% orders.forEach(order => { %>
                                 <tr>
                                     <td>#<%= order._id.toString().slice(-6) %></td>
-                                    <td><%= order.userId.name %></td>
+                                    <td><%= order.userId ? order.userId.name : 'Unknown User' %></td>
                                     <td><%= order.paymentMethod %></td>
                                     <td>₹<%= order.totalPrice.toFixed(2) %></td>
                                     <td><%= order.createdAt.toISOString().split('T')[0] %></td>

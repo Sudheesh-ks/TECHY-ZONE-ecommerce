@@ -40,7 +40,7 @@
                     <tr class="<%= order.isReturnRequested ? 'table-warning' : '' %>">
                         <td>#<%= order._id.toString().slice(-6) %></td>
                         <td>
-                            <%= order.user.name %>
+                            <%= order.user ? order.user.name : 'Unknown User' %>
                             <% if (order.isReturnRequested) { %>
                                 <span class="badge bg-danger ms-2">Return Requested</span>
                             <% } %>

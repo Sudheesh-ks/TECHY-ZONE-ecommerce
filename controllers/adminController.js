@@ -497,7 +497,7 @@ const exportSalesToExcel = async (req, res) => {
         orders.forEach(order => {
             worksheet.addRow({
                 orderId: "#" + order._id.toString().slice(-6),
-                userName: order.userId.name,
+                userName: order.userId ? order.userId.name : 'Unknown User',
                 products: order.products.map(product => product.name).join(', '),
                 paymentMethod: order.paymentMethod,
                 date: order.createdAt.toISOString().split('T')[0],
