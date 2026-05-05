@@ -22,6 +22,50 @@ const loadAddCoupon = async (req,res) => {
     }
 }
 
+const loadEditCoupon = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const coupon = await Coupon.findById(id);
+        if (!coupon) {
+            return res.status(STATUS_CODES.NOT_FOUND).json({ error: MESSAGES.NOT_FOUND });
+        }
+        res.render('admin/editCoupon', { coupon });
+    } catch (error) {
+        console.error(error.message);
+        res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({ error: MESSAGES.INTERNAL_SERVER_ERROR });
+    }
+};
+
+const updateCoupon = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { couponCode, discount, minAmount, expiryDate, maxDiscount, maxUsage } = req.body;
+
+        if (!couponCode || !discount || !minAmount || !expiryDate) {
+            return res.status(STATUS_CODES.BAD_REQUEST).json({ error: MESSAGES.BAD_REQUEST });
+        }
+
+        const existingCoupon = await Coupon.findOne({ couponCode, _id: { $ne: id } });
+        if (existingCoupon) {
+            return res.status(STATUS_CODES.CONFLICT).json({ error: MESSAGES.CONFLICT });
+        }
+
+        await Coupon.findByIdAndUpdate(id, {
+            couponCode,
+            discount,
+            minAmount,
+            maxDiscount,
+            maxUsage,
+            expiryDate,
+        });
+
+        res.status(STATUS_CODES.OK).json({ message: MESSAGES.SUCCESS });
+    } catch (error) {
+        console.error(error.message);
+        res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({ error: MESSAGES.INTERNAL_SERVER_ERROR });
+    }
+};
+
 
 
 const addCoupon = async (req, res) => {
@@ -156,5 +200,7 @@ module.exports = {
     addCoupon,
     deleteCoupon,
     applyCoupon,
-    removeCoupon
+    removeCoupon,
+    loadEditCoupon,
+    updateCoupon
 }

@@ -39,6 +39,15 @@
             <label for="expiryDate"><b>Expiry Date</b></label>
             <input type="date" name="expiryDate" class="form-control" id="expiryDate" required />
         </div>
+        <script>
+            // Disable past dates and today in the date picker
+            document.addEventListener('DOMContentLoaded', function() {
+                const tomorrow = new Date();
+                tomorrow.setDate(tomorrow.getDate() + 1);
+                const minDate = tomorrow.toISOString().split('T')[0];
+                document.getElementById('expiryDate').setAttribute('min', minDate);
+            });
+        </script>
         <div class="form-group">
             <label for="maxUsage"><b>Max Usage</b></label>
             <input type="number" name="maxUsage" class="form-control" id="maxUsage" placeholder="Max Usage" min="1" required />
