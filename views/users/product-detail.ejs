@@ -843,10 +843,28 @@ Copyright &copy;<script>document.write(new Date().getFullYear());</script> All r
 
 // Add to Cart
 
+const isUserLoggedIn = <% if(user) { %>true<% } else { %>false<% } %>;
 
 document.querySelectorAll('.add-to-cart-btn').forEach(button => {
     button.addEventListener('click', function (e) {
         e.preventDefault();
+
+        // Check if user is logged in
+        if (!isUserLoggedIn) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Not Logged In',
+                text: 'You need to log in to add items to your cart.',
+                confirmButtonText: 'Go to Login'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Redirect to login with return URL
+                    const currentUrl = window.location.pathname + window.location.search;
+                    window.location.href = `/login?returnUrl=${encodeURIComponent(currentUrl)}`;
+                }
+            });
+            return;
+        }
 
         const productId = this.getAttribute('data-product-id');
         const inputField = document.querySelector(`input[data-product-id="${productId}"]`);

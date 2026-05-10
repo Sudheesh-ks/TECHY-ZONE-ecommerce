@@ -186,8 +186,8 @@ const resendOtp = async (req, res) => {
 
 const loadLogin = async (req, res) => {
     try {
-
-        res.render('users/login',{message: null});
+        const returnUrl = req.query.returnUrl || null;
+        res.render('users/login',{message: null, returnUrl});
 
     } catch (error) {
         console.log(error.message);
@@ -197,7 +197,7 @@ const loadLogin = async (req, res) => {
 
 
 const login = async (req, res) => {
-    const { email, password } = req.body;
+    const { email, password, returnUrl } = req.body;
     console.log(email, password)
     try {
         const user = await User.findOne({ email });  // Finding user
@@ -219,18 +219,23 @@ const login = async (req, res) => {
                     isAdmin:user.isAdmin
                 };
 
-                res.redirect('/');
+                // Redirect to returnUrl if provided, otherwise redirect to home
+                if (returnUrl) {
+                    res.redirect(returnUrl);
+                } else {
+                    res.redirect('/');
+                }
             } else {
                 // req.flash('error', 'Incorrect password. Please try again.');
-                res.render('users/login',{message: "Invalid Credentials. Please try again."});
+                res.render('users/login',{message: "Invalid Credentials. Please try again.", returnUrl});
             }
         } else {
             req.flash('error', 'No account found with this email.');
-            res.redirect('/login');
+            res.redirect(`/login${returnUrl ? `?returnUrl=${encodeURIComponent(returnUrl)}` : ''}`);
         }
     } catch (error) {
         console.log("Error during login:", error.message);
-        res.render('users/login', { message: "An error occurred during login" });
+        res.render('users/login', { message: "An error occurred during login", returnUrl });
     }
 }
 

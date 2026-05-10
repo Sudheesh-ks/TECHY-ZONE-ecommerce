@@ -49,6 +49,9 @@
                 <h2 class="mb-4 text-center">LOGIN</h2>
                <p style="color: red;"><%= message && message%></p>
                 <form id="login-form" action="/login" method="post" onsubmit="return validateForm()">
+                    <% if(returnUrl) { %>
+                        <input type="hidden" name="returnUrl" value="<%= returnUrl %>">
+                    <% } %>
                     <div class="mb-3">
                         <label for="email" class="form-label">Email address</label>
                         <input type="email" class="form-control" name="email" id="email" placeholder="Enter email">
