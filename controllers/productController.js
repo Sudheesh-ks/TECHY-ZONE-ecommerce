@@ -37,17 +37,27 @@ const productsAdd = async (req, res) => {
   price = Number(price);
   offerPrice = Number(offerPrice);
   stock = Number(stock);
-  offerPrice = offerPrice === NaN ? 0 : offerPrice;
+  if (Number.isNaN(offerPrice)) offerPrice = 0;
+
+  if (Number.isNaN(price) || Number.isNaN(stock)) {
+    return res
+      .status(STATUS_CODES.BAD_REQUEST)
+      .json({ val: false, msg: "Invalid price or stock value" });
+  }
 
   try {
       
-    if (!req.files || req.files.length === 0) {
+    const hasFiles = req.files && Object.values(req.files).some(
+      (fileArray) => Array.isArray(fileArray) && fileArray.length > 0
+    );
+
+    if (!hasFiles) {
       return res
         .status(STATUS_CODES.BAD_REQUEST)
         .json({ val: false, msg: "No files were uploaded" });
     }
-    
-    const categoryObject = await categoryModel.findOne({ name: category }); // Checking if category exists
+
+    const categoryObject = await categoryModel.findById(category);
     if (!categoryObject) {
       return res.status(STATUS_CODES.BAD_REQUEST).json({ val: false, msg: "Category not found" });
     }

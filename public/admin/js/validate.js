@@ -133,17 +133,47 @@ function validateAndSubmit() {
         formData.append("description", description.value);
         formData.append("category", categorySelect.value);
         formData.append("price", parseFloat(ogPrice.value));
-        formData.append("offerPrice", offerPrice.value !== "" ? offerPrice.value : null);
+        if (offerPrice.value !== "") {
+            formData.append("offerPrice", offerPrice.value);
+        }
         formData.append("stock", parseInt(stock.value));
-        formData.append("warranty", warranty.value !== "" ? warranty.value : null);
-        formData.append("returnPolicy", returnPolicy.value !== "" ? returnPolicy.value : null);
-        console.log(croppedImages)
-        croppedImages.forEach((croppedImage,i) => {
-            console.log(i)
-            if (croppedImage) {
-                formData.append(`productImage${i + 1}`, croppedImage);
+        if (warranty.value !== "") {
+            formData.append("warranty", warranty.value);
+        }
+        if (returnPolicy.value !== "") {
+            formData.append("returnPolicy", returnPolicy.value);
+        }
+
+        const fileFields = [
+            document.getElementById('productImage1'),
+            document.getElementById('productImage2'),
+            document.getElementById('productImage3')
+        ];
+
+        const hasImages = fileFields.every((input, index) => {
+            return croppedImages[index] || (input.files && input.files[0]);
+        });
+
+        if (!hasImages) {
+            showError(fileFields[0], "Please select and crop/upload all 3 product images.");
+            return;
+        }
+
+        fileFields.forEach((input, index) => {
+            if (croppedImages[index]) {
+                formData.append(`productImage${index + 1}`, croppedImages[index]);
+            } else if (input.files && input.files[0]) {
+                formData.append(`productImage${index + 1}`, input.files[0]);
             }
         });
+
+        const submitBtn = document.getElementById('productSubmitBtn');
+        const submitText = submitBtn.querySelector('.btn-text');
+        const submitSpinner = submitBtn.querySelector('.btn-spinner');
+
+        submitBtn.disabled = true;
+        submitText.textContent = 'Saving...';
+        submitSpinner.style.display = 'inline-block';
 
         (async function addData() {
             try {
@@ -153,12 +183,46 @@ function validateAndSubmit() {
                 });
                 const data = await response.json();
                 console.log(data.msg);
-                console.log(data.val)
-                if(data.val){
+                console.log(data.val);
+                if (data.val) {
+                    if (typeof Swal !== 'undefined') {
+                        await Swal.fire({
+                            icon: 'success',
+                            title: 'Product added',
+                            text: data.msg || 'Your product has been created successfully.',
+                            showConfirmButton: false,
+                            timer: 1500,
+                            background: '#111827',
+                            color: '#e2e8f0'
+                        });
+                    }
                     window.location.href = "/admin/addProducts";
+                    return;
+                }
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Unable to save',
+                        text: data.msg || 'Please try again.',
+                        background: '#111827',
+                        color: '#e2e8f0'
+                    });
                 }
             } catch (err) {
                 console.log("Error ::- " + err);
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Upload failed',
+                        text: err.message || 'Something went wrong while uploading the product.',
+                        background: '#111827',
+                        color: '#e2e8f0'
+                    });
+                }
+            } finally {
+                submitBtn.disabled = false;
+                submitText.textContent = 'Create Product';
+                submitSpinner.style.display = 'none';
             }
         })();
     }

@@ -1,135 +1,120 @@
 <%- include("../../views/partials/admin/header") %>
-<head>
-   <link rel="stylesheet" href="/admin/css/product-add.css">
-   <link
-      href="https://unpkg.com/cropperjs@1.5.12/dist/cropper.min.css"
-      rel="stylesheet"
-    />
-</head>
-   <section class="content-main">
-       <div class="row">
-           <div class="col-9">
-               <div class="content-header">
-                   <h2 class="content-title">Add New Product</h2>
-               </div>
-           </div>
-           <div class="col-lg-6">
-               <div class="card mb-4">
-                   <div class="card-body">
-                       <form action="/admin/products/add" method="post" class="forms-sample" id="productForm" enctype="multipart/form-data" novalidate>
-                  <input style="display: none" type="file" class="product-image" multiple required />
-                  <div class="form-group">
-                    <label for="productName">Name</label>
-                    <input type="text" class="form-control product-name" id="productName" name="name" placeholder="Product Name" required />
+<section class="content-main">
+    <div class="content-header">
+        <div>
+            <h2 class="content-title card-title">Add New Product</h2>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <form action="/admin/products/add" method="post" class="forms-sample row g-4" id="productForm" enctype="multipart/form-data" novalidate>
+                <div class="col-12">
+                    <label for="productName" class="form-label">Name</label>
+                    <input type="text" class="form-control" id="productName" name="name" placeholder="Product Name" required />
                     <p class="error-message" id="productNameError"></p>
-                  </div>
-                  <div class="form-group">
-                    <label for="productImages">Images <span class="text-danger">*</span> <small class="text-muted">(All 3 images required)</small></label>
-                    <input type="file" class="form-control product-image" id="productImage1" 
-                    accept="image/png, image/gif, image/jpeg" onchange="previewAndCrop(event, 0)" />
+                </div>
+
+                <div class="col-12">
+                    <label class="form-label">Images <span class="text-danger">*</span> <small class="text-muted">(All 3 images required)</small></label>
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <input type="file" class="form-control" id="productImage1" name="productImage1" accept="image/png, image/gif, image/jpeg" onchange="previewAndCrop(event, 0)" />
+                            <div class="cropPreviewSection mt-2" id="cropPreviewSection0" style="display: none;">
+                                <img id="cropPreview0" class="rounded" />
+                                <button type="button" class="btn btn-primary btn-sm mt-2" onclick="startCropping(0)"><i class="fas fa-crop"></i> Crop Image 1</button>
+                            </div>
+                            <div id="croppedImagePreview0" class="cropped-image-preview mt-2"></div>
+                        </div>
+                        <div class="col-md-4">
+                            <input type="file" class="form-control" id="productImage2" name="productImage2" accept="image/*" onchange="previewAndCrop(event, 1)" />
+                            <div class="cropPreviewSection mt-2" id="cropPreviewSection1" style="display: none;">
+                                <img id="cropPreview1" class="rounded" />
+                                <button type="button" class="btn btn-primary btn-sm mt-2" onclick="startCropping(1)"><i class="fas fa-crop"></i> Crop Image 2</button>
+                            </div>
+                            <div id="croppedImagePreview1" class="cropped-image-preview mt-2"></div>
+                        </div>
+                        <div class="col-md-4">
+                            <input type="file" class="form-control" id="productImage3" name="productImage3" accept="image/*" onchange="previewAndCrop(event, 2)" />
+                            <div class="cropPreviewSection mt-2" id="cropPreviewSection2" style="display: none;">
+                                <img id="cropPreview2" class="rounded" />
+                                <button type="button" class="btn btn-primary btn-sm mt-2" onclick="startCropping(2)"><i class="fas fa-crop"></i> Crop Image 3</button>
+                            </div>
+                            <div id="croppedImagePreview2" class="cropped-image-preview mt-2"></div>
+                        </div>
+                    </div>
                     <p class="error-message" id="imageError"></p>
-                    <div class="cropPreviewSection" id="cropPreviewSection0" style="display: none" >
-                      <img id="cropPreview0" style="max-width: 100%" />
-                      <button type="button" class="btn btn-primary btn-sm" onclick="startCropping(0)">
-                        <i class="fas fa-crop"></i> Crop Image 1
-                      </button>
-                      
-                    </div>
+                </div>
 
-                    <div id="croppedImagePreview0" class="cropped-image-preview"></div>
-
-                    <input type="file" class="form-control product-image" id="productImage2" accept="image/*" onchange="previewAndCrop(event, 1)" />
-                    <div class="cropPreviewSection" id="cropPreviewSection1" style="display: none" >
-                      <img id="cropPreview1" style="max-width: 100%" />
-                      <button type="button" class="btn btn-primary btn-sm" onclick="startCropping(1)">
-                        <i class="fas fa-crop"></i> Crop Image 2
-                      </button>
-                    </div>
-
-                    <div id="croppedImagePreview1" class="cropped-image-preview"></div>
-
-                    <input type="file" class="form-control product-image" id="productImage3" accept="image/*" onchange="previewAndCrop(event, 2)" />
-                    <div class="cropPreviewSection" id="cropPreviewSection2" style="display: none" >
-                      <img id="cropPreview2" style="max-width: 100%" />
-                    <button type="button" class="btn btn-primary btn-sm" onclick="startCropping(2)">
-                        <i class="fas fa-crop"></i> Crop Image 3
-                      </button>
-                    </div>
-
-                    <div id="croppedImagePreview2" class="cropped-image-preview"></div>
-                  </div>
-
-                  <div class="form-group">
-                    <label for="productDesc">Description</label>
-                    <input type="text" class="form-control product-desc" id="productDescription" name="description" placeholder="Product Description" required />
+                <div class="col-md-6">
+                    <label for="productDescription" class="form-label">Description</label>
+                    <input type="text" class="form-control" id="productDescription" name="description" placeholder="Product Description" required />
                     <p class="error-message" id="descError"></p>
-                  </div>
+                </div>
 
-                  <div class="form-group">
-                    <label for="productCategory">Category</label>
-                    <select class="form-control" id="productCategory" name="cta" required>
-                      <option value="" disabled selected>Select a Category</option>
-                    <%for(let i=0;i<cat.length;i++){%>
-                      <option value="<%=cat[i].name%>">
-                        
-                        <%=cat[i].name%>
-                    
-                    </option>
-
-                    <%}%>
-                 </select>
+                <div class="col-md-6">
+                    <label for="productCategory" class="form-label">Category</label>
+                    <select class="form-select" id="productCategory" name="category" required>
+                        <option value="" disabled selected>Select a Category</option>
+                        <% for (let i = 0; i < cat.length; i++) { %>
+                            <option value="<%= cat[i]._id %>"><%= cat[i].name %></option>
+                        <% } %>
+                    </select>
                     <p class="error-message" id="categoryError"></p>
-                  </div>
-                  <div class="form-group">
-                    <label for="productOgPrice">Price</label>
-                    <input type="number" class="form-control product-og-price" id="productOgPrice" placeholder="Original Price" min="1" required />
-                    <p class="error-message" id="ogPriceError"></p>
-                  </div>
-                  <div class="form-group">
-                       <label for="productOfferPrice">Offer Price <span class="text-danger">*</span></label>
-                       <input type="number" class="form-control product-offer-price" id="productOfferPrice" placeholder="Offer Price" min="1" required />
-                       <p class="error-message" id="offerPriceError"></p>
-                   </div>
-                  <div class="form-group">
-                    <label for="productStock">Stock</label>
-                    <input type="number" class="form-control product-stock" id="productStock" placeholder="Stock" min="1" required />
-                    <p class="error-message" id="stockError"></p>
-                  </div>
-                  <div class="form-group">
-                    <div class="form-check mb-3">
-                      <input type="checkbox" class="form-check-input" id="toggleWarranty" onclick="toggleWarrantyInput()" />
-                      <label class="form-check-label" for="toggleWarranty" >Add Warranty</label>
-                    </div>
-                    <div class="warranty-input mt-2" id="warrantyDiv" style="display: none" >
-                      <label for="productWarranty">Warranty</label>
-                      <input type="text" class="form-control product-warranty" id="productWarranty" placeholder="Warranty" />
-                      <p class="error-message" id="warrantyError"></p>
-                    </div>
-                  </div>
-                  <div class="form-group">
-                    <div class="form-check mb-3">
-                      <input type="checkbox" class="form-check-input" id="toggleReturnPolicy" onclick="toggleReturnPolicyInput()" />
-                      <label class="form-check-label" for="toggleReturnPolicy" >Add Return Policy</label>
-                    </div>
-                    <div class="return-policy-input mt-2" id="returnPolicyDiv" style="display: none" >
-                      <label for="productReturnPolicy">Return Policy</label>
-                      <input type="text" class="form-control product-return-policy" id="productReturnPolicy" placeholder="Return Policy" />
-                      <p class="error-message" id="returnPolicyError"></p>
-                    </div>
-                  </div>
-                  <button type="submit" class="btn btn-primary mt-3 btn-CreateProduct">
-                    Create
-                  </button>
-                </form>
-                   </div>
-               </div>
-           </div>
-       </div>
-   </section>
-<script src="https://cdn.jsdelivr.net/npm/cropperjs/dist/cropper.min.js"></script>
-<script src="https://unpkg.com/cropperjs@1.5.12/dist/cropper.min.js"></script>
-<script src="/admin/js/validate.js" ></script>
+                </div>
 
+                <div class="col-md-4">
+                    <label for="productOgPrice" class="form-label">Price</label>
+                        <input type="number" class="form-control" id="productOgPrice" name="price" placeholder="Original Price" min="1" required />
+                        <p class="error-message" id="ogPriceError"></p>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="productOfferPrice" class="form-label">Offer Price</label>
+                        <input type="number" class="form-control" id="productOfferPrice" name="offerPrice" placeholder="Offer Price" min="1" required />
+                        <p class="error-message" id="offerPriceError"></p>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="productStock" class="form-label">Stock</label>
+                        <input type="number" class="form-control" id="productStock" name="stock" placeholder="Stock" min="1" required />
+                    </div>
+
+                <div class="col-12">
+                    <div class="form-check mb-3">
+                        <input type="checkbox" class="form-check-input" id="toggleWarranty" onclick="toggleWarrantyInput()" />
+                        <label class="form-check-label" for="toggleWarranty">Add Warranty</label>
+                    </div>
+                    <div class="warranty-input mt-3" id="warrantyDiv" style="display: none;">
+                        <label for="productWarranty" class="form-label">Warranty</label>
+                        <input type="text" class="form-control" id="productWarranty" name="warranty" placeholder="Warranty" />
+                        <p class="error-message" id="warrantyError"></p>
+                    </div>
+                </div>
+
+                <div class="col-12">
+                    <div class="form-check mb-3">
+                        <input type="checkbox" class="form-check-input" id="toggleReturnPolicy" onclick="toggleReturnPolicyInput()" />
+                        <label class="form-check-label" for="toggleReturnPolicy">Add Return Policy</label>
+                    </div>
+                    <div class="return-policy-input mt-3" id="returnPolicyDiv" style="display: none;">
+                        <label for="productReturnPolicy" class="form-label">Return Policy</label>
+                        <input type="text" class="form-control" id="productReturnPolicy" name="returnPolicy" placeholder="Return Policy" />
+                        <p class="error-message" id="returnPolicyError"></p>
+                    </div>
+                </div>
+
+                <div class="col-12">
+                    <button type="submit" id="productSubmitBtn" class="btn btn-primary btn-CreateProduct">
+                        <span class="btn-text">Create Product</span>
+                        <span class="btn-spinner spinner-border spinner-border-sm ms-2" role="status" aria-hidden="true" style="display:none"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</section>
+
+<script src="https://cdn.jsdelivr.net/npm/cropperjs@1.5.12/dist/cropper.min.js"></script>
+<script src="/admin/js/validate.js"></script>
 <%- include("../../views/partials/admin/footer") %>
 
 

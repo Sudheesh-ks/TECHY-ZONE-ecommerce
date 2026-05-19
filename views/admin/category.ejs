@@ -1,253 +1,189 @@
-<%- include("../../views/partials/admin/header") %>
-<head>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@10/dist/sweetalert2.min.css"/>
-</head>
-<body>
-  <section class="content-main">
+﻿<%- include("../../views/partials/admin/header") %>
+<section class="content-main">
     <div class="content-header">
-      <div>
-        <h2 class="content-title card-title">Category</h2>
-      </div>
-    </div>
-    <header class="card-header text-center mb-20">
-      <form action="/admin/category/" method="get" class="d-inline">
-        <div class="input-group input-group-sm border border-1 border-grey rounded-pill" style="width: 500px; margin-left: 230px">
-          <input type="text" class="form-control border-0 rounded-pill mt-3" placeholder="Search categories" name="search"/>
-          <button class="btn" type="submit">Search</button>
+        <div>
+            <h2 class="content-title card-title">Categories</h2>
         </div>
-      </form>
-    </header>
-    <div class="card">
-      <div class="card-body">
-        <div class="row">
-          <div class="col-md-3">
-            <form method="POST" action="/admin/addCategory">
-                <div class="mb-4">
-                  <label for="product_name" class="form-label">Name</label>
-                  <input type="text" name="name" placeholder="Type here" class="form-control" id="product_name" required/>
-                  <div id="name-error" class="error-message"></div>
-                </div>
-                <div class="mb-4">
-                  <label class="form-label">Description</label>
-                  <textarea placeholder="Type here" name="description" class="form-control" id="descriptionId" required></textarea>
-                  <div id="description-error" class="error-message"></div>
-                </div>
-                <div class="d-grid">
-                  <button class="btn btn-primary" type="submit">Create category</button>
-                </div>
-              </form>
-          </div>
-          <div class="col-md-8 ml-10">
-            <div class="table-responsive">
-              <table class="table table-hover">
-                <thead>
-                  <tr>
-                    <th class="text-center"></th>
-                    <th>Name</th>
-                    <th>Description</th>
-                    <th>Status</th>
-                    <th>List/Unlist</th>
-                    <th>Offer</th>
-                    <th class="text-start">Edit</th>
-                  </tr>
-                </thead>
-                <tbody>
-                    <% if (cat && cat.length > 0) { %>
-                      <% cat.forEach((category, index) => { %>
-                        <tr>
-                          <td class="text-center"><%= index + 1 %></td>
-                          <td class="text-start"><%= category.name %></td>
-                          <td class="text-start"><%= category.description %></td>
-                          <td class="text-start">
-                            <span class="badge <%= category.isListed ? 'alert-success' : 'alert-danger' %>">
-                                <%= category.status %>
-                            </span>
-                        </td>                        
-                          <td class="text-start">
-                            <button class="btn <%= category.isListed ? 'btn-danger' : 'btn-success' %>" onclick="toggleListStatus('<%= category._id %>')">
-                              <%= category.isListed ? 'Unlist' : 'List' %>
-                            </button>
-                          </td>
-                          <td class="text-start">
-                            <% if (category.categoryOffer && category.categoryOffer > 0) { %>
-                              <form action="/admin/remove-category-offer" method="POST" class="d-flex align-items-center">
-                                <input type="hidden" name="categoryId" value="<%= category.id %>">
-                                <input type="number" name="offerValue" class="form-control form-control-sm mr-2" placeholder="Offer Value">
-                                <button type="submit" class="btn btn-danger btn">Remove</button>
-                              </form>
-                            <% } else { %>
-                              <form action="/admin/apply-category-offer" method="POST" class="d-flex align-items-center">
-                                <input type="hidden" name="categoryId" value="<%= category.id %>">
-                                <input type="number" name="offerValue" class="form-control form-control-sm mr-2" placeholder="Offer Value" min="0" max="100" required>
-                                <button type="submit" class="btn btn-success btn">Apply</button>
-                              </form>
-                            <% } %>
-                          </td>                          
-                          <td class="text-start">
-                            <a href="javascript:void(0);" onclick="openEditModal('<%= category._id %>', '<%= category.name %>', '<%= category.description %>', '<%=category.offerPrice%>,<%=category.categoryOffer%>')" class="btn btn-info text-white">Edit</a>
-                          </td>
-                        </tr>
-                      <% }) %>
-                    <% } else { %>
-                      <tr>
-                        <td colspan="8" class="text-center">No categories found.</td>
-                      </tr>
-                    <% } %>
-                  </tbody>
+    </div>
 
-                  <!-- Edit Category Modal -->
-                  <div id="editModal" class="modal">
-                    <div class="modal-content">
-                      <span onclick="closeModal()" class="close">&times;</span>
-                      <h2>Edit Category</h2>
-                      <form id="editForm" method="post">
-                        <input type="hidden" name="id" id="editId">
-                        <label for="editName">Name:</label>
-                        <input type="text" name="name" id="editName" required>
-
-                        <label for="editDescription">Description:</label>
-                        <textarea name="description" id="editDescription" required></textarea>
-
-                        <button type="submit" class="btn btn-primary">Save Changes</button>
-                      </form>
-                    </div>
-                  </div>
-              </table>
+    <div class="card card-body mb-4">
+        <form action="/admin/category/" method="get" class="mb-0">
+            <div class="input-group" style="max-width: 560px;">
+                <input type="text" class="form-control" placeholder="Search categories" name="search" />
+                <button class="btn btn-light" type="submit"><i class="material-icons md-search"></i></button>
             </div>
-          </div>
-        </div>
-      </div>
+        </form>
     </div>
-  </section>
-  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10/dist/sweetalert2.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10/dist/sweetalert2.min.js"></script>
 
+    <div class="card">
+        <div class="card-body">
+            <div class="row gy-4">
+                <div class="col-lg-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">New Category</h5>
+                            <form method="POST" action="/admin/addCategory" class="row g-3">
+                                <div class="col-12">
+                                    <label for="product_name" class="form-label">Name</label>
+                                    <input type="text" name="name" placeholder="Type here" class="form-control" id="product_name" required />
+                                    <div id="name-error" class="error-message"></div>
+                                </div>
+                                <div class="col-12">
+                                    <label for="descriptionId" class="form-label">Description</label>
+                                    <textarea placeholder="Type here" name="description" class="form-control" id="descriptionId" required></textarea>
+                                    <div id="description-error" class="error-message"></div>
+                                </div>
+                                <div class="col-12">
+                                    <button class="btn btn-primary w-100" type="submit">Create category</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-8">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Name</th>
+                                    <th>Description</th>
+                                    <th>Status</th>
+                                    <th>List/Unlist</th>
+                                    <th>Offer</th>
+                                    <th>Edit</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% if (cat && cat.length > 0) { %>
+                                    <% cat.forEach((category, index) => { %>
+                                        <tr>
+                                            <td><%= index + 1 %></td>
+                                            <td><%= category.name %></td>
+                                            <td><%= category.description %></td>
+                                            <td>
+                                                <span class="badge <%= category.isListed ? 'bg-success' : 'bg-danger' %>"><%= category.status %></span>
+                                            </td>
+                                            <td>
+                                                <button type="button" class="btn <%= category.isListed ? 'btn-danger' : 'btn-success' %> btn-sm confirm-action" data-confirm-title="<%= category.isListed ? 'Unlist category' : 'List category' %>" data-confirm-text="<%= category.isListed ? 'This category will be hidden from customers.' : 'This category will be visible to customers.' %> Continue?" data-url="/admin/toggleListStatus/<%= category._id %>" data-method="POST">
+                                                    <%= category.isListed ? 'Unlist' : 'List' %>
+                                                </button>
+                                            </td>
+                                            <td>
+                                                <% if (category.categoryOffer && category.categoryOffer > 0) { %>
+                                                    <form action="/admin/remove-category-offer" method="POST" class="d-flex gap-2 align-items-center confirm-action" data-confirm-title="Remove category offer" data-confirm-text="This offer will be removed from the category. Continue?">
+                                                        <input type="hidden" name="categoryId" value="<%= category._id %>">
+                                                        <input type="number" name="offerValue" class="form-control form-control-sm" placeholder="Offer Value">
+                                                        <button type="submit" class="btn btn-danger btn-sm">Remove</button>
+                                                    </form>
+                                                <% } else { %>
+                                                    <form action="/admin/apply-category-offer" method="POST" class="d-flex gap-2 align-items-center confirm-action" data-confirm-title="Apply category offer" data-confirm-text="This offer will be applied to all products in this category. Continue?">
+                                                        <input type="hidden" name="categoryId" value="<%= category._id %>">
+                                                        <input type="number" name="offerValue" class="form-control form-control-sm" placeholder="Offer Value" min="0" max="100" required>
+                                                        <button type="submit" class="btn btn-success btn-sm">Apply</button>
+                                                    </form>
+                                                <% } %>
+                                            </td>
+                                            <td>
+                                                <button type="button" class="btn btn-info btn-sm" data-bs-toggle="modal" data-bs-target="#editCategoryModal" data-category-id="<%= category._id %>" data-category-name="<%= category.name %>" data-category-description="<%= category.description %>">Edit</button>
+                                            </td>
+                                        </tr>
+                                    <% }) %>
+                                <% } else { %>
+                                    <tr>
+                                        <td colspan="7" class="text-center">No categories found.</td>
+                                    </tr>
+                                <% } %>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
 
-  
+<div class="modal fade" id="editCategoryModal" tabindex="-1" aria-labelledby="editCategoryModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-md">
+        <div class="modal-content admin-dark-modal border-0 shadow-sm">
+            <div class="modal-header border-0">
+                <h5 class="modal-title" id="editCategoryModalLabel">Edit Category</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editForm" method="post" class="confirm-action" data-confirm-title="Save category changes" data-confirm-text="Save the changes made to this category?">
+                    <input type="hidden" name="id" id="editId">
+                    <div class="mb-3">
+                        <label for="editName" class="form-label">Category Name</label>
+                        <input type="text" name="name" id="editName" class="form-control" placeholder="Enter category name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editDescription" class="form-label">Description</label>
+                        <textarea name="description" id="editDescription" class="form-control" placeholder="Enter category description" rows="4" required></textarea>
+                    </div>
+                    <div class="d-flex justify-content-end gap-2">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
 
 <script>
-  function openEditModal(id, name, description, offerPrice, categoryOffer) {
-    document.getElementById("editId").value = id;
-    document.getElementById("editName").value = name;
-    document.getElementById("editDescription").value = description;
-
-    document.getElementById("editForm").action = `/admin/category/edit/${id}`;
-    document.getElementById("editModal").style.display = "block";
-  }
-
-
-  $('form[action="/admin/addCategory"]').on('submit', function (event) {
-    event.preventDefault();
-
-    const formData = $(this).serialize();
-
-    $.post('/admin/addCategory', formData)
-        .done((response) => {
-            Swal.fire({
-                icon: response.type,
-                title: response.message,
-                showConfirmButton: false,
-                timer: 1500,
-            }).then(() => location.reload());
-        })
-        .fail((error) => {
-            Swal.fire({
-                icon: 'error',
-                title: error.responseJSON?.message || 'An error occurred',
-                showConfirmButton: false,
-                timer: 1500,
-            });
+    const editCategoryModalEl = document.getElementById('editCategoryModal');
+    if (editCategoryModalEl) {
+        editCategoryModalEl.addEventListener('show.bs.modal', function (event) {
+            const button = event.relatedTarget;
+            const categoryId = button.getAttribute('data-category-id');
+            const categoryName = button.getAttribute('data-category-name');
+            const categoryDescription = button.getAttribute('data-category-description');
+            document.getElementById('editId').value = categoryId;
+            document.getElementById('editName').value = categoryName;
+            document.getElementById('editDescription').value = categoryDescription;
+            document.getElementById('editForm').action = `/admin/category/edit/${categoryId}`;
         });
-});
+    }
 
-
-
-
-  function closeModal() {
-    document.getElementById("editModal").style.display = "none";
-  }
-
-  function toggleListStatus(id) {
-    fetch(`/admin/toggleListStatus/${id}`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-    })
-        .then((response) => response.json())
-        .then((data) => {
-            Swal.fire({
-                icon: data.type,
-                title: data.message,
-                showConfirmButton: false,
-                timer: 1500,
-            }).then(() => {
-                if (data.type === 'success') {
-                    location.reload();
-                }
+    $('form[action="/admin/addCategory"]').on('submit', function (event) {
+        event.preventDefault();
+        const formData = $(this).serialize();
+        $.post('/admin/addCategory', formData)
+            .done((response) => {
+                Swal.fire({ icon: response.type, title: response.message, showConfirmButton: false, timer: 1500 }).then(() => location.reload());
+            })
+            .fail((error) => {
+                Swal.fire({ icon: 'error', title: error.responseJSON?.message || 'An error occurred', showConfirmButton: false, timer: 1500 });
             });
-        })
-        .catch((error) => {
-            Swal.fire({
-                icon: 'error',
-                title: 'An error occurred',
-                text: error.message,
-                showConfirmButton: true,
+    });
+
+    function toggleListStatus(id) {
+        fetch(`/admin/toggleListStatus/${id}`, { method: 'POST', headers: { 'Content-Type': 'application/json' } })
+            .then((response) => response.json())
+            .then((data) => {
+                Swal.fire({ icon: data.type, title: data.message, showConfirmButton: false, timer: 1500 }).then(() => { if (data.type === 'success') location.reload(); });
+            })
+            .catch((error) => {
+                Swal.fire({ icon: 'error', title: 'An error occurred', text: error.message, showConfirmButton: true });
             });
-        });
-}
+    }
 
+    $(document).on('submit', 'form[action="/admin/apply-category-offer"]', function (event) {
+        event.preventDefault();
+        const formData = $(this).serialize();
+        $.post('/admin/apply-category-offer', formData)
+            .done((response) => { Swal.fire({ icon: response.type, title: response.message, showConfirmButton: false, timer: 1500 }).then(() => location.reload()); })
+            .fail((error) => { Swal.fire({ icon: 'error', title: 'An error occurred', showConfirmButton: false, timer: 1500 }); });
+    });
 
-
-$(document).on('submit', 'form[action="/admin/apply-category-offer"]', function (event) {
-    event.preventDefault();
-    const formData = $(this).serialize();
-
-    $.post('/admin/apply-category-offer', formData)
-        .done((response) => {
-            Swal.fire({
-                icon: response.type,
-                title: response.message,
-                showConfirmButton: false,
-                timer: 1500,
-            }).then(() => location.reload());
-        })
-        .fail((error) => {
-            Swal.fire({
-                icon: 'error',
-                title: error.responseJSON?.message || 'An error occurred',
-                showConfirmButton: false,
-                timer: 1500,
-            });
-        });
-});
-
-$(document).on('submit', 'form[action="/admin/remove-category-offer"]', function (event) {
-    event.preventDefault();
-    const formData = $(this).serialize();
-
-    $.post('/admin/remove-category-offer', formData)
-        .done((response) => {
-            Swal.fire({
-                icon: response.type,
-                title: response.message,
-                showConfirmButton: false,
-                timer: 1500,
-            }).then(() => location.reload());
-        })
-        .fail((error) => {
-            Swal.fire({
-                icon: 'error',
-                title: error.responseJSON?.message || 'An error occurred',
-                showConfirmButton: false,
-                timer: 1500,
-            });
-        });
-});
-
-
-
+    $(document).on('submit', 'form[action="/admin/remove-category-offer"]', function (event) {
+        event.preventDefault();
+        const formData = $(this).serialize();
+        $.post('/admin/remove-category-offer', formData)
+            .done((response) => { Swal.fire({ icon: response.type, title: response.message, showConfirmButton: false, timer: 1500 }).then(() => location.reload()); })
+            .fail((error) => { Swal.fire({ icon: 'error', title: 'An error occurred', showConfirmButton: false, timer: 1500 }); });
+    });
 </script>
 
 <%- include("../../views/partials/admin/footer") %>

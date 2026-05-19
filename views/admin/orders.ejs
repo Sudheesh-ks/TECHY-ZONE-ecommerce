@@ -1,85 +1,110 @@
 <%- include("../../views/partials/admin/header") %>
-
-<head>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@10/dist/sweetalert2.min.css">
-</head>
-
-<div class="content-header">
-    <div>
-        <h2 class="content-title card-title">Orders</h2>
-    </div>
-</div>
-
-<header class="card-header text-center mb-20">
-    <form action="" method="get" class="d-inline">
-        <div class="input-group input-group-sm border border-1 border-grey rounded-pill" style="width: 500px; margin-left: 230px;">
-            <input type="text" class="form-control border-0 rounded-pill" placeholder="Search orders by user or product" name="search">
-            <button class="btn border-0" type="submit">Search</button>
+<section class="content-main">
+    <div class="content-header">
+        <div>
+            <h2 class="content-title card-title">Orders</h2>
         </div>
-    </form>
-</header>
+    </div>
 
-<div class="right mt-5">
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th scope="col"><b>Order ID</b></th>
-                <th scope="col"><b>User</b></th>
-                <th scope="col"><b>Date</b></th>
-                <th scope="col"><b>Total Price</b></th>
-                <th scope="col"><b>Items</b></th>
-                <th scope="col"><b>Order Status</b></th>
-                <th scope="col"><b>Payment Status</b></th>
-                <th scope="col"><b>Payment Method</b></th>
-                <th scope="col"><b>Action</b></th>
-            </tr>
-        </thead>
-        <tbody>
-            <% if (orders && orders.length > 0) { %>
-                <% orders.forEach((order, index) => { %>
-                    <tr class="<%= order.isReturnRequested ? 'table-warning' : '' %>">
-                        <td>#<%= order._id.toString().slice(-6) %></td>
-                        <td>
-                            <%= order.user ? order.user.name : 'Unknown User' %>
-                            <% if (order.isReturnRequested) { %>
-                                <span class="badge bg-danger ms-2">Return Requested</span>
-                            <% } %>
-                        </td>
-                        <td><%= new Date(order.createdAt).toLocaleString() %></td>
-                        <td>₹<%= order.totalPrice %></td>
-                        <td><%= order.totalQuantity %></td>
-                        <td><%= order.status %></td>
-                        <td><%= order.paymentStatus %></td>
-                        <td><%= order.paymentMethod %></td>
-                        <td>
-                            <button class="btn btn-info" style="width: 100px;">
-                                <a href="/admin/order-detail/<%= order._id %>" class="text-white" style="text-decoration: none;">View</a>
-                            </button>
-                        </td>
-                    </tr>
-                <% }); %>
-            <% } else { %>
-                <tr>
-                    <td colspan="7" class="text-center">No orders found</td>
-                </tr>
-            <% } %>
-        </tbody>
-    </table>
-</div>
+    <div class="card card-body mb-4">
+        <form action="" method="get" class="mb-0">
+            <div class="input-group" style="max-width: 560px;">
+                <input type="text" class="form-control" placeholder="Search orders by user or product" name="search">
+                <button class="btn btn-light" type="submit"><i class="material-icons md-search"></i></button>
+            </div>
+        </form>
+    </div>
 
-<div class="container mt-3">
-    <nav aria-label="Page navigation">
-        <ul class="pagination justify-content-center mb-20" style="margin-right: 200px;">
-            <%for(let i = 1; i <= totalPages; i++){%>
-                <li class="page-item <%=(i===currentPage) ? 'active' : '' %>">
-                    <a class="page-link" href="?page=<%=i%>"><%= i %></a>
-                </li>
-                <%}%>
+    <div class="card">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-striped mb-0">
+                    <thead>
+                        <tr>
+                            <th scope="col">Order ID</th>
+                            <th scope="col">User</th>
+                            <th scope="col">Date</th>
+                            <th scope="col">Total Price</th>
+                            <th scope="col">Items</th>
+                            <th scope="col">Order Status</th>
+                            <th scope="col">Payment Status</th>
+                            <th scope="col">Payment Method</th>
+                            <th scope="col">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% if (orders && orders.length > 0) { %>
+                            <% orders.forEach((order, index) => { %>
+                                <tr class="<%= order.isReturnRequested ? 'table-warning' : '' %>">
+                                    <td>#<%= order._id.toString().slice(-6) %></td>
+                                    <td>
+                                        <%= order.user ? order.user.name : 'Unknown User' %>
+                                        <% if (order.isReturnRequested) { %>
+                                            <span class="badge bg-danger ms-2">Return Requested</span>
+                                        <% } %>
+                                    </td>
+                                    <td><%= new Date(order.createdAt).toLocaleString() %></td>
+                                    <td>₹<%= order.totalPrice %></td>
+                                    <td><%= order.totalQuantity %></td>
+                                    <td><%= order.status %></td>
+                                    <td><%= order.paymentStatus %></td>
+                                    <td><%= order.paymentMethod %></td>
+                                    <td>
+                                        <a href="/admin/order-detail/<%= order._id %>" class="btn btn-info btn-sm">View</a>
+                                    </td>
+                                </tr>
+                            <% }); %>
+                        <% } else { %>
+                            <tr>
+                                <td colspan="9" class="text-center">No orders found</td>
+                            </tr>
+                        <% } %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <nav class="mt-4">
+        <% function renderPagination(currentPage, totalPages) {
+            const current = Number(currentPage);
+            const total = Number(totalPages);
+            const pages = [];
+            if (total <= 7) {
+                for (let i = 1; i <= total; i++) pages.push(i);
+            } else {
+                pages.push(1);
+                const left = Math.max(2, current - 2);
+                const right = Math.min(total - 1, current + 2);
+                if (left > 2) pages.push('left-ellipsis');
+                for (let i = left; i <= right; i++) pages.push(i);
+                if (right < total - 1) pages.push('right-ellipsis');
+                pages.push(total);
+            }
+            return { pages, current, total };
+        }
+        const pagination = renderPagination(currentPage, totalPages);
+        const pages = pagination.pages;
+        const current = pagination.current;
+        const total = pagination.total;
+        %>
+        <ul class="pagination justify-content-center mb-0">
+            <li class="page-item <%= current === 1 ? 'disabled' : '' %>">
+                <a class="page-link" href="?page=<%= Math.max(1, current - 1) %>">Prev</a>
+            </li>
+            <% pages.forEach((page) => { %>
+                <% if (page === 'left-ellipsis' || page === 'right-ellipsis') { %>
+                    <li class="page-item disabled ellipsis"><span class="page-link">&hellip;</span></li>
+                <% } else { %>
+                    <li class="page-item <%= page === current ? 'active' : '' %>">
+                        <a class="page-link" href="?page=<%= page %>"><%= page %></a>
+                    </li>
+                <% } %>
+            <% }); %>
+            <li class="page-item <%= current === total ? 'disabled' : '' %>">
+                <a class="page-link" href="?page=<%= Math.min(total, current + 1) %>">Next</a>
+            </li>
         </ul>
     </nav>
-</div>
-
-
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@10/dist/sweetalert2.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+</section>
 <%- include("../../views/partials/admin/footer") %>

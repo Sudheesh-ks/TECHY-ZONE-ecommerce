@@ -1,91 +1,112 @@
 <%- include("../../views/partials/admin/header") %>
-<head>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@10/dist/sweetalert2.min.css">
-</head>
-<div class="content-header">
-    <div>
-        <h2 class="content-title card-title">Products</h2>
-    </div>
-</div>
-<header class="card-header text-center mb-20">
-    <form action="" method="" class="d-inline">
-        <div class="input-group input-group-sm border border-1 border-grey rounded-pill" style="width: 500px; margin-left: 230px;">
-            <input type="text" class="form-control border-0 rounded-pill" placeholder="Search products or brands" name="search">
-            <button class="btn  border-0" type="submit">Search</button>
+<section class="content-main">
+    <div class="content-header">
+        <div>
+            <h2 class="content-title card-title">Products</h2>
         </div>
-    </form>
-</header>
-<div class="right mt-5">
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th scope="col"><b>Product name</b></th>
-                <th scope="col"><b>Brand</b></th>
-                <th scope="col"><b>Category</b></th>
-                <th scope="col"><b>Sale Price</b></th>
-                <th scope="col"><b>Offer Price</b></th>
-                <th scope="col"><b>Quantity</b></th>
-                <th scope="col"><b>Action</b></th>
-                <th scope="col"><b>Edit</b></th>
-            </tr>
-        </thead>
-        <tbody>
-            <% if (data && data.length > 0) { %>
-                <% for (let i = 0; i < data.length; i++) { %>
-                    <tr>
-                        <td><%= data[i].name %></td>
-                        <td>Brands</td>
-                        <td><%= data[i].category ? data[i].category.name : 'No Category' %></td>
-                        <td><%= data[i].price %></td>
-                        <td><%= data[i].offerPrice %></td>
-                        <td><%= data[i].stock %></td>
-                        <td>
+        <div class="page-actions">
+            <a href="/admin/addProducts" class="btn btn-primary">Add Product</a>
+        </div>
+    </div>
 
-                            <%if(data[i].isDeleted===false){%>
-                            <button class="btn btn-danger" style="width: 80px;">
-                                <a href="/admin/blockProduct?id=<%=data[i]._id%>" class="text-white" style="text-decoration: none;">Remove</a>
-                            </button>
-                            <%}else{%>
-                            <button class="btn btn-success" style="width: 80px;">
-                                <a href="/admin/unblockProduct?id=<%=data[i]._id%>" class="text-white" style="text-decoration: none;">Add</a>
-                            </button>
-                            <%}%>
-                        </td>
-                        <td>
-                            <button class="btn btn-info" style="width: 80px;">
-                                <a href="/admin/products/edit/<%= data[i]._id %>" class="text-white" style="text-decoration: none;">Edit</a>
-                            </button>
-                        </td>
-                    </tr>
-                <% } %>
-            <% } else { %>
-                <tr>
-                    <td colspan="7" class="text-center">No products found</td>
-                </tr>
-            <% } %>
-        </tbody>
+    <div class="card card-body mb-4">
+        <form method="GET" action="" class="mb-0">
+            <div class="input-group" style="max-width: 560px;">
+                <input type="text" class="form-control" placeholder="Search products or brands" name="search">
+                <button class="btn btn-light" type="submit"><i class="material-icons md-search"></i></button>
+            </div>
+        </form>
+    </div>
 
-    </table>
-</div>
-</div>
-</div>
+    <div class="card">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-striped mb-0">
+                    <thead>
+                        <tr>
+                            <th scope="col">Product name</th>
+                            <th scope="col">Brand</th>
+                            <th scope="col">Category</th>
+                            <th scope="col">Sale Price</th>
+                            <th scope="col">Offer Price</th>
+                            <th scope="col">Quantity</th>
+                            <th scope="col">Action</th>
+                            <th scope="col">Edit</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% if (data && data.length > 0) { %>
+                            <% for (let i = 0; i < data.length; i++) { %>
+                                <tr>
+                                    <td><%= data[i].name %></td>
+                                    <td>Brands</td>
+                                    <td><%= data[i].category ? data[i].category.name : 'No Category' %></td>
+                                    <td>₹<%= data[i].price %></td>
+                                    <td>₹<%= data[i].offerPrice %></td>
+                                    <td><%= data[i].stock %></td>
+                                    <td>
+                                        <% if (data[i].isDeleted === false) { %>
+                                            <a href="/admin/blockProduct?id=<%= data[i]._id %>" class="btn btn-danger btn-sm confirm-action" data-confirm-title="Remove product" data-confirm-text="This product will be removed from the storefront. Are you sure?">Remove</a>
+                                        <% } else { %>
+                                            <a href="/admin/unblockProduct?id=<%= data[i]._id %>" class="btn btn-success btn-sm confirm-action" data-confirm-title="Add product" data-confirm-text="This product will be restored to the storefront. Continue?">Add</a>
+                                        <% } %>
+                                    </td>
+                                    <td>
+                                        <a href="/admin/products/edit/<%= data[i]._id %>" class="btn btn-info btn-sm">Edit</a>
+                                    </td>
+                                </tr>
+                            <% } %>
+                        <% } else { %>
+                            <tr>
+                                <td colspan="8" class="text-center">No products found</td>
+                            </tr>
+                        <% } %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 
-<div class="container mt-3">
-    <nav aria-label="Page navigation">
-        <ul class="pagination justify-content-center mb-20" style="margin-right: 200px;">
- 
- 
-            <% for (let i = 1; i <= totalPages; i++) { %>
-            <li class="page-item <%=(i === currentPage) ? 'active' : '' %>">
-                <a class="page-link" href="?page=<%= i %>"><%= i %></a>
+    <nav class="mt-4">
+        <% function renderPagination(currentPage, totalPages) {
+            const current = Number(currentPage);
+            const total = Number(totalPages);
+            const pages = [];
+            if (total <= 7) {
+                for (let i = 1; i <= total; i++) pages.push(i);
+            } else {
+                pages.push(1);
+                const left = Math.max(2, current - 2);
+                const right = Math.min(total - 1, current + 2);
+                if (left > 2) pages.push('left-ellipsis');
+                for (let i = left; i <= right; i++) pages.push(i);
+                if (right < total - 1) pages.push('right-ellipsis');
+                pages.push(total);
+            }
+            return { pages, current, total };
+        }
+        const pagination = renderPagination(currentPage, totalPages);
+        const pages = pagination.pages;
+        const current = pagination.current;
+        const total = pagination.total;
+        %>
+        <ul class="pagination justify-content-center mb-0">
+            <li class="page-item <%= current === 1 ? 'disabled' : '' %>">
+                <a class="page-link" href="?page=<%= Math.max(1, current - 1) %>">Prev</a>
             </li>
-            <% } %>
- 
- 
+            <% pages.forEach((page) => { %>
+                <% if (page === 'left-ellipsis' || page === 'right-ellipsis') { %>
+                    <li class="page-item disabled ellipsis"><span class="page-link">&hellip;</span></li>
+                <% } else { %>
+                    <li class="page-item <%= page === current ? 'active' : '' %>">
+                        <a class="page-link" href="?page=<%= page %>"><%= page %></a>
+                    </li>
+                <% } %>
+            <% }); %>
+            <li class="page-item <%= current === total ? 'disabled' : '' %>">
+                <a class="page-link" href="?page=<%= Math.min(total, current + 1) %>">Next</a>
+            </li>
         </ul>
     </nav>
- </div>
-
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@10/dist/sweetalert2.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+</section>
 <%- include("../../views/partials/admin/footer") %>

@@ -1,116 +1,92 @@
 <%- include("../../views/partials/admin/header") %>
-<div class="content-header row">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
-    <div class="d-flex justify-content-between align-items-center">
-        <h2 class="content-title card-title">Manage Coupons</h2>
+<section class="content-main">
+    <div class="content-header">
+        <div>
+            <h2 class="content-title card-title">Add Coupon</h2>
+        </div>
     </div>
-</div>
 
-<!-- Search Bar -->
-<header class="card-header text-center mb-20">
-    <form action="/admin/coupons" method="get" class="d-inline">
-        <div class="input-group input-group-sm border border-1 border-grey rounded-pill" style="width: 500px; margin-left: 230px;">
-            <input type="text" class="form-control border-0 rounded-pill" placeholder="Search coupons..." name="search">
-            <button class="btn border-0" type="submit">Search</button>
+    <div class="card">
+        <div class="card-body">
+            <form id="addCouponForm" action="/admin/add-coupon" method="POST" class="row g-4">
+                <div class="col-md-6">
+                    <label for="couponCode" class="form-label">Coupon Code (Unique)</label>
+                    <input type="text" name="couponCode" class="form-control" id="couponCode" placeholder="Coupon Code" required />
+                </div>
+                <div class="col-md-6">
+                    <label for="discount" class="form-label">Discount (%)</label>
+                    <input type="number" name="discount" class="form-control" id="discount" placeholder="Discount %" min="1" max="100" required />
+                </div>
+                <div class="col-md-6">
+                    <label for="minAmount" class="form-label">Minimum Amount</label>
+                    <input type="number" name="minAmount" class="form-control" id="minAmount" placeholder="Minimum Amount" min="1" required />
+                </div>
+                <div class="col-md-6">
+                    <label for="maxDiscount" class="form-label">Maximum Discount</label>
+                    <input type="number" name="maxDiscount" class="form-control" id="maxDiscount" placeholder="Maximum Discount" min="1" required />
+                </div>
+                <div class="col-md-6">
+                    <label for="expiryDate" class="form-label">Expiry Date</label>
+                    <input type="date" name="expiryDate" class="form-control" id="expiryDate" required />
+                </div>
+                <div class="col-md-6">
+                    <label for="maxUsage" class="form-label">Max Usage</label>
+                    <input type="number" name="maxUsage" class="form-control" id="maxUsage" placeholder="Max Usage" min="1" required />
+                </div>
+                <div class="col-12">
+                    <button type="submit" class="btn btn-primary">Add Coupon</button>
+                </div>
+            </form>
         </div>
-    </form>
-</header>
-
-<div class="right mt-5">
-    <!-- Add Coupon Form -->
-    <form id="addCouponForm" action="/admin/add-coupon" method="POST" class="mb-4">
-        <div class="form-group">
-            <label for="couponCode"><b>Coupon Code (Unique)</b></label>
-            <input type="text" name="couponCode" class="form-control" id="couponCode" placeholder="Coupon Code" required />
-        </div>
-        <div class="form-group">
-            <label for="discount"><b>Discount (%)</b></label>
-            <input type="number" name="discount" class="form-control" id="discount" placeholder="Discount %" min="1" max="100" required />
-        </div>
-        <div class="form-group">
-            <label for="minAmount"><b>Minimum Amount</b></label>
-            <input type="number" name="minAmount" class="form-control" id="minAmount" placeholder="Minimum Amount" min="1" required />
-        </div>
-        <div class="form-group">
-            <label for="maxDiscount"><b>Maximum Discount</b></label>
-            <input type="number" name="maxDiscount" class="form-control" id="maxDiscount" placeholder="Maximum Discount" min="1" required />
-        </div>
-        <div class="form-group">
-            <label for="expiryDate"><b>Expiry Date</b></label>
-            <input type="date" name="expiryDate" class="form-control" id="expiryDate" required />
-        </div>
-        <script>
-            // Disable past dates and today in the date picker
-            document.addEventListener('DOMContentLoaded', function() {
-                const tomorrow = new Date();
-                tomorrow.setDate(tomorrow.getDate() + 1);
-                const minDate = tomorrow.toISOString().split('T')[0];
-                document.getElementById('expiryDate').setAttribute('min', minDate);
-            });
-        </script>
-        <div class="form-group">
-            <label for="maxUsage"><b>Max Usage</b></label>
-            <input type="number" name="maxUsage" class="form-control" id="maxUsage" placeholder="Max Usage" min="1" required />
-        </div>
-        <button type="submit" class="btn btn-primary">Add Coupon</button>
-    </form>
-</div>
+    </div>
+</section>
 
 <script>
-    //Function to Handle Add Coupon
-    document.getElementById('addCouponForm').addEventListener('submit', async function (e) {
-        e.preventDefault();
+    document.addEventListener('DOMContentLoaded', function () {
+        const expiryInput = document.getElementById('expiryDate');
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        expiryInput.setAttribute('min', tomorrow.toISOString().split('T')[0]);
 
-        const couponCode = document.getElementById('couponCode').value.trim();
-        const discount = document.getElementById('discount').value;
-        const minAmount = document.getElementById('minAmount').value;
-        const maxDiscount = document.getElementById('maxDiscount').value;
-        const expiryDate = document.getElementById('expiryDate').value;
-        const maxUsage = document.getElementById('maxUsage').value;
+        document.getElementById('addCouponForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
 
-        if (!couponCode || !discount || !minAmount || !maxDiscount || !expiryDate || !maxUsage) {
-            return Swal.fire({ icon: 'error', title: 'Validation Error', text: 'All fields are required.' });
-        }
+            const couponCode = document.getElementById('couponCode').value.trim();
+            const discount = document.getElementById('discount').value;
+            const minAmount = document.getElementById('minAmount').value;
+            const maxDiscount = document.getElementById('maxDiscount').value;
+            const expiryDate = document.getElementById('expiryDate').value;
+            const maxUsage = document.getElementById('maxUsage').value;
 
-        if (Number(minAmount) <= 0 || Number(maxDiscount) <= 0 || Number(maxUsage) <= 0 || Number(discount) <= 0) {
-            return Swal.fire({ icon: 'error', title: 'Validation Error', text: 'Discount, amount, and usage fields must be positive numbers.' });
-        }
+            if (!couponCode || !discount || !minAmount || !maxDiscount || !expiryDate || !maxUsage) {
+                return Swal.fire({ icon: 'error', title: 'Validation Error', text: 'All fields are required.' });
+            }
 
-        const selectedDate = new Date(expiryDate);
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
+            if (Number(minAmount) <= 0 || Number(maxDiscount) <= 0 || Number(maxUsage) <= 0 || Number(discount) <= 0) {
+                return Swal.fire({ icon: 'error', title: 'Validation Error', text: 'Discount, amount, and usage fields must be positive numbers.' });
+            }
 
-        if (selectedDate <= today) {
-            return Swal.fire({ icon: 'error', title: 'Validation Error', text: 'Expiry date must be a future date.' });
-        }
+            const selectedDate = new Date(expiryDate);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
 
-        const formData = new FormData(this);
+            if (selectedDate <= today) {
+                return Swal.fire({ icon: 'error', title: 'Validation Error', text: 'Expiry date must be a future date.' });
+            }
 
-        const response = await fetch('/admin/add-coupon', {
-            method: 'POST',
-            body: JSON.stringify(Object.fromEntries(formData)),
-            headers: { 'Content-Type': 'application/json' },
+            const formData = new FormData(this);
+            const response = await fetch('/admin/add-coupon', {
+                method: 'POST',
+                body: JSON.stringify(Object.fromEntries(formData)),
+                headers: { 'Content-Type': 'application/json' },
+            });
+            const data = await response.json();
+            if (response.ok) {
+                Swal.fire({ icon: 'success', title: 'Success', text: data.message }).then(() => window.location.reload());
+            } else {
+                Swal.fire({ icon: 'error', title: 'Error', text: data.error || 'Failed to add coupon' });
+            }
         });
-
-        const data = await response.json();
-        if (response.ok) {
-            Swal.fire({
-                icon: 'success',
-                title: 'Success',
-                text: data.message,
-            }).then(() => {
-                window.location.reload();
-            });
-        } else {
-            Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: data.error || 'Failed to add coupon',
-            });
-        }
     });
-
 </script>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.js"></script>
-
 <%- include("../../views/partials/admin/footer") %>

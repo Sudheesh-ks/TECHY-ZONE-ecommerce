@@ -7,6 +7,132 @@
 <script src="/admin/js/vendors/chart.js"></script>
 <script src="/admin/js/main.js" type="text/javascript"></script>
 <script src="/admin/js/custom-chart.js" type="text/javascript"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+(function () {
+    function confirmOptions($el) {
+        return {
+            title: $el.data('confirm-title') || 'Are you sure?',
+            text: $el.data('confirm-text') || 'This action cannot be undone.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: $el.data('confirm-button-text') || 'Yes, continue',
+            cancelButtonText: $el.data('cancel-button-text') || 'Cancel',
+            reverseButtons: true,
+            background: '#111827',
+            color: '#e2e8f0'
+        };
+    }
+
+    function handleRedirect($el, responseData) {
+        const redirect = $el.data('redirect') || window.location.href;
+        const successTitle = responseData?.message || 'Action completed';
+        Swal.fire({
+            icon: responseData?.type || 'success',
+            title: successTitle,
+            showConfirmButton: false,
+            timer: 1400,
+            background: '#111827',
+            color: '#e2e8f0'
+        }).then(() => {
+            window.location.href = redirect;
+        });
+    }
+
+    async function executeUrlAction($el) {
+        const url = $el.data('url');
+        if (!url) {
+            return;
+        }
+        const method = ($el.data('method') || 'POST').toUpperCase();
+        const body = $el.data('body') ? JSON.stringify($el.data('body')) : undefined;
+        const headers = { 'Content-Type': 'application/json' };
+
+        try {
+            const response = await fetch(url, { method, headers, body });
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok) {
+                Swal.fire({
+                    icon: 'error',
+                    title: data.error || data.message || 'Action failed',
+                    text: data.error || '',
+                    background: '#111827',
+                    color: '#e2e8f0'
+                });
+                return;
+            }
+            handleRedirect($el, data);
+        } catch (error) {
+            Swal.fire({
+                icon: 'error',
+                title: 'An error occurred',
+                text: error.message,
+                background: '#111827',
+                color: '#e2e8f0'
+            });
+        }
+    }
+
+    function handleConfirm(event) {
+        const $el = $(event.currentTarget);
+        event.preventDefault();
+        if (typeof Swal === 'undefined') {
+            if (!window.confirm($el.data('confirm-text') || 'Are you sure?')) {
+                return;
+            }
+            if ($el.is('form')) {
+                $el.off('submit.confirmed');
+                $el.data('confirmed', true);
+                $el.submit();
+                return;
+            }
+            if ($el.data('url')) {
+                executeUrlAction($el);
+                return;
+            }
+            if ($el.is('a')) {
+                window.location.href = $el.attr('href');
+            }
+            return;
+        }
+        Swal.fire(confirmOptions($el)).then((result) => {
+            if (!result.isConfirmed) {
+                return;
+            }
+            if ($el.is('form')) {
+                $el.off('submit.confirmed');
+                $el.data('confirmed', true);
+                $el.submit();
+                return;
+            }
+            if ($el.data('url')) {
+                executeUrlAction($el);
+                return;
+            }
+            if ($el.is('a')) {
+                window.location.href = $el.attr('href');
+            }
+        });
+    }
+
+    $(document).on('submit', 'form.confirm-action', function (event) {
+        const $form = $(this);
+        if ($form.data('confirmed')) {
+            $form.data('confirmed', false);
+            return;
+        }
+        event.preventDefault();
+        Swal.fire(confirmOptions($form)).then((result) => {
+            if (result.isConfirmed) {
+                $form.data('confirmed', true);
+                $form.submit();
+            }
+        });
+    });
+
+    $(document).on('click', 'a.confirm-action, button.confirm-action', handleConfirm);
+})();
+</script>
 </body>
 </html>

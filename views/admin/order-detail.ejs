@@ -1,55 +1,18 @@
-<%- include("../../views/partials/admin/footer") %><%- include("../../views/partials/admin/header") %>
-<head>
-  <style>
-    .container-fluid {
-      background-color: #fff;
-      padding-top: 3rem;
-      padding-bottom: 3rem;
-    }
-    .card {
-      background-color: #f8f9fa;
-    }
-    .card-header {
-      padding: 1rem;
-    }
-    .dropdown-toggle {
-      width: 100%;
-    }
-    .table {
-      margin-bottom: 0;
-    }
-    .table th, .table td {
-      border-top: none;
-      border-bottom: 1px solid #dee2e6;
-    }
-    .table-hover tbody tr:hover {
-      background-color: #f2f2f2;
-    }
-    .table-container, .address-container {
-      padding: 1rem;
-    }
-  </style>
-
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@10/dist/sweetalert2.min.css">
-  </head>
-    
-
-<div class="content-header">
-    <div>
-        <h2 class="content-title card-title">Order Details</h2>
+﻿<%- include("../../views/partials/admin/header") %>
+<section class="content-main">
+    <div class="content-header">
+        <div>
+            <h2 class="content-title card-title">Order Details</h2>
+        </div>
     </div>
-</div>
 
-  
-  <div class="container-fluid">
-    <div class="row justify-content-center">
-
-        <!-- Product Table -->
-        <div class="col-md-6 table-container">
+    <div class="row g-4 mb-4">
+        <div class="col-lg-7">
             <div class="card">
                 <div class="card-body">
+                    <h5 class="card-title mb-4">Items in Order</h5>
                     <div class="table-responsive">
-                        <table class="table table-hover">
+                        <table class="table table-hover mb-0">
                             <thead>
                                 <tr>
                                     <th>Image</th>
@@ -63,9 +26,7 @@
                                 <% order.products.forEach(item => { %>
                                     <tr>
                                         <td>
-                                            <img src="<%= item.productDetails.images %>" 
-                                                 alt="<%= item.productDetails.name %>" 
-                                                 style="width: 50px; height: 50px; object-fit: cover;">
+                                            <img src="<%= item.productDetails.images %>" alt="<%= item.productDetails.name %>" class="rounded" style="width: 48px; height: 48px; object-fit: cover;">
                                         </td>
                                         <td><%= item.productDetails.name %></td>
                                         <td>₹<%= item.productDetails.offerPrice || item.productDetails.price %></td>
@@ -79,108 +40,90 @@
                 </div>
             </div>
         </div>
-
-        <!-- Shipping Address -->
-        <div class="col-md-6 address-container">
+        <div class="col-lg-5">
             <div class="card">
                 <div class="card-body">
-                    <h5 class="card-title">Shipping Address</h5>
-                    <p class="card-text">
-                        Name: <%= order.address.name %><br>
-                        City: <%= order.address.city %><br>
-                        Landmark: <%= order.address.landMark %><br>
-                        State: <%= order.address.state %><br>
-                        Pin Code: <%= order.address.pincode %><br>
-                        Phone: <%= order.address.phone %><br>
-                        Alternate Phone: <%= order.address.altPhone || 'N/A' %>
-                    </p>
+                    <h5 class="card-title mb-3">Shipping Address</h5>
+                    <div class="mb-2"><strong>Name:</strong> <%= order.address.name %></div>
+                    <div class="mb-2"><strong>City:</strong> <%= order.address.city %></div>
+                    <div class="mb-2"><strong>Landmark:</strong> <%= order.address.landMark %></div>
+                    <div class="mb-2"><strong>State:</strong> <%= order.address.state %></div>
+                    <div class="mb-2"><strong>Pin Code:</strong> <%= order.address.pincode %></div>
+                    <div class="mb-2"><strong>Phone:</strong> <%= order.address.phone %></div>
+                    <div><strong>Alternate Phone:</strong> <%= order.address.altPhone || 'N/A' %></div>
                 </div>
             </div>
         </div>
-
     </div>
-</div>
 
-
-
-  <div class="card-header m-b-15">
-    <div class="row">
-      <form action="/admin/update-order-status/<%= order._id %>" method="POST">
-        <div class="dropdown">
-            <select name="status" class="form-select"  <%= (order.status === 'Cancelled' || order.status === 'Delivered' || order.status === 'Returned') ? 'disabled' : '' %>>
-                <option value="Processing" <%= order.status === 'Processing' ? 'selected' : '' %>>Processing</option>
-                <option value="Shipped">Shipped</option>
-                <option value="Delivered">Delivered</option>
-                <option value="Cancelled">Cancelled</option>
-            </select>
-        </div>
-        <button type="submit" class="btn btn-primary"  <%=  (order.status === 'Cancelled' || order.status === 'Delivered' || order.status === 'Returned') ? 'disabled' : '' %>>Update Status</button>
-    </form>
-    </div>
-  </div>
-
-  <div class="card mt-4">
-    <div class="card-body">
-        <h3 class="card-title">Order Details</h3>
-        <div>
-            <p><strong>Status:</strong> <%= order.status %></p>
-            <p><strong>Reason for Cancellation:</strong> <%= order.cancelReason || 'No reason provided' %></p>
-        </div>
-    </div>
-</div>
-
-
-<!-- Return Status Management -->
-<div class="card mt-4">
-  <div class="card-body">
-      <h3 class="card-title">Return Status</h3>
-      <% if (order.returnStatus === 'Requested') { %>
-          <div class="mb-3">
-              <p><h5 class="fw-bold"><strong>Reason for Return:</strong></h5> <%= order.returnReason || 'No reason provided' %></p>
-          </div>
-          <form action="/admin/approve-return/<%= order._id %>" method="POST" style="display: inline-block; margin-right: 10px;">
-              <button class="btn btn-success btn" type="submit">Approve</button>
-          </form>
-          <form action="/admin/reject-return/<%= order._id %>" method="POST" style="display: inline-block;">
-              <button class="btn btn-danger btn" type="submit">Reject</button>
-          </form>
-      <% } else { %>
-          <p class="card-text">
-              <strong>Status:</strong> <%= order.returnStatus || 'N/A' %>
-          </p>
-      <% } %>
-  </div>
-</div>
-
-
-<!-- Product Return Status Management -->
-<div class="card mt-4">
-  <div class="card-body">
-      <h3 class="card-title">Product Return Status</h3>
-      <% order.products.forEach(product => { %>
-        <div class="mb-4 border-bottom pb-3">
-            <h5 class="fw-bold"><%= product.name %></h5>
-            <p><strong>Status:</strong> <%= product.returnStatus || 'N/A' %></p>
-            <% if (product.returnStatus === 'Requested') { %>
-                <div class="mb-3">
-                    <p><strong>Reason for Return:</strong> <%= product.returnReason || 'No reason provided' %></p>
+    <div class="card mb-4">
+        <div class="card-body">
+            <form action="/admin/update-order-status/<%= order._id %>" method="POST" class="row g-3 align-items-end confirm-action" data-confirm-title="Update order status" data-confirm-text="Are you sure you want to update the order status?">
+                <div class="col-md-6">
+                    <label class="form-label" for="status">Order Status</label>
+                    <select id="status" name="status" class="form-select" <%= (order.status === 'Cancelled' || order.status === 'Delivered' || order.status === 'Returned') ? 'disabled' : '' %>>
+                        <option value="Processing" <%= order.status === 'Processing' ? 'selected' : '' %>>Processing</option>
+                        <option value="Shipped" <%= order.status === 'Shipped' ? 'selected' : '' %>>Shipped</option>
+                        <option value="Delivered" <%= order.status === 'Delivered' ? 'selected' : '' %>>Delivered</option>
+                        <option value="Cancelled" <%= order.status === 'Cancelled' ? 'selected' : '' %>>Cancelled</option>
+                    </select>
                 </div>
-                <form action="/admin/approve-return/<%= order._id %>/<%= product.productId %>" method="POST" style="display: inline-block; margin-right: 10px;">
-                    <button class="btn btn-success btn" type="submit">Approve</button>
-                </form>
-                <form action="/admin/reject-return/<%= order._id %>/<%= product.productId %>" method="POST" style="display: inline-block;">
-                    <button class="btn btn-danger btn" type="submit">Reject</button>
-                </form>
+                <div class="col-md-6">
+                    <button type="submit" class="btn btn-primary w-100" <%= (order.status === 'Cancelled' || order.status === 'Delivered' || order.status === 'Returned') ? 'disabled' : '' %>>Update Status</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5 class="card-title">Order Details</h5>
+            <div class="mb-2"><strong>Status:</strong> <%= order.status %></div>
+            <div><strong>Reason for Cancellation:</strong> <%= order.cancelReason || 'No reason provided' %></div>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5 class="card-title">Return Status</h5>
+            <% if (order.returnStatus === 'Requested') { %>
+                <div class="mb-3"><strong>Reason for Return:</strong> <%= order.returnReason || 'No reason provided' %></div>
+                <div class="d-flex gap-2">
+                    <form action="/admin/approve-return/<%= order._id %>" method="POST" class="confirm-action" data-confirm-title="Approve return" data-confirm-text="Approve the customer's return request?">
+                        <button class="btn btn-success" type="submit">Approve</button>
+                    </form>
+                    <form action="/admin/reject-return/<%= order._id %>" method="POST" class="confirm-action" data-confirm-title="Reject return" data-confirm-text="Reject the customer's return request?">
+                        <button class="btn btn-danger" type="submit">Reject</button>
+                    </form>
+                </div>
+            <% } else { %>
+                <div><strong>Status:</strong> <%= order.returnStatus || 'N/A' %></div>
             <% } %>
         </div>
-      <% }); %> 
-  </div>
-</div>
+    </div>
 
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5 class="card-title">Product Return Status</h5>
+            <% order.products.forEach(product => { %>
+                <div class="mb-4 border-bottom pb-3">
+                    <div class="mb-2"><strong><%= product.name %></strong></div>
+                    <div class="mb-2"><strong>Status:</strong> <%= product.returnStatus || 'N/A' %></div>
+                    <% if (product.returnStatus === 'Requested') { %>
+                        <div class="mb-3"><strong>Reason for Return:</strong> <%= product.returnReason || 'No reason provided' %></div>
+                        <div class="d-flex gap-2">
+                            <form action="/admin/approve-return/<%= order._id %>/<%= product.productId %>" method="POST" class="confirm-action" data-confirm-title="Approve item return" data-confirm-text="Approve return for this item?">
+                                <button class="btn btn-success" type="submit">Approve</button>
+                            </form>
+                            <form action="/admin/reject-return/<%= order._id %>/<%= product.productId %>" method="POST" class="confirm-action" data-confirm-title="Reject item return" data-confirm-text="Reject return for this item?">
+                                <button class="btn btn-danger" type="submit">Reject</button>
+                            </form>
+                        </div>
+                    <% } %>
+                </div>
+            <% }); %>
+        </div>
+    </div>
+</section>
 
-  
-  <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.min.js"></script>
-  
-  <%- include("../../views/partials/admin/footer") %>
-  
+<%- include("../../views/partials/admin/footer") %>
