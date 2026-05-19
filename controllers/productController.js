@@ -43,13 +43,13 @@ const productsAdd = async (req, res) => {
       
     if (!req.files || req.files.length === 0) {
       return res
-        .status(400)
+        .status(STATUS_CODES.BAD_REQUEST)
         .json({ val: false, msg: "No files were uploaded" });
     }
     
     const categoryObject = await categoryModel.findOne({ name: category }); // Checking if category exists
     if (!categoryObject) {
-      return res.status(400).json({ val: false, msg: "Category not found" });
+      return res.status(STATUS_CODES.BAD_REQUEST).json({ val: false, msg: "Category not found" });
     }
     const imagePaths = [];
     for (const key in req.files) { // Looping through the uploaded files
@@ -77,10 +77,10 @@ const productsAdd = async (req, res) => {
       returnPolicy,
     });
     
-    res.status(200).json({ val: true, msg: "Upload successful" });
+    res.status(STATUS_CODES.OK).json({ val: true, msg: "Upload successful" });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ val: false, msg: "Internal server error" });
+    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({ val: false, msg: "Internal server error" });
   }
 }  
 
@@ -167,7 +167,7 @@ const getEditProductPage = async (req, res) => {
     const categories = await categoryModel.find({ isListed: true });
 
     if (!product) {
-      return res.status(404).send('Product not found');
+      return res.status(STATUS_CODES.NOT_FOUND).send('Product not found');
     }
 
     res.render('admin/edit-product', {
@@ -176,7 +176,7 @@ const getEditProductPage = async (req, res) => {
     });
   } catch (error) {
     console.error('Error fetching product for editing:', error);
-    res.status(500).send('Internal Server Error');
+    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).send('Internal Server Error');
   }
 };
 

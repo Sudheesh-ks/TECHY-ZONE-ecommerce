@@ -153,7 +153,7 @@ const placeOrder = async (req, res) => {
             order.paymentStatus = 'Completed';  // Updating the payment status
             await order.save();
             console.log(`Payment of ₹${totalAmountWithDelivery} completed using Wallet.`);
-            return res.status(200).json({
+            return res.status(STATUS_CODES.OK).json({
                 success: true,
                 message: 'Order placed successfully!',
                 orderId: order._id,
@@ -161,7 +161,7 @@ const placeOrder = async (req, res) => {
             });      
 
         } else if (paymentMethod === 'Cash on Delivery') {  // Checking if the payment method is Cash on Delivery
-            return res.status(200).json({
+            return res.status(STATUS_CODES.OK).json({
                 success: true,
                 message: 'Order placed successfully!',
                 orderId: order._id,
@@ -240,7 +240,7 @@ const retryPayment = async (req, res) => {
         }
 
         if (!order.totalPrice) {  // Checking if the order total price is available
-            return res.status(400).json({ success: false, message: 'Invalid order amount for retry.' });
+            return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: 'Invalid order amount for retry.' });
         }
 
         const razorpayOrder = await razorpayInstance.orders.create({  // Creating the Razorpay order
@@ -258,7 +258,7 @@ const retryPayment = async (req, res) => {
         });
     } catch (error) {
         console.error('Error in retryPayment:', error.message);
-        res.status(500).json({ success: false, message: 'Internal Server Error' });
+        res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({ success: false, message: 'Internal Server Error' });
     }
 };
 

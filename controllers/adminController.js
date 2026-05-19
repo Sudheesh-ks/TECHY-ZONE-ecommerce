@@ -174,7 +174,7 @@ const loadDashboard = async (req, res) => {
         });
     } catch (error) {
         console.error("Error loading dashboard:", error.message);
-        res.status(500).send("Internal Server Error. Please try again later.");
+        res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).send("Internal Server Error. Please try again later.");
     }
 };
 
@@ -234,111 +234,9 @@ const loadSalesData = async (req, res) => {
         });
     } catch (error) {
         console.error("Error loading sales data:", error.message);
-        res.status(500).send("An error occurred while loading the sales data.");
+        res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).send("An error occurred while loading the sales data.");
     }
 };
-
-// Conttroller to export data to PDF
-// const exportSalesToPDF = async (req, res) => {
-//     try {
-//         const { filter, startDate, endDate } = req.query;
-
-//         // filter for Sales data to pdf
-//         let filterCondition = {};
-//         if (filter === 'daily') {
-//             filterCondition = { createdAt: { $gte: new Date().setHours(0, 0, 0, 0) } };
-//         } else if (filter === 'weekly') {
-//             const oneWeekAgo = new Date();
-//             oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-//             filterCondition = { createdAt: { $gte: oneWeekAgo } };
-//         } else if (filter === 'monthly') {
-//             const oneMonthAgo = new Date();
-//             oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
-//             filterCondition = { createdAt: { $gte: oneMonthAgo } };
-//         } else if (filter === 'custom' && startDate && endDate) {
-//             filterCondition = { createdAt: { $gte: new Date(startDate), $lte: new Date(endDate) } };
-//         }
-
-//         const orders = await Order.find(filterCondition)
-//             .sort({ createdAt: -1 })
-//             .populate('userId', 'name')
-//             .select('userId products paymentMethod totalPrice discountAmount createdAt');
-
-
-//             if (orders.length === 0) {
-//                 return res.status(404).send('No data available to export.');
-//             }
-
-
-//         let totalRevenue = 0;
-//         let totalDiscount = 0;
-//         orders.forEach(order => {
-//             totalRevenue += order.totalPrice; 
-//             totalDiscount += order.discountAmount || 0; 
-//         });
-
-
-//         // HTML Design for PDF
-//         const html = `
-//             <html>
-//             <head>
-//                 <style>
-//                     body { font-family: Arial, sans-serif; }
-//                     table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-//                     th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
-//                     th { background-color: #f4f4f4; }
-//                     tr:nth-child(even) { background-color: #f9f9f9; }
-//                     tr:hover { background-color: #f1f1f1; }
-//                 </style>
-//             </head>
-//             <body>
-//                 <h2 style="text-align: center;">Sales Report TECHY ZONE</h2>
-
-//                 <h3 style="text-align: right; color: green;">Total Revenue: ₹${totalRevenue.toFixed(2)}</h3>
-//                 <h3 style="text-align: right; color: red;">Total Discount: ₹${totalDiscount.toFixed(2)}</h3>
-//                 <table>
-//                     <thead>
-//                         <tr>
-//                             <th>Order ID</th>
-//                             <th>User Name</th>
-//                             <th>Products</th>
-//                             <th>Payment Method</th>
-//                             <th>Total Price</th>
-//                             <th>Order Date</th>
-//                         </tr>
-//                     </thead>
-//                     <tbody>
-//                         ${orders.map(order => `
-//                             <tr>
-//                                 <td>#${order._id.toString().slice(-6)}</td>
-//                                 <td>${order.userId.name}</td>
-//                                 <td>${order.products.map(product => product.name).join(', ')}</td>
-//                                 <td>${order.paymentMethod}</td>
-//                                 <td>₹${order.totalPrice.toFixed(2)}</td>
-//                                 <td>${order.createdAt.toISOString().split('T')[0]}</td>
-//                             </tr>
-//                         `).join('')}
-//                     </tbody>
-//                 </table>
-//             </body>
-//             </html>
-//         `;
-
-//         // This is for PDF creation
-//         pdf.create(html, { format: 'A4' }).toStream((err, stream) => {
-//             if (err) {
-//                 console.error('Error generating PDF:', err.message);
-//                 return res.status(500).send('An error occurred while generating the PDF.');
-//             }
-//             res.setHeader('Content-Disposition', 'attachment; filename=sales-report.pdf');
-//             res.setHeader('Content-Type', 'application/pdf');
-//             stream.pipe(res);
-//         });
-//     } catch (error) {
-//         console.error('Error exporting sales data to PDF:', error.message);
-//         res.status(500).send('An error occurred while exporting the sales data.');
-//     }
-// };
 
 
 const exportSalesToPDF = async (req, res) => {
@@ -367,7 +265,7 @@ const exportSalesToPDF = async (req, res) => {
             .select("userId products paymentMethod totalPrice discountAmount createdAt");
 
         if (orders.length === 0) {
-            return res.status(404).send("No data available to export.");
+            return res.status(STATUS_CODES.NOT_FOUND).send("No data available to export.");
         }
 
         // Calculate total revenue and discount
@@ -440,7 +338,7 @@ const exportSalesToPDF = async (req, res) => {
         doc.end();
     } catch (error) {
         console.error("Error exporting sales data to PDF:", error.message);
-        res.status(500).send("An error occurred while exporting the sales data.");
+        res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).send("An error occurred while exporting the sales data.");
     }
 };
 
@@ -471,7 +369,7 @@ const exportSalesToExcel = async (req, res) => {
             .select('userId products paymentMethod totalPrice discountAmount createdAt');
 
         if (orders.length === 0) {
-            return res.status(404).send('No data available to export.');
+            return res.status(STATUS_CODES.NOT_FOUND).send('No data available to export.');
         }
 
         let totalRevenue = 0;
@@ -529,7 +427,7 @@ const exportSalesToExcel = async (req, res) => {
         res.end();
     } catch (error) {
         console.error("Error exporting sales data to Excel:", error.message);
-        res.status(500).send("An error occurred while exporting the sales data.");
+        res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).send("An error occurred while exporting the sales data.");
     }
 };
  

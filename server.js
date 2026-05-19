@@ -87,7 +87,7 @@ app.use('/admin',adminRoute);
 // Error handling middleware
 app.use((err, req, res, next) => {
     console.error("Unhandled Error:", err);
-    res.status(500).send("Internal Server Error: " + err.message);
+    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).send("Internal Server Error: " + err.message);
 });
 
 

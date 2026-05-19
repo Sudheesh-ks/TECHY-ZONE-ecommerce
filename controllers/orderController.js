@@ -289,7 +289,7 @@ const rejectProductReturn = async (req, res) => {
 
         const product = order.products.find(p => p.productId.toString() === productId); // Finding the product
         if (!product || product.returnStatus !== 'Requested') {
-            return res.status(400).json({ message: 'Invalid product return request' });
+            return res.status(STATUS_CODES.BAD_REQUEST).json({ message: 'Invalid product return request' });
         }
 
         product.returnStatus = 'Rejected'; // Updating return status
@@ -298,7 +298,7 @@ const rejectProductReturn = async (req, res) => {
 
         res.redirect(`/admin/order-detail/${orderId}`);
     } catch (error) {
-        res.status(500).json({ message: 'Internal Server Error' });
+        res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({ message: 'Internal Server Error' });
     }
 };
 
