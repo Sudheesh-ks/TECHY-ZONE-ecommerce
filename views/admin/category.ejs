@@ -71,13 +71,13 @@
                                             </td>
                                             <td>
                                                 <% if (category.categoryOffer && category.categoryOffer > 0) { %>
-                                                    <form action="/admin/remove-category-offer" method="POST" class="d-flex gap-2 align-items-center confirm-action" data-confirm-title="Remove category offer" data-confirm-text="This offer will be removed from the category. Continue?">
+                                                    <form action="/admin/remove-category-offer" method="POST" class="d-flex gap-2 align-items-center remove-category-offer" data-confirm-title="Remove category offer" data-confirm-text="This offer will be removed from the category. Continue?">
                                                         <input type="hidden" name="categoryId" value="<%= category._id %>">
                                                         <input type="number" name="offerValue" class="form-control form-control-sm" placeholder="Offer Value" style="min-width:140px; max-width:200px;">
                                                         <button type="submit" class="btn btn-danger btn-sm">Remove</button>
                                                     </form>
                                                 <% } else { %>
-                                                    <form action="/admin/apply-category-offer" method="POST" class="d-flex gap-2 align-items-center confirm-action" data-confirm-title="Apply category offer" data-confirm-text="This offer will be applied to all products in this category. Continue?">
+                                                    <form action="/admin/apply-category-offer" method="POST" class="d-flex gap-2 align-items-center apply-category-offer" data-confirm-title="Apply category offer" data-confirm-text="This offer will be applied to all products in this category. Continue?">
                                                         <input type="hidden" name="categoryId" value="<%= category._id %>">
                                                         <input type="number" name="offerValue" class="form-control form-control-sm" placeholder="Offer Value" min="0" max="100" required style="min-width:140px; max-width:200px;">
                                                         <button type="submit" class="btn btn-success btn-sm">Apply</button>
@@ -169,32 +169,34 @@
             });
     }
 
-    $(document).on('submit', 'form[action="/admin/apply-category-offer"]', function (event) {
-        const $form = $(this);
-        // If the form hasn't been confirmed via the global confirm-action handler, don't proceed with AJAX yet.
-        if (!$form.data('confirmed')) {
-            return; // let the confirm-action handler show the modal
-        }
-        // Reset confirmation flag and proceed with AJAX
-        $form.data('confirmed', false);
+    // Handle apply-category-offer with its own confirmation and AJAX to avoid global confirm-action conflicts
+    $(document).on('submit', 'form.apply-category-offer', function (event) {
         event.preventDefault();
-        const formData = $form.serialize();
-        $.post('/admin/apply-category-offer', formData)
-            .done((response) => { Swal.fire({ icon: response.type, title: response.message, showConfirmButton: false, timer: 1500 }).then(() => location.reload()); })
-            .fail((error) => { Swal.fire({ icon: 'error', title: 'An error occurred', showConfirmButton: false, timer: 1500 }); });
+        const $form = $(this);
+        const title = $form.data('confirm-title') || 'Apply offer?';
+        const text = $form.data('confirm-text') || '';
+        Swal.fire({ title, text, icon: 'warning', showCancelButton: true, confirmButtonText: 'Apply', cancelButtonText: 'Cancel', background: '#111827', color: '#e2e8f0' }).then((result) => {
+            if (!result.isConfirmed) return;
+            const formData = $form.serialize();
+            $.post($form.attr('action'), formData)
+                .done((response) => { Swal.fire({ icon: response.type, title: response.message, showConfirmButton: false, timer: 1500 }).then(() => location.reload()); })
+                .fail(() => { Swal.fire({ icon: 'error', title: 'An error occurred', showConfirmButton: false, timer: 1500 }); });
+        });
     });
 
-    $(document).on('submit', 'form[action="/admin/remove-category-offer"]', function (event) {
-        const $form = $(this);
-        if (!$form.data('confirmed')) {
-            return;
-        }
-        $form.data('confirmed', false);
+    // Handle remove-category-offer similarly
+    $(document).on('submit', 'form.remove-category-offer', function (event) {
         event.preventDefault();
-        const formData = $form.serialize();
-        $.post('/admin/remove-category-offer', formData)
-            .done((response) => { Swal.fire({ icon: response.type, title: response.message, showConfirmButton: false, timer: 1500 }).then(() => location.reload()); })
-            .fail((error) => { Swal.fire({ icon: 'error', title: 'An error occurred', showConfirmButton: false, timer: 1500 }); });
+        const $form = $(this);
+        const title = $form.data('confirm-title') || 'Remove offer?';
+        const text = $form.data('confirm-text') || '';
+        Swal.fire({ title, text, icon: 'warning', showCancelButton: true, confirmButtonText: 'Remove', cancelButtonText: 'Cancel', background: '#111827', color: '#e2e8f0' }).then((result) => {
+            if (!result.isConfirmed) return;
+            const formData = $form.serialize();
+            $.post($form.attr('action'), formData)
+                .done((response) => { Swal.fire({ icon: response.type, title: response.message, showConfirmButton: false, timer: 1500 }).then(() => location.reload()); })
+                .fail(() => { Swal.fire({ icon: 'error', title: 'An error occurred', showConfirmButton: false, timer: 1500 }); });
+        });
     });
 </script>
 
