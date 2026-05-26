@@ -18,7 +18,7 @@ async function sendOTP(email, otp) {
 
   emailData.subject = "Your OTP Code";
   emailData.sender = {
-    name: "Stockify",
+    name: "TechyZone",
     email: process.env.SENDER_EMAIL,
   };
 
