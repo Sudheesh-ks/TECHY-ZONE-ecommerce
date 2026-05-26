@@ -234,13 +234,42 @@ const updateProduct = async (req, res) => {
 
     console.log('Final Images:', finalImages);
 
+    // Validate numeric fields (preserve existing values when fields not provided)
+    let price = req.body.price ? parseFloat(req.body.price) : product.price;
+    let stock = req.body.stock ? parseInt(req.body.stock) : product.stock;
+    const offerPriceProvided = req.body.offerPrice !== undefined && req.body.offerPrice !== '';
+    let offerPrice = offerPriceProvided ? parseFloat(req.body.offerPrice) : product.offerPrice;
+
+    if (Number.isNaN(price) || Number.isNaN(stock)) {
+      return res
+        .status(STATUS_CODES.BAD_REQUEST)
+        .json({ val: false, msg: "Invalid price or stock value" });
+    }
+
+    // Reject negative or zero values where appropriate
+    if (price <= 0) {
+      return res.status(STATUS_CODES.BAD_REQUEST).json({ val: false, msg: "Price must be a positive number" });
+    }
+    if (stock < 1 || !Number.isInteger(stock)) {
+      return res.status(STATUS_CODES.BAD_REQUEST).json({ val: false, msg: "Stock must be a positive integer" });
+    }
+
+    if (offerPriceProvided) {
+      if (Number.isNaN(offerPrice) || offerPrice <= 0) {
+        return res.status(STATUS_CODES.BAD_REQUEST).json({ val: false, msg: "Offer price must be a positive number" });
+      }
+      if (offerPrice > price) {
+        return res.status(STATUS_CODES.BAD_REQUEST).json({ val: false, msg: "Offer price cannot be greater than the original price" });
+      }
+    }
+
     // Handle form fields with fallbacks
     product.name = req.body.name || product.name;
     product.description = req.body.description || product.description;
     product.category = categoryData ? categoryData._id : product.category;
-    product.price = req.body.price ? parseFloat(req.body.price) : product.price;
-    product.offerPrice = req.body.offerPrice ? parseFloat(req.body.offerPrice) : product.offerPrice;
-    product.stock = req.body.stock ? parseInt(req.body.stock) : product.stock;
+    product.price = price;
+    product.offerPrice = offerPrice;
+    product.stock = stock;
     product.warranty = req.body.warranty && req.body.warranty !== 'null' ? req.body.warranty : product.warranty;
     product.returnPolicy = req.body.returnPolicy && req.body.returnPolicy !== 'null' ? req.body.returnPolicy : product.returnPolicy;
     product.images = finalImages;

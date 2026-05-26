@@ -236,46 +236,105 @@ function startCropping(index) {
 }
 
 function validateAndSubmit() {
-    const form = document.getElementById('editProductForm');
-    const formData = new FormData(form);
+  const name = document.getElementById("productName");
+  const description = document.getElementById("productDescription");
+  const categorySelect = document.getElementById("productCategory");
+  const ogPrice = document.getElementById("productOgPrice");
+  const offerPrice = document.getElementById("productOfferPrice");
+  const stock = document.getElementById("productStock");
 
-    // Append cropped images
-    croppedImages.forEach((croppedImage, i) => {
-        if (croppedImage) {
-            formData.append(`croppedImage${i + 1}`, croppedImage);
-        }
-    });
+  const nameRegex = /^[a-zA-Z0-9 ]{3,}$/;
+  const priceRegex = /^\d+(\.\d{1,2})?$/;
+  const stockRegex = /^\d+$/;
 
-    fetch(`/admin/products/edit/<%= product._id %>`, {
+  // Clear previous errors
+  document.querySelectorAll('.error-message').forEach(e => e.remove());
+
+  if (!nameRegex.test(name.value)) {
+    showError(name, "Product name must be at least 3 characters long and alphanumeric.");
+    return;
+  }
+  if (description.value.length < 5) {
+    showError(description, "Description must be at least 5 characters long.");
+    return;
+  }
+  if (categorySelect.value === "") {
+    showError(categorySelect, "Please select a category.");
+    return;
+  }
+  if (!priceRegex.test(ogPrice.value) || parseFloat(ogPrice.value) <= 0) {
+    showError(ogPrice, "Original Price must be a positive number with up to 2 decimal places.");
+    return;
+  }
+  if (offerPrice.value !== "" && (!priceRegex.test(offerPrice.value) || parseFloat(offerPrice.value) <= 0)) {
+    showError(offerPrice, "Offer Price must be a positive number with up to 2 decimal places.");
+    return;
+  }
+  if (offerPrice.value !== "" && parseFloat(offerPrice.value) > parseFloat(ogPrice.value)) {
+    showError(offerPrice, "Offer Price cannot be greater than the Original Price.");
+    return;
+  }
+  if (!stockRegex.test(stock.value) || parseInt(stock.value) < 1) {
+    showError(stock, "Stock must be a positive integer.");
+    return;
+  }
+
+  // Prepare form data
+  const form = document.getElementById('editProductForm');
+  const formData = new FormData(form);
+
+  // Images: allow existing preview images to satisfy requirement
+  const fileFields = [
+    document.getElementById('productImage1'),
+    document.getElementById('productImage2'),
+    document.getElementById('productImage3')
+  ];
+
+  const hasImages = fileFields.every((input, index) => {
+    const previewContainer = document.getElementById(`croppedImagePreview${index}`);
+    const hasPreviewImg = previewContainer && previewContainer.querySelector('img');
+    return croppedImages[index] || (input && input.files && input.files[0]) || hasPreviewImg;
+  });
+
+  if (!hasImages) {
+    showError(fileFields[0], "Please ensure all 3 product images exist or are uploaded.");
+    return;
+  }
+
+  fileFields.forEach((input, index) => {
+    if (croppedImages[index]) {
+      formData.append(`croppedImage${index + 1}`, croppedImages[index]);
+    } else if (input && input.files && input.files[0]) {
+      formData.append(`croppedImage${index + 1}`, input.files[0]);
+    }
+  });
+
+  const submitBtn = document.querySelector('.btn-UpdateProduct');
+  submitBtn.disabled = true;
+  const originalText = submitBtn.textContent;
+  submitBtn.textContent = 'Saving...';
+
+  (async function updateData() {
+    try {
+      const response = await fetch(`/admin/products/edit/<%= product._id %>`, {
         method: 'POST',
         body: formData,
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            Swal.fire({
-                icon: 'success',
-                title: 'Success',
-                text: data.message,
-            }).then(() => {
-                window.location.href = '/admin/products';
-            });
-        } else {
-            Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: data.msg || 'Failed to update product',
-            });
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: 'An error occurred while updating the product.',
-        });
-    });
+      });
+      const data = await response.json();
+      if (data.success) {
+        await Swal.fire({ icon: 'success', title: 'Product updated', text: data.message || 'Updated successfully', showConfirmButton: false, timer: 1500 });
+        window.location.href = '/admin/products';
+        return;
+      }
+      await Swal.fire({ icon: 'error', title: 'Unable to save', text: data.msg || 'Please try again.' });
+    } catch (err) {
+      console.error('Error ::- ', err);
+      await Swal.fire({ icon: 'error', title: 'Upload failed', text: err.message || 'Something went wrong while updating the product.' });
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = originalText;
+    }
+  })();
 }
 
 function newImageSave(){
