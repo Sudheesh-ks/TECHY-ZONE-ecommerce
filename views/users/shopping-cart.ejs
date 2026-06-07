@@ -470,69 +470,102 @@ Copyright &copy;<script>document.write(new Date().getFullYear());</script> All r
 	}
 
     
-	document.querySelectorAll('.btn-remove').forEach(button => {
-    button.addEventListener('click', async (e) => {
-        e.preventDefault();
+	// Use event delegation for remove buttons - more reliable
+	document.addEventListener('click', async (e) => {
+		const removeBtn = e.target.closest('.btn-remove');
+		if (!removeBtn) return;
+		
+		e.preventDefault();
+		const productId = removeBtn.getAttribute('data-product-id');
+		const row = removeBtn.closest('tr');
+		
+		// Show confirmation dialog
+		const result = await Swal.fire({
+			title: 'Are you sure?',
+			text: 'Do you want to remove this product from your cart?',
+			icon: 'warning',
+			showCancelButton: true,
+			confirmButtonColor: '#d33',
+			cancelButtonColor: '#3085d6',
+			confirmButtonText: 'Yes, remove it!',
+			cancelButtonText: 'Cancel'
+		});
+		
+		if (!result.isConfirmed) return;
+		
+		try {
+			const response = await fetch(`/cart/remove/${productId}`, {
+				method: 'DELETE',
+				headers: { 'Content-Type': 'application/json' },
+			});
 
-        Swal.fire({
-            title: 'Are you sure?',
-            text: 'Do you want to remove this product from your cart?',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#d33',
-            cancelButtonColor: '#3085d6',
-            confirmButtonText: 'Yes, remove it!',
-            cancelButtonText: 'Cancel'
-        }).then(async (result) => {
-            if (result.isConfirmed) {
-                const productId = e.target.closest('button').getAttribute('data-product-id');
+			const data = await response.json();
 
-                try {
-                    const response = await fetch(`/cart/remove/${productId}`, {
-                        method: 'DELETE',
-                        headers: { 'Content-Type': 'application/json' },
-                    });
-
-                    const data = await response.json();
-
-                    if (data.success) {
-                        Swal.fire(
-                            'Removed!',
-                            data.message,
-                            'success'
-                        ).then(() => {
-                            
-                            const totalElement = document.querySelector('.mtext-110.cl2');
-                            totalElement.textContent = `₹ ${data.totalPrice}`;
-                            
-                            e.target.closest('tr').remove();
-                        });
-                    } else {
-                        Swal.fire(
-                            'Error',
-                            data.message,
-                            'error'
-                        );
-                    }
-                } catch (error) {
-                    console.error('Error removing product:', error);
-                    Swal.fire(
-                        'Error',
-                        'An error occurred while removing the product.',
-                        'error'
-                    );
-                }
-            }
-        });
-    });
-});
+			if (data.success) {
+				// Remove the row immediately from DOM
+				row.remove();
+				
+				// Update cart total price immediately
+				const totalElement = document.getElementById('cart-total-price');
+				if (totalElement) {
+					totalElement.textContent = `₹ ${parseFloat(data.totalPrice).toFixed(2)}`;
+				}
+				
+				// Check if cart is empty after removal
+				const remainingRows = document.querySelectorAll('table tr.table_row').length;
+				if (remainingRows === 0) {
+					// Replace table content with empty message
+					const table = document.querySelector('table');
+					table.innerHTML = '<tr><td colspan="6" class="text-center">Your cart is empty</td></tr>';
+				}
+				
+				// Update checkout button state
+				updateCheckoutButtonState();
+				
+				// Show success message
+				Swal.fire('Removed!', data.message, 'success');
+			} else {
+				Swal.fire('Error', data.message, 'error');
+			}
+		} catch (error) {
+			console.error('Error removing product:', error);
+			Swal.fire('Error', 'An error occurred while removing the product.', 'error');
+		}
+	});
 
 </script>
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
 <script>
+	// Function to check and update checkout button state
+	function updateCheckoutButtonState() {
+		const cartRows = document.querySelectorAll('table tr.table_row');
+		const checkoutBtn = document.querySelector('a[href="/checkout"]');
+		
+		if (checkoutBtn) {
+			if (cartRows.length === 0) {
+				// Disable checkout button
+				checkoutBtn.style.opacity = '0.5';
+				checkoutBtn.style.cursor = 'not-allowed';
+				checkoutBtn.onclick = (e) => {
+					e.preventDefault();
+					Swal.fire('Error', 'Your cart is empty. Add products to proceed.', 'error');
+					return false;
+				};
+			} else {
+				// Enable checkout button
+				checkoutBtn.style.opacity = '1';
+				checkoutBtn.style.cursor = 'pointer';
+				checkoutBtn.onclick = null;
+			}
+		}
+	}
+
 	document.addEventListener('DOMContentLoaded', () => {
+		// Initialize checkout button state on page load
+		updateCheckoutButtonState();
+		
     document.querySelectorAll('.quantity-input').forEach(input => {
         input.addEventListener('input', async (event) => {
             const input = event.target;
