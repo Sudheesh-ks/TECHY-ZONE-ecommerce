@@ -10,10 +10,10 @@ const productSchema = new mongoose.Schema(
     stock: {
       type: Number,
       default: 0,
-      min: [0, 'Stock cannot be negative'],
+      min: [0, "Stock cannot be negative"],
     },
     images: [{ type: String }],
-    category: { type: mongoose.Schema.ObjectId, ref: 'Category' },
+    category: { type: mongoose.Schema.ObjectId, ref: "Category" },
     // brand: { type: String },
     warranty: { type: String },
     returnPolicy: { type: String },
@@ -29,7 +29,7 @@ const productSchema = new mongoose.Schema(
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date, default: Date.now },
   },
-  { timestamps: true } 
+  { timestamps: true },
 );
 
-module.exports = mongoose.model('Products', productSchema);
+module.exports = mongoose.model("Products", productSchema);

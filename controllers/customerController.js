@@ -1,80 +1,91 @@
-const User = require('../models/userModel');
-const STATUS_CODES = require('../constants/status.constants');
-const MESSAGES = require('../constants/responseMessage');
+const User = require("../models/userModel");
+const STATUS_CODES = require("../constants/status.constants");
+const MESSAGES = require("../constants/responseMessage");
 
-
-const customerInfo = async (req,res) => {
-
-    try{
-
-        let search = "";  
-        if(req.query.search){
-            search=req.query.search;
-        }
-        let page = 1;
-        if(req.query.page){
-            page = req.query.page
-        }
-        const limit = 3
-        const userData = await User.find ({  
-            isAdmin:false,
-            $or: [
-                { name: { $regex: ".*" + search + ".*"}},
-                { email: {$regex: ".*" + search + ".*"}}
-            ],
-        })
-        .limit(limit*1)
-        .skip((page-1)*limit)
-        .exec();
-
-        const count = await User.find({ isAdmin:false,
-            $or: [
-                { name: { $regex: ".*" + search + ".*"}},
-                { email: {$regex: ".*" + search + ".*"}}
-            ],
-        }).countDocuments();
-
-        res.render('admin/customers',{
-            data:userData,
-            totalPages:Math.ceil(count/limit),
-            currentPage:page
-        })
-
-    }catch(error){
-            res.redirect('/pageerror');
+const customerInfo = async (req, res) => {
+  try {
+    let search = "";
+    if (req.query.search) {
+      search = req.query.search;
     }
+    let page = 1;
+    if (req.query.page) {
+      page = req.query.page;
+    }
+    const limit = 3;
+    const userData = await User.find({
+      isAdmin: false,
+      $or: [
+        { name: { $regex: ".*" + search + ".*" } },
+        { email: { $regex: ".*" + search + ".*" } },
+      ],
+    })
+      .limit(limit * 1)
+      .skip((page - 1) * limit)
+      .exec();
+
+    const count = await User.find({
+      isAdmin: false,
+      $or: [
+        { name: { $regex: ".*" + search + ".*" } },
+        { email: { $regex: ".*" + search + ".*" } },
+      ],
+    }).countDocuments();
+
+    res.render("admin/customers", {
+      data: userData,
+      totalPages: Math.ceil(count / limit),
+      currentPage: page,
+    });
+  } catch (error) {
+    res.redirect("/pageerror");
+    console.error(error.message);
+    res
+      .status(STATUS_CODES.INTERNAL_SERVER_ERROR)
+      .json({
+        success: false,
+        message: error.message || MESSAGES.INTERNAL_SERVER_ERROR,
+      });
+  }
 };
 
-const customerBlocked = async (req,res) => {
+const customerBlocked = async (req, res) => {
+  try {
+    let id = req.query.id;
+    await User.updateOne({ _id: id }, { $set: { isBlocked: true } }); // updating isBlocked to true
+    res.redirect("/admin/users");
+  } catch (error) {
+    res.redirect("/pageerror");
+    console.error(error.message);
+    res
+      .status(STATUS_CODES.INTERNAL_SERVER_ERROR)
+      .json({
+        success: false,
+        message: error.message || MESSAGES.INTERNAL_SERVER_ERROR,
+      });
+  }
+};
 
-    try{
+const customerunBlocked = async (req, res) => {
+  try {
+    let id = req.query.id;
+    console.log(id);
 
-        let id = req.query.id;
-        await User.updateOne({_id:id},{$set:{isBlocked:true}});  // updating isBlocked to true
-        res.redirect('/admin/users')
-    }catch(error){
-        res.redirect('/pageerror');
-    }
-}
-
-
-const customerunBlocked = async (req,res) => {
-
-    try{
-
-        let id = req.query.id;
-        console.log(id);
-        
-        await User.updateOne({_id:id},{$set:{isBlocked:false}}); // updating isBlocked to false
-        res.redirect('/admin/users')
-    }catch(error){
-        res.redirect('/pageerror');
-    }
-}
-
+    await User.updateOne({ _id: id }, { $set: { isBlocked: false } }); // updating isBlocked to false
+    res.redirect("/admin/users");
+  } catch (error) {
+    console.error(error.message);
+    res
+      .status(STATUS_CODES.INTERNAL_SERVER_ERROR)
+      .json({
+        success: false,
+        message: error.message || MESSAGES.INTERNAL_SERVER_ERROR,
+      });
+  }
+};
 
 module.exports = {
-    customerInfo,
-    customerBlocked,
-    customerunBlocked,
-}
+  customerInfo,
+  customerBlocked,
+  customerunBlocked,
+};

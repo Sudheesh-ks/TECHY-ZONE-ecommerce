@@ -1,113 +1,127 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
 const orderSchema = new mongoose.Schema({
-    userId: {
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    required: true,
+  },
+  products: [
+    {
+      productId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-        required: true
+        ref: "Product",
+        required: true,
+      },
+      name: String,
+      price: Number,
+      quantity: Number,
+      image: String,
+      status: {
+        type: String,
+        enum: [
+          "Pending",
+          "Processing",
+          "Shipped",
+          "Cancelled",
+          "Delivered",
+          "Returned",
+        ],
+        default: "Pending",
+      },
+      returnStatus: {
+        type: String,
+        enum: ["Not Requested", "Requested", "Approved", "Rejected"],
+        default: "Not Requested",
+      },
+      returnReason: {
+        type: String,
+        default: "",
+      },
+      returnRequestedAt: {
+        type: Date,
+      },
+      returnApprovedAt: {
+        type: Date,
+      },
     },
-    products: [
-        {
-            productId: {
-                type: mongoose.Schema.Types.ObjectId,
-                ref: 'Product',
-                required: true
-            },
-            name: String,
-            price: Number,
-            quantity: Number,
-            image: String,
-            status: {
-                type: String,
-                enum: ['Pending', 'Processing', 'Shipped', 'Cancelled', 'Delivered', 'Returned'],
-                default: 'Pending' 
-            },
-            returnStatus: {
-                type: String,
-                enum: ['Not Requested', 'Requested', 'Approved', 'Rejected'],
-                default: 'Not Requested'
-            },
-            returnReason: {
-                type: String,
-                default: ''
-            },
-            returnRequestedAt: {
-                type: Date
-            },
-            returnApprovedAt: {
-                type: Date
-            }
-        }
+  ],
+  totalPrice: {
+    type: Number,
+    required: true,
+  },
+  deliveryCharge: {
+    type: Number,
+    default: 0,
+  },
+  discountAmount: {
+    type: Number,
+    default: 0,
+  },
+  address: {
+    name: String,
+    phone: String,
+    altPhone: String,
+    addressType: String,
+    city: String,
+    landMark: String,
+    state: String,
+    pincode: String,
+  },
+  paymentMethod: {
+    type: String,
+    enum: ["Cash on Delivery", "Razorpay", "Wallet"],
+    required: true,
+  },
+  paymentStatus: {
+    type: String,
+    enum: ["Pending", "Completed", "Failed"],
+    default: "Pending",
+  },
+  status: {
+    type: String,
+    enum: [
+      "Pending",
+      "Processing",
+      "Shipped",
+      "Delivered",
+      "Cancelled",
+      "Returned",
     ],
-    totalPrice: {
-        type: Number,
-        required: true
-    },
-    deliveryCharge: {
-         type: Number,
-         default: 0 
-    },
-    discountAmount: {
-        type: Number,
-        default: 0
-    },
-    address: {
-        name: String,
-        phone: String,
-        altPhone: String,
-        addressType: String,
-        city: String,
-        landMark: String,
-        state: String,
-        pincode: String
-    },
-    paymentMethod: {
-        type: String,
-        enum: ['Cash on Delivery', 'Razorpay', 'Wallet'],
-        required: true
-    },
-    paymentStatus: { 
-        type: String,
-        enum: ['Pending', 'Completed', 'Failed'],
-        default: 'Pending'
-    },
-    status: {
-        type: String,
-        enum: ['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled', 'Returned'],
-        default: 'Pending'
-    },
-    createdAt: {
-        type: Date,
-        default: Date.now
-    },
-    updatedAt: {
-        type: Date,
-        default: Date.now
-    },
-    cancelReason: {
-        type: String,
-        default: ''
-    },
-    returnStatus: {
-        type: String,
-        enum: ['Not Requested', 'Requested', 'Approved', 'Rejected'],
-        default: 'Not Requested'
-    },
-    returnReason: {
-        type: String,
-        default: ''
-    },
-    returnRequestedAt: {
-        type: Date 
-    },
-    returnApprovedAt: {
-        type: Date
-    }
+    default: "Pending",
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now,
+  },
+  updatedAt: {
+    type: Date,
+    default: Date.now,
+  },
+  cancelReason: {
+    type: String,
+    default: "",
+  },
+  returnStatus: {
+    type: String,
+    enum: ["Not Requested", "Requested", "Approved", "Rejected"],
+    default: "Not Requested",
+  },
+  returnReason: {
+    type: String,
+    default: "",
+  },
+  returnRequestedAt: {
+    type: Date,
+  },
+  returnApprovedAt: {
+    type: Date,
+  },
 });
 
-orderSchema.pre('save', function (next) {
-    this.updatedAt = Date.now();
-    next();
+orderSchema.pre("save", function (next) {
+  this.updatedAt = Date.now();
+  next();
 });
 
-module.exports = mongoose.model('Order', orderSchema);
+module.exports = mongoose.model("Order", orderSchema);

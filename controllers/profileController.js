@@ -1,165 +1,184 @@
-const User = require('../models/userModel');
-const nodemailer = require('nodemailer');
-const bcrypt = require('bcrypt');
-const env = require('dotenv').config();
+const User = require("../models/userModel");
+const nodemailer = require("nodemailer");
+const bcrypt = require("bcrypt");
+const env = require("dotenv").config();
 const { generateOTP, sendOTP } = require("../utils/otp");
 const Otp = require("../models/otpModel");
-const STATUS_CODES = require('../constants/status.constants');
-const MESSAGES = require('../constants/responseMessage');
-
+const STATUS_CODES = require("../constants/status.constants");
+const MESSAGES = require("../constants/responseMessage");
 
 const loadForgotPassword = async (req, res) => {
-    try {
-        res.render('users/forgot-password');
-    } catch (error) {
-        console.error("Error loading forgot password page:", error.message);
-        res.redirect('/users/error');
-    }
+  try {
+    res.render("users/forgot-password");
+  } catch (error) {
+    console.error("Error loading forgot password page:", error.message);
+    res
+      .status(STATUS_CODES.INTERNAL_SERVER_ERROR)
+      .json({ success: false, message: MESSAGES.INTERNAL_SERVER_ERROR });
+    res.redirect("/users/error");
+  }
 };
-
 
 const forgotEmailValid = async (req, res) => {
-    try {
-        const { email } = req.body;
-        const user = await User.findOne({ email });
+  try {
+    const { email } = req.body;
+    const user = await User.findOne({ email });
 
-        if (!user) {
-            return res.render('users/forgot-password', { message: "User with this email does not exist." });
-        }
-
-        const otp = generateOTP();
-
-        await Otp.deleteMany({ email });
-        await Otp.create({ email, otp });
-
-        await sendOTP(email, otp);
-
-        console.log("OTP sent:", otp);
-
-        req.session.resetEmail = email;
-
-        res.render('users/forgot-pass-otp', { email });
-
-    } catch (error) {
-        console.error("Error validating email:", error.message);
-        res.redirect('/error');
+    if (!user) {
+      return res.render("users/forgot-password", {
+        message: "User with this email does not exist.",
+      });
     }
-};
 
+    const otp = generateOTP();
+
+    await Otp.deleteMany({ email });
+    await Otp.create({ email, otp });
+
+    await sendOTP(email, otp);
+
+    console.log("OTP sent:", otp);
+
+    req.session.resetEmail = email;
+
+    res.render("users/forgot-pass-otp", { email });
+  } catch (error) {
+    console.error("Error validating email:", error.message);
+    res
+      .status(STATUS_CODES.INTERNAL_SERVER_ERROR)
+      .json({ success: false, message: MESSAGES.INTERNAL_SERVER_ERROR });
+    res.redirect("/error");
+  }
+};
 
 const securePassword = async (password) => {
-    try{
-        const passwordHash = await bcrypt.hash(password,10);
-        return passwordHash;
-    }catch(error){
-        console.log(error);
-        
-    }
-}
-
+  try {
+    const passwordHash = await bcrypt.hash(password, 10);
+    return passwordHash;
+  } catch (error) {
+    console.log(error);
+    res
+      .status(STATUS_CODES.INTERNAL_SERVER_ERROR)
+      .json({ success: false, message: MESSAGES.INTERNAL_SERVER_ERROR });
+  }
+};
 
 const verifyForgotPassOTP = async (req, res) => {
-    try {
-        const enterOtp = req.body.otp;
-        const email = req.session.resetEmail;
+  try {
+    const enterOtp = req.body.otp;
+    const email = req.session.resetEmail;
 
-        const record = await Otp.findOne({ email });
+    const record = await Otp.findOne({ email });
 
-        if (!record) {
-            return res.json({ success: false, message: MESSAGES.BAD_REQUEST });
-        }
-
-        if (record.otp !== enterOtp) {
-            return res.json({ success: false, message: MESSAGES.BAD_REQUEST });
-        }
-
-        await Otp.deleteOne({ email });
-
-        return res.json({ success: true, redirectUrl: "reset-password" });
-
-    } catch (error) {
-        return res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({ success: false, message: MESSAGES.INTERNAL_SERVER_ERROR });
+    if (!record) {
+      return res.json({ success: false, message: MESSAGES.BAD_REQUEST });
     }
-};
 
+    if (record.otp !== enterOtp) {
+      return res.json({ success: false, message: MESSAGES.BAD_REQUEST });
+    }
+
+    await Otp.deleteOne({ email });
+
+    return res.json({ success: true, redirectUrl: "reset-password" });
+  } catch (error) {
+    console.log(error);
+    return res
+      .status(STATUS_CODES.INTERNAL_SERVER_ERROR)
+      .json({ success: false, message: MESSAGES.INTERNAL_SERVER_ERROR });
+  }
+};
 
 const resetPassword = async (req, res) => {
-    try {
-        res.render('users/reset-password');
-    } catch (error) {
-        res.redirect('/pageNotFound');
-    }
+  try {
+    res.render("users/reset-password");
+  } catch (error) {
+    res
+      .status(STATUS_CODES.INTERNAL_SERVER_ERROR)
+      .json({ success: false, message: MESSAGES.INTERNAL_SERVER_ERROR });
+    res.redirect("/pageNotFound");
+  }
 };
-
 
 const sendVerificationEmail = async (email, otp) => {
-    try {
-        const transporter = nodemailer.createTransport({  // Sending OTP
-            service: "gmail",
-            auth: {
-                user: process.env.NODEMAILER_EMAIL,
-                pass: process.env.NODEMAILER_PASSWORD,
-            },
-        });
+  try {
+    const transporter = nodemailer.createTransport({
+      // Sending OTP
+      service: "gmail",
+      auth: {
+        user: process.env.NODEMAILER_EMAIL,
+        pass: process.env.NODEMAILER_PASSWORD,
+      },
+    });
 
-        await transporter.sendMail({
-            from: process.env.NODEMAILER_EMAIL,
-            to: email,
-            subject: "Your OTP for password reset",
-            text: `Your OTP is ${otp}`,
-            html: `<h4>Your OTP: ${otp}</h4>`,
-        });
+    await transporter.sendMail({
+      from: process.env.NODEMAILER_EMAIL,
+      to: email,
+      subject: "Your OTP for password reset",
+      text: `Your OTP is ${otp}`,
+      html: `<h4>Your OTP: ${otp}</h4>`,
+    });
 
-        return true;
-    } catch (error) {
-        console.error("Error sending OTP email:", error.message);
-        return false;
-    }
+    return true;
+  } catch (error) {
+    console.error("Error sending OTP email:", error.message);
+    res
+      .status(STATUS_CODES.INTERNAL_SERVER_ERROR)
+      .json({ success: false, message: MESSAGES.INTERNAL_SERVER_ERROR });
+    return false;
+  }
 };
-
 
 const resendOtp = async (req, res) => {
-    try {
-        const email = req.session.resetEmail;
+  try {
+    const email = req.session.resetEmail;
 
-        const otp = generateOTP();
+    const otp = generateOTP();
 
-        await Otp.deleteMany({ email });
-        await Otp.create({ email, otp });
+    await Otp.deleteMany({ email });
+    await Otp.create({ email, otp });
 
-        await sendOTP(email, otp);
+    await sendOTP(email, otp);
 
-        res.status(STATUS_CODES.OK).json({ success: true, message: MESSAGES.SUCCESS });
-
-    } catch (error) {
-        console.log("Error in resend OTP:", error);
-        res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({ success: false, message: MESSAGES.INTERNAL_SERVER_ERROR });
-    }
+    res
+      .status(STATUS_CODES.OK)
+      .json({ success: true, message: MESSAGES.SUCCESS });
+  } catch (error) {
+    console.log("Error in resend OTP:", error);
+    res
+      .status(STATUS_CODES.INTERNAL_SERVER_ERROR)
+      .json({ success: false, message: MESSAGES.INTERNAL_SERVER_ERROR });
+  }
 };
 
-
-const postNewPassword = async (req,res) => {
-    try{
-
-        const {newPass1,newPass2} = req.body;
-        const email = req.session.email;
-        if(newPass1 === newPass2){
-            const passwordHash = await securePassword(newPass1);
-            await User.updateOne({email:email},{$set:{password:passwordHash}})  // Updating password
-            res.redirect('/login');
-        }else{
-            res.render("reset-password",{message:"Password do not match"});
-        }
-    }catch(error){
-        res.redirect('/pageNotFound');
+const postNewPassword = async (req, res) => {
+  try {
+    const { newPass1, newPass2 } = req.body;
+    const email = req.session.email;
+    if (newPass1 === newPass2) {
+      const passwordHash = await securePassword(newPass1);
+      await User.updateOne(
+        { email: email },
+        { $set: { password: passwordHash } },
+      ); // Updating password
+      res.redirect("/login");
+    } else {
+      res.render("reset-password", { message: "Password do not match" });
     }
-}
+  } catch (error) {
+    console.log(error);
+    res
+      .status(STATUS_CODES.INTERNAL_SERVER_ERROR)
+      .json({ success: false, message: MESSAGES.INTERNAL_SERVER_ERROR });
+    res.redirect("/pageNotFound");
+  }
+};
 
 module.exports = {
-    loadForgotPassword,
-    forgotEmailValid,
-    verifyForgotPassOTP,
-    resetPassword,
-    resendOtp,
-    postNewPassword
+  loadForgotPassword,
+  forgotEmailValid,
+  verifyForgotPassOTP,
+  resetPassword,
+  resendOtp,
+  postNewPassword,
 };

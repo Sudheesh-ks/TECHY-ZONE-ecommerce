@@ -1,61 +1,57 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
 const userSchema = new mongoose.Schema({
+  name: {
+    type: String,
+    required: true,
+  },
 
+  email: {
+    type: String,
+    required: true,
+  },
 
-    name:{
-        type:String,
-        required:true
-    },
+  phno: {
+    type: String,
+    required: false,
+    default: null,
+  },
 
-    email:{
-        type:String,
-        required:true
-    },
+  isGoogleAuth: {
+    type: Boolean,
+    default: false,
+  },
 
-    phno:{
-        type:String,
-        required:false,
-        default:null
-    },
+  googleId: {
+    type: String,
+    unique: true,
+  },
 
-    isGoogleAuth: { 
-        type: Boolean, 
-        default: false 
-    },
+  password: {
+    type: String,
+    required: false,
+  },
 
-    googleId : {
-        type: String,
-        unique: true
-    },
+  isAdmin: {
+    type: Boolean,
+    default: false,
+  },
 
-    password:{
-        type:String,
-        required:false
-    },
+  isBlocked: {
+    type: Boolean,
+    default: false,
+  },
 
-    isAdmin : {
-        type: Boolean,
-        default:false
-    },
+  referralCode: {
+    type: String,
+    unique: true,
+  },
 
-    isBlocked: {
-        type : Boolean,
-        default:false
-    },
-
-    referralCode: { 
-        type: String, 
-        unique: true 
-    }, 
-
-    referredBy: { 
-        type: mongoose.Schema.Types.ObjectId, 
-        ref: 'User', 
-        default: null 
-    },
-
+  referredBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    default: null,
+  },
 });
 
-
-module.exports = mongoose.model('User' , userSchema)
+module.exports = mongoose.model("User", userSchema);
