@@ -1,3 +1,4 @@
+const mongoose = require("mongoose");
 const Order = require("../models/orderModel");
 const Product = require("../models/productModel");
 const User = require("../models/userModel");
@@ -154,19 +155,26 @@ const updateOrderStatus = async (req, res) => {
 };
 
 const approveReturn = async (req, res) => {
+  const session = await mongoose.startSession();
+  const isReplicaSet = mongoose.connection.getClient().topology?.description?.type === 'ReplicaSetWithPrimary' ||
+    mongoose.connection.getClient().topology?.description?.type === 'Sharded';
   try {
+    if (isReplicaSet) session.startTransaction();
     const orderId = req.params.id;
 
-    if (!updatedOrder) {
+    const order = await Order.findById(orderId).session(session);
+
+    if (!order) {
+      if (session.inTransaction()) await session.abortTransaction();
       return res
         .status(STATUS_CODES.NOT_FOUND)
         .json({ message: MESSAGES.NOT_FOUND });
     }
 
-    const userId = updatedOrder.userId;
-    const refundAmount = updatedOrder.totalPrice;
+    const userId = order.userId;
+    const refundAmount = order.totalPrice;
 
-    let wallet = await Wallet.findOne({ userId });
+    let wallet = await Wallet.findOne({ userId }).session(session);
 
     if (!wallet) {
       wallet = new Wallet({
@@ -189,7 +197,13 @@ const approveReturn = async (req, res) => {
       });
     }
 
-    await wallet.save();
+    await wallet.save({ session });
+
+    order.returnStatus = "Approved";
+    order.status = "Returned";
+    await order.save({ session });
+
+    if (session.inTransaction()) await session.commitTransaction();
 
     console.log(
       `Refund of ₹${refundAmount} credited to wallet for user ${userId}.`,
@@ -198,12 +212,17 @@ const approveReturn = async (req, res) => {
     req.flash("success", "Return approved successfully!");
     res.redirect(`/admin/order-detail/${orderId}`);
   } catch (error) {
+    if (session.inTransaction()) {
+      await session.abortTransaction();
+    }
     console.error("Error approving return:", error);
     res
       .status(STATUS_CODES.INTERNAL_SERVER_ERROR)
       .json({ message: error.message || MESSAGES.INTERNAL_SERVER_ERROR });
     req.flash("error", "Failed to approve return. Please try again.");
     res.redirect("back");
+  } finally {
+    session.endSession();
   }
 };
 
@@ -231,10 +250,15 @@ const rejectReturn = async (req, res) => {
 
 const approveProductReturn = async (req, res) => {
   const { id: orderId, productId } = req.params;
+  const session = await mongoose.startSession();
+  const isReplicaSet = mongoose.connection.getClient().topology?.description?.type === 'ReplicaSetWithPrimary' ||
+    mongoose.connection.getClient().topology?.description?.type === 'Sharded';
 
   try {
-    const order = await Order.findById(orderId);
+    if (isReplicaSet) session.startTransaction();
+    const order = await Order.findById(orderId).session(session);
     if (!order) {
+      if (session.inTransaction()) await session.abortTransaction();
       req.flash("error", "Order not found");
       return res.redirect("back");
     }
@@ -243,6 +267,7 @@ const approveProductReturn = async (req, res) => {
       (p) => p.productId.toString() === productId,
     );
     if (!product || product.returnStatus !== "Requested") {
+      if (session.inTransaction()) await session.abortTransaction();
       req.flash("error", "Invalid product return request");
       return res.redirect("back");
     }
@@ -252,7 +277,7 @@ const approveProductReturn = async (req, res) => {
 
     const refundAmount = product.price * product.quantity;
 
-    let wallet = await Wallet.findOne({ userId: order.userId });
+    let wallet = await Wallet.findOne({ userId: order.userId }).session(session);
     if (!wallet) {
       wallet = new Wallet({
         userId: order.userId,
@@ -266,7 +291,7 @@ const approveProductReturn = async (req, res) => {
         ],
       });
     } else {
-      wallet.balance += refundAmount; // Adding refund amount
+      wallet.balance += refundAmount;
       wallet.transactions.push({
         amount: refundAmount,
         type: "Credit",
@@ -274,7 +299,7 @@ const approveProductReturn = async (req, res) => {
       });
     }
 
-    await wallet.save();
+    await wallet.save({ session });
 
     const allApproved = order.products.every(
       (p) => p.returnStatus === "Approved",
@@ -283,7 +308,9 @@ const approveProductReturn = async (req, res) => {
       order.status = "Returned";
     }
 
-    await order.save();
+    await order.save({ session });
+
+    if (session.inTransaction()) await session.commitTransaction();
 
     req.flash(
       "success",
@@ -291,12 +318,17 @@ const approveProductReturn = async (req, res) => {
     );
     res.redirect(`/admin/order-detail/${orderId}`);
   } catch (error) {
+    if (session.inTransaction()) {
+      await session.abortTransaction();
+    }
     console.error("Error approving return:", error);
     res
       .status(STATUS_CODES.INTERNAL_SERVER_ERROR)
       .json({ message: error.message || MESSAGES.INTERNAL_SERVER_ERROR });
     req.flash("error", "Failed to approve return. Please try again.");
     res.redirect("back");
+  } finally {
+    session.endSession();
   }
 };
 

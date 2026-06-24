@@ -1,3 +1,4 @@
+const mongoose = require("mongoose");
 const razorpayInstance = require("../config/razorpayConfig");
 const Address = require("../models/addressModel");
 const Order = require("../models/orderModel");
@@ -11,13 +12,19 @@ const STATUS_CODES = require("../constants/status.constants");
 const MESSAGES = require("../constants/responseMessage");
 
 const placeOrder = async (req, res) => {
+  const session = await mongoose.startSession();
+  const isReplicaSet = mongoose.connection.getClient().topology?.description?.type === 'ReplicaSetWithPrimary' ||
+    mongoose.connection.getClient().topology?.description?.type === 'Sharded';
+
   try {
+    if (isReplicaSet) session.startTransaction();
     const { addressId, paymentMethod } = req.body;
     const couponCode = req.session.appliedCoupon
       ? req.session.appliedCoupon.couponCode
       : req.body.couponCode;
 
     if (!addressId) {
+      if (session.inTransaction()) await session.abortTransaction();
       return res
         .status(STATUS_CODES.BAD_REQUEST)
         .json({ success: false, message: MESSAGES.BAD_REQUEST });
@@ -25,11 +32,12 @@ const placeOrder = async (req, res) => {
 
     const userId = req.session.user.id;
 
-    const userAddresses = await Address.findOne({ userId });
-    const selectedAddress = userAddresses?.address.find(
+    const userAddresses = await Address.findOne({ userId }).session(session);
+    const selectedAddress = userAddresses?.address?.find(
       (addr) => addr._id.toString() === addressId,
     );
     if (!selectedAddress) {
+      if (session.inTransaction()) await session.abortTransaction();
       return res
         .status(STATUS_CODES.NOT_FOUND)
         .json({ success: false, message: MESSAGES.NOT_FOUND });
@@ -40,8 +48,9 @@ const placeOrder = async (req, res) => {
     let totalPrice = 0;
 
     if (productId && quantity) {
-      const product = await Product.findById(productId);
+      const product = await Product.findById(productId).session(session);
       if (!product) {
+        if (session.inTransaction()) await session.abortTransaction();
         return res
           .status(STATUS_CODES.NOT_FOUND)
           .json({ success: false, message: MESSAGES.NOT_FOUND });
@@ -57,8 +66,9 @@ const placeOrder = async (req, res) => {
 
       totalPrice = product.price * quantity;
     } else {
-      const cart = await Cart.findOne({ userId });
+      const cart = await Cart.findOne({ userId }).session(session);
       if (!cart || cart.items.length === 0) {
+        if (session.inTransaction()) await session.abortTransaction();
         return res
           .status(STATUS_CODES.BAD_REQUEST)
           .json({ success: false, message: MESSAGES.BAD_REQUEST });
@@ -81,21 +91,24 @@ const placeOrder = async (req, res) => {
         couponCode: couponCode.toUpperCase(),
         isActive: true,
         expiryDate: { $gte: new Date() },
-      });
+      }).session(session);
 
       if (!coupon) {
+        if (session.inTransaction()) await session.abortTransaction();
         return res
           .status(STATUS_CODES.BAD_REQUEST)
           .json({ success: false, message: MESSAGES.BAD_REQUEST });
       }
 
       if (totalPrice < coupon.minAmount) {
+        if (session.inTransaction()) await session.abortTransaction();
         return res
           .status(STATUS_CODES.BAD_REQUEST)
           .json({ success: false, message: MESSAGES.BAD_REQUEST });
       }
 
       if (coupon.userUsed >= coupon.maxUsage) {
+        if (session.inTransaction()) await session.abortTransaction();
         return res
           .status(STATUS_CODES.BAD_REQUEST)
           .json({ success: false, message: MESSAGES.BAD_REQUEST });
@@ -107,7 +120,7 @@ const placeOrder = async (req, res) => {
       }
 
       coupon.userUsed += 1;
-      await coupon.save();
+      await coupon.save({ session });
     }
 
     const finalTotalPrice = totalPrice - discountAmount;
@@ -116,6 +129,7 @@ const placeOrder = async (req, res) => {
     const totalAmountWithDelivery = finalTotalPrice + deliveryCharge;
 
     if (paymentMethod === "Cash on Delivery" && finalTotalPrice > 1000) {
+      if (session.inTransaction()) await session.abortTransaction();
       return res
         .status(STATUS_CODES.BAD_REQUEST)
         .json({ success: false, message: MESSAGES.BAD_REQUEST });
@@ -134,36 +148,35 @@ const placeOrder = async (req, res) => {
       deliveryCharge,
     });
 
-    await order.save();
+    await order.save({ session });
 
     for (const item of orderProducts) {
-      const product = await Product.findById(item.productId);
+      const product = await Product.findById(item.productId).session(session);
       if (product) {
         if (product.stock < item.quantity) {
+          if (session.inTransaction()) await session.abortTransaction();
           return res
             .status(STATUS_CODES.BAD_REQUEST)
             .json({ success: false, message: MESSAGES.BAD_REQUEST });
         }
         product.stock -= item.quantity;
-        await product.save();
+        await product.save({ session });
       }
     }
 
     if (!productId) {
-      await Cart.deleteOne({ userId });
+      await Cart.deleteOne({ userId }).session(session);
     }
 
     if (req.session.appliedCoupon) {
       delete req.session.appliedCoupon;
-      console.log("Coupon removed from session after order.");
-    } else {
-      console.log("Coupon not found in session.");
     }
 
     if (paymentMethod === "Wallet") {
-      const wallet = await Wallet.findOne({ userId });
+      const wallet = await Wallet.findOne({ userId }).session(session);
 
       if (!wallet || wallet.balance < totalAmountWithDelivery) {
+        if (session.inTransaction()) await session.abortTransaction();
         return res
           .status(STATUS_CODES.BAD_REQUEST)
           .json({ success: false, message: MESSAGES.BAD_REQUEST });
@@ -175,13 +188,12 @@ const placeOrder = async (req, res) => {
         type: "Debit",
         description: "Order placed",
       });
-      await wallet.save();
+      await wallet.save({ session });
 
       order.paymentStatus = "Completed";
-      await order.save();
-      console.log(
-        `Payment of ₹${totalAmountWithDelivery} completed using Wallet.`,
-      );
+      await order.save({ session });
+
+      if (session.inTransaction()) await session.commitTransaction();
       return res.status(STATUS_CODES.OK).json({
         success: true,
         message: "Order placed successfully!",
@@ -189,6 +201,7 @@ const placeOrder = async (req, res) => {
         redirectUrl: `/order-confirmation/${order._id}`,
       });
     } else if (paymentMethod === "Cash on Delivery") {
+      if (session.inTransaction()) await session.commitTransaction();
       return res.status(STATUS_CODES.OK).json({
         success: true,
         message: "Order placed successfully!",
@@ -202,6 +215,7 @@ const placeOrder = async (req, res) => {
         receipt: `order_${Date.now()}`,
       });
 
+      if (session.inTransaction()) await session.commitTransaction();
       return res.json({
         razorpayOrderId: razorpayOrder.id,
         amount: razorpayOrder.amount,
@@ -210,20 +224,31 @@ const placeOrder = async (req, res) => {
         razorpayKey: process.env.RAZORPAY_KEY_ID,
       });
     } else {
+      if (session.inTransaction()) await session.abortTransaction();
       return res
         .status(STATUS_CODES.BAD_REQUEST)
         .json({ success: false, message: MESSAGES.BAD_REQUEST });
     }
   } catch (error) {
+    if (session.inTransaction()) {
+      await session.abortTransaction();
+    }
     console.error("Error placing order:", error.message, error);
     return res
       .status(STATUS_CODES.INTERNAL_SERVER_ERROR)
-      .json({ success: false, message: MESSAGES.INTERNAL_SERVER_ERROR });
+      .json({
+        success: false,
+        message: error.message || MESSAGES.INTERNAL_SERVER_ERROR,
+      });
+  } finally {
+    session.endSession();
   }
 };
 
 const verifyPayment = async (req, res) => {
+  const session = await mongoose.startSession();
   try {
+    session.startTransaction();
     const { orderId, paymentId, razorpayOrderId, razorpaySignature } = req.body;
 
     const body = razorpayOrderId + "|" + paymentId;
@@ -233,30 +258,38 @@ const verifyPayment = async (req, res) => {
       .digest("hex");
 
     if (expectedSignature === razorpaySignature) {
-      const order = await Order.findById(orderId);
+      const order = await Order.findById(orderId).session(session);
       if (order) {
         order.paymentStatus = "Completed";
         order.status = "Pending";
-        await order.save();
+        await order.save({ session });
 
-        await Cart.deleteOne({ userId: order.userId });
+        await Cart.deleteOne({ userId: order.userId }).session(session);
 
+        await session.commitTransaction();
         return res.json({ success: true, message: "Payment verified." });
       } else {
+        await session.abortTransaction();
         return res
           .status(STATUS_CODES.NOT_FOUND)
           .json({ success: false, message: MESSAGES.NOT_FOUND });
       }
     } else {
+      await session.abortTransaction();
       return res
         .status(STATUS_CODES.BAD_REQUEST)
         .json({ success: false, message: MESSAGES.BAD_REQUEST });
     }
   } catch (error) {
-    console.error(error.message);
+    if (session.inTransaction()) {
+      await session.abortTransaction();
+    }
+    console.error("Error verifying payment:", error.message, error);
     return res
       .status(STATUS_CODES.INTERNAL_SERVER_ERROR)
-      .json({ success: false, message: MESSAGES.INTERNAL_SERVER_ERROR });
+      .json({ success: false, message: error.message || MESSAGES.INTERNAL_SERVER_ERROR });
+  } finally {
+    session.endSession();
   }
 };
 

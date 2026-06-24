@@ -1,3 +1,4 @@
+const mongoose = require("mongoose");
 const Coupon = require("../models/couponModel");
 const STATUS_CODES = require("../constants/status.constants");
 const MESSAGES = require("../constants/responseMessage");
@@ -175,17 +176,26 @@ const deleteCoupon = async (req, res) => {
 
 const applyCoupon = async (req, res) => {
   const { couponCode, cartTotal } = req.body;
+  const session = await mongoose.startSession();
+  const isReplicaSet = mongoose.connection.getClient().topology?.description?.type === 'ReplicaSetWithPrimary' ||
+    mongoose.connection.getClient().topology?.description?.type === 'Sharded';
 
   try {
-    const coupon = await Coupon.findOne({ couponCode, isActive: true });
+    if (isReplicaSet) session.startTransaction();
+    const coupon = await Coupon.findOne({
+      couponCode,
+      isActive: true,
+    }).session(session);
 
     if (!coupon) {
+      if (session.inTransaction()) await session.abortTransaction();
       return res
         .status(STATUS_CODES.BAD_REQUEST)
         .json({ success: false, message: MESSAGES.BAD_REQUEST });
     }
 
     if (cartTotal < coupon.minAmount) {
+      if (session.inTransaction()) await session.abortTransaction();
       return res.status(STATUS_CODES.BAD_REQUEST).json({
         success: false,
         message: MESSAGES.BAD_REQUEST,
@@ -193,6 +203,7 @@ const applyCoupon = async (req, res) => {
     }
 
     if (coupon.userUsed >= coupon.maxUsage) {
+      if (session.inTransaction()) await session.abortTransaction();
       return res
         .status(STATUS_CODES.BAD_REQUEST)
         .json({ success: false, message: MESSAGES.BAD_REQUEST });
@@ -211,7 +222,9 @@ const applyCoupon = async (req, res) => {
 
     coupon.userUsed += 1;
     coupon.maxUsage -= 1;
-    await coupon.save();
+    await coupon.save({ session });
+
+    if (session.inTransaction()) await session.commitTransaction();
 
     return res.status(STATUS_CODES.OK).json({
       success: true,
@@ -220,6 +233,9 @@ const applyCoupon = async (req, res) => {
       discountedTotal,
     });
   } catch (error) {
+    if (session.inTransaction()) {
+      await session.abortTransaction();
+    }
     console.error(error.message);
     return res
       .status(STATUS_CODES.INTERNAL_SERVER_ERROR)
@@ -227,27 +243,37 @@ const applyCoupon = async (req, res) => {
         success: false,
         message: error.message || MESSAGES.INTERNAL_SERVER_ERROR,
       });
+  } finally {
+    session.endSession();
   }
 };
 
 const removeCoupon = async (req, res) => {
+  const session = await mongoose.startSession();
+  const isReplicaSet = mongoose.connection.getClient().topology?.description?.type === 'ReplicaSetWithPrimary' ||
+    mongoose.connection.getClient().topology?.description?.type === 'Sharded';
   try {
+    if (isReplicaSet) session.startTransaction();
     if (req.session.appliedCoupon) {
       const { couponCode } = req.session.appliedCoupon;
 
-      const coupon = await Coupon.findOne({ couponCode });
+      const coupon = await Coupon.findOne({ couponCode }).session(session);
       if (coupon) {
         coupon.userUsed -= 1;
         coupon.maxUsage += 1;
-        await coupon.save();
+        await coupon.save({ session });
       }
 
       delete req.session.appliedCoupon;
     }
+    if (session.inTransaction()) await session.commitTransaction();
     res
       .status(STATUS_CODES.OK)
       .json({ success: true, message: MESSAGES.SUCCESS });
   } catch (error) {
+    if (session.inTransaction()) {
+      await session.abortTransaction();
+    }
     console.error(error.message);
     res
       .status(STATUS_CODES.INTERNAL_SERVER_ERROR)
@@ -255,6 +281,8 @@ const removeCoupon = async (req, res) => {
         success: false,
         message: error.message || MESSAGES.INTERNAL_SERVER_ERROR,
       });
+  } finally {
+    session.endSession();
   }
 };
 

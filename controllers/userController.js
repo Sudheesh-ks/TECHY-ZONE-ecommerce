@@ -1,3 +1,4 @@
+const mongoose = require("mongoose");
 const razorpayInstance = require("../config/razorpayConfig");
 const User = require("../models/userModel");
 const Category = require("../models/categoryModel");
@@ -90,14 +91,19 @@ const loadOTPVerification = async (req, res) => {
 };
 
 const verifyOTPController = async (req, res) => {
+  const session = await mongoose.startSession();
+  const isReplicaSet = mongoose.connection.getClient().topology?.description?.type === 'ReplicaSetWithPrimary' ||
+    mongoose.connection.getClient().topology?.description?.type === 'Sharded';
   try {
+    if (isReplicaSet) session.startTransaction();
     const { otp } = req.body;
     const { name, email, phno, password, referralCode } =
       req.session.tempUserData;
 
-    const record = await Otp.findOne({ email });
+    const record = await Otp.findOne({ email }).session(session);
 
     if (!record) {
+      if (session.inTransaction()) await session.abortTransaction();
       return res.render("users/otp-verification", {
         message: "OTP expired or not found.",
         email,
@@ -105,41 +111,39 @@ const verifyOTPController = async (req, res) => {
     }
 
     if (record.otp !== otp) {
+      if (session.inTransaction()) await session.abortTransaction();
       return res.render("users/otp-verification", {
         message: "Invalid OTP. Please try again.",
         email,
       });
     }
 
-    // OTP is correct
-    await Otp.deleteOne({ email });
+    await Otp.deleteOne({ email }).session(session);
 
-    // Continue with user registration
     let referrer = null;
-
     if (referralCode) {
-      referrer = await User.findOne({ referralCode });
+      referrer = await User.findOne({ referralCode }).session(session);
       if (referrer) {
-        let referrerWallet = await Wallet.findOne({ userId: referrer._id });
+        let referrerWallet = await Wallet.findOne({
+          userId: referrer._id,
+        }).session(session);
         if (!referrerWallet) {
           referrerWallet = new Wallet({ userId: referrer._id, balance: 0 });
         }
 
         const creditAmount = 100;
         referrerWallet.balance += creditAmount;
-
         referrerWallet.transactions.push({
           amount: creditAmount,
           type: "Credit",
           description: "Referral bonus credited for referring a new user.",
         });
 
-        await referrerWallet.save();
+        await referrerWallet.save({ session });
       }
     }
 
     const newReferralCode = generateReferralCode();
-
     const user = new User({
       name,
       email,
@@ -149,9 +153,11 @@ const verifyOTPController = async (req, res) => {
       referredBy: referrer ? referrer._id : null,
     });
 
-    await user.save();
+    await user.save({ session });
 
-    await new Wallet({ userId: user._id, balance: 0 }).save();
+    await new Wallet({ userId: user._id, balance: 0 }).save({ session });
+
+    if (session.inTransaction()) await session.commitTransaction();
 
     delete req.session.tempUserData;
 
@@ -164,17 +170,16 @@ const verifyOTPController = async (req, res) => {
 
     return res.redirect("/");
   } catch (err) {
+    if (session.inTransaction()) {
+      await session.abortTransaction();
+    }
     console.log("Error in OTP verification", err);
-    return res
-      .status(STATUS_CODES.INTERNAL_SERVER_ERROR)
-      .json({
-        success: false,
-        message: error.message || MESSAGES.INTERNAL_SERVER_ERROR,
-      });
-    res.render("users/otp-verification", {
+    return res.render("users/otp-verification", {
       message: "Something went wrong.",
-      email: req.session.tempUserData.email,
+      email: req.session.tempUserData?.email,
     });
+  } finally {
+    session.endSession();
   }
 };
 
@@ -313,7 +318,7 @@ const loadHome = async (req, res) => {
 
     if (sortBy) {
       switch (
-        sortBy // Sorting based on selected option
+      sortBy // Sorting based on selected option
       ) {
         case "popularity":
           productData.sort((a, b) => b.popularity - a.popularity);
@@ -707,8 +712,8 @@ const loadOrdersList = async (req, res) => {
 
     const cart = req.session.user
       ? await Cart.findOne({ userId: req.session.user.id })
-          .populate("items.productId")
-          .lean()
+        .populate("items.productId")
+        .lean()
       : null;
 
     res.render("users/orders-list", {
@@ -771,63 +776,53 @@ const orderListView = async (req, res) => {
 };
 
 const cancelOrder = async (req, res) => {
+  const session = await mongoose.startSession();
+  const isReplicaSet = mongoose.connection.getClient().topology?.description?.type === 'ReplicaSetWithPrimary' ||
+    mongoose.connection.getClient().topology?.description?.type === 'Sharded';
   try {
+    if (isReplicaSet) session.startTransaction();
     const userId = req.session.user.id;
     const orderId = req.params.id;
     const { reason } = req.body;
 
     const order = await Order.findOneAndUpdate(
-      // Update order status
       { _id: orderId, userId },
       { status: "Cancelled", cancelReason: reason },
-      { new: true },
+      { new: true, session },
     );
 
     if (!order) {
+      if (session.inTransaction()) await session.abortTransaction();
       console.log("Order not found or unauthorized attempt to cancel");
       return res
         .status(STATUS_CODES.NOT_FOUND)
         .json({ success: false, message: "Order not found" });
     }
 
-    console.log(`Order ${orderId} cancelled successfully.`);
-    console.log(`Order Details:`, order);
-
     for (let item of order.products) {
-      // Update stock for canceled order
-      const product = await Product.findById(item.productId);
+      const product = await Product.findById(item.productId).session(session);
       if (product) {
-        await Product.findByIdAndUpdate(item.productId, {
-          $inc: { stock: item.quantity },
-        });
-        console.log(
-          `Stock updated for product ${product.name}: +${item.quantity}`,
+        await Product.findByIdAndUpdate(
+          item.productId,
+          { $inc: { stock: item.quantity } },
+          { session },
         );
       } else {
+        if (session.inTransaction()) await session.abortTransaction();
         console.error(`Product with ID ${item.productId} not found.`);
         return res
           .status(STATUS_CODES.NOT_FOUND)
           .json({ success: false, message: "Product not found" });
       }
     }
-
-    console.log(`Stock updated for canceled order ${orderId}.`);
-
     let refundAmount = 0;
-
-    console.log(`Payment Method: ${order.paymentMethod}`);
-    console.log(`Payment Status: ${order.paymentStatus}`);
 
     if (
       order.paymentMethod !== "Cash on Delivery" &&
       order.paymentStatus !== "Pending"
     ) {
-      // Checking if refund is applicable
       refundAmount = order.totalPrice;
-      console.log(`Refund Amount Calculated: ₹${refundAmount}`);
-
-      const updatedWallet = await Wallet.findOneAndUpdate(
-        // Updating wallet
+      const wallet = await Wallet.findOneAndUpdate(
         { userId },
         {
           $inc: { balance: refundAmount },
@@ -839,43 +834,37 @@ const cancelOrder = async (req, res) => {
             },
           },
         },
-        { new: true, upsert: true },
+        { new: true, upsert: true, session },
       );
 
-      if (updatedWallet) {
-        console.log("Wallet successfully updated:", updatedWallet);
-        return res
-          .status(STATUS_CODES.OK)
-          .json({ success: true, message: "Wallet successfully updated" });
-      } else {
-        console.error("Failed to update wallet.");
+      if (!wallet) {
+        if (session.inTransaction()) await session.abortTransaction();
         return res
           .status(STATUS_CODES.BAD_REQUEST)
-          .json({ success: false, message: "Wallet updation failed" });
+          .json({ success: false, message: "Wallet update failed" });
       }
-    } else {
-      console.log("Refund not applicable due to payment method or status.");
-      return res
-        .status(STATUS_CODES.INTERNAL_SERVER_ERROR)
-        .json({ success: false, message: "Refund not applicable" });
     }
 
-    console.log(
-      `Refund of ₹${refundAmount} added to wallet for user ${userId}.`,
-    );
-    res.json({
+    if (session.inTransaction()) await session.commitTransaction();
+
+    res.status(STATUS_CODES.OK).json({
       success: true,
       message: "Order cancelled successfully",
       refundAmount,
     });
   } catch (error) {
+    if (session.inTransaction()) {
+      await session.abortTransaction();
+    }
     console.error("Error cancelling order:", error.message);
-    return res
-      .status(STATUS_CODES.NOT_FOUND)
+    res
+      .status(STATUS_CODES.INTERNAL_SERVER_ERROR)
       .json({
         success: false,
         message: error.message || MESSAGES.INTERNAL_SERVER_ERROR,
       });
+  } finally {
+    session.endSession();
   }
 };
 
