@@ -71,6 +71,46 @@ const updateCoupon = async (req, res) => {
         .json({ success: false, message: MESSAGES.BAD_REQUEST });
     }
 
+    const discountValue = Number(discount);
+    const minAmountValue = Number(minAmount);
+    const maxDiscountValue = Number(maxDiscount || 0);
+    const maxUsageValue = Number(maxUsage || 0);
+
+    if (!Number.isFinite(discountValue) || discountValue < 1 || discountValue > 90) {
+      return res.status(STATUS_CODES.BAD_REQUEST).json({
+        success: false,
+        message: "Discount must be between 1% and 90%.",
+      });
+    }
+
+    if (!Number.isFinite(minAmountValue) || minAmountValue < 100) {
+      return res.status(STATUS_CODES.BAD_REQUEST).json({
+        success: false,
+        message: "Minimum amount must be at least ₹100.",
+      });
+    }
+
+    if (!Number.isFinite(maxDiscountValue) || maxDiscountValue < 50) {
+      return res.status(STATUS_CODES.BAD_REQUEST).json({
+        success: false,
+        message: "Maximum discount must be at least ₹50.",
+      });
+    }
+
+    if (!Number.isFinite(maxUsageValue) || maxUsageValue < 1) {
+      return res.status(STATUS_CODES.BAD_REQUEST).json({
+        success: false,
+        message: "Maximum usage must be at least 1.",
+      });
+    }
+
+    if (maxDiscountValue > minAmountValue) {
+      return res.status(STATUS_CODES.BAD_REQUEST).json({
+        success: false,
+        message: "Maximum discount cannot be greater than the minimum cart amount.",
+      });
+    }
+
     const existingCoupon = await Coupon.findOne({
       couponCode,
       _id: { $ne: id },
@@ -117,6 +157,46 @@ const addCoupon = async (req, res) => {
       return res
         .status(STATUS_CODES.BAD_REQUEST)
         .json({ success: false, message: MESSAGES.BAD_REQUEST });
+    }
+
+    const discountValue = Number(discount);
+    const minAmountValue = Number(minAmount);
+    const maxDiscountValue = Number(maxDiscount || 0);
+    const maxUsageValue = Number(maxUsage || 0);
+
+    if (!Number.isFinite(discountValue) || discountValue < 1 || discountValue > 90) {
+      return res.status(STATUS_CODES.BAD_REQUEST).json({
+        success: false,
+        message: "Discount must be between 1% and 90%.",
+      });
+    }
+
+    if (!Number.isFinite(minAmountValue) || minAmountValue < 100) {
+      return res.status(STATUS_CODES.BAD_REQUEST).json({
+        success: false,
+        message: "Minimum amount must be at least ₹100.",
+      });
+    }
+
+    if (!Number.isFinite(maxDiscountValue) || maxDiscountValue < 50) {
+      return res.status(STATUS_CODES.BAD_REQUEST).json({
+        success: false,
+        message: "Maximum discount must be at least ₹50.",
+      });
+    }
+
+    if (!Number.isFinite(maxUsageValue) || maxUsageValue < 1) {
+      return res.status(STATUS_CODES.BAD_REQUEST).json({
+        success: false,
+        message: "Maximum usage must be at least 1.",
+      });
+    }
+
+    if (maxDiscountValue > minAmountValue) {
+      return res.status(STATUS_CODES.BAD_REQUEST).json({
+        success: false,
+        message: "Maximum discount cannot be greater than the minimum cart amount.",
+      });
     }
 
     const existingCoupon = await Coupon.findOne({ couponCode });

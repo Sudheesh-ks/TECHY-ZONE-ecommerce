@@ -63,8 +63,29 @@
                 return Swal.fire({ icon: 'error', title: 'Validation Error', text: 'All fields are required.' });
             }
 
-            if (Number(minAmount) <= 0 || Number(maxDiscount) <= 0 || Number(maxUsage) <= 0 || Number(discount) <= 0) {
-                return Swal.fire({ icon: 'error', title: 'Validation Error', text: 'Discount, amount, and usage fields must be positive numbers.' });
+            const discountValue = Number(discount);
+            const minAmountValue = Number(minAmount);
+            const maxDiscountValue = Number(maxDiscount);
+            const maxUsageValue = Number(maxUsage);
+
+            if (!Number.isFinite(discountValue) || discountValue < 1 || discountValue > 90) {
+                return Swal.fire({ icon: 'error', title: 'Validation Error', text: 'Discount must be between 1% and 90%.' });
+            }
+
+            if (!Number.isFinite(minAmountValue) || minAmountValue < 100) {
+                return Swal.fire({ icon: 'error', title: 'Validation Error', text: 'Minimum amount must be at least ₹100.' });
+            }
+
+            if (!Number.isFinite(maxDiscountValue) || maxDiscountValue < 50) {
+                return Swal.fire({ icon: 'error', title: 'Validation Error', text: 'Maximum discount must be at least ₹50.' });
+            }
+
+            if (!Number.isFinite(maxUsageValue) || maxUsageValue < 1) {
+                return Swal.fire({ icon: 'error', title: 'Validation Error', text: 'Maximum usage must be at least 1.' });
+            }
+
+            if (maxDiscountValue > minAmountValue) {
+                return Swal.fire({ icon: 'error', title: 'Validation Error', text: 'The maximum discount cap must not be higher than the minimum order value for this coupon.' });
             }
 
             const selectedDate = new Date(expiryDate);
