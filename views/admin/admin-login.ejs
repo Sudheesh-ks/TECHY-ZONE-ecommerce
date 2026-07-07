@@ -19,7 +19,7 @@
     <h2 class="text-center mb-4">Admin Login</h2>
 
     <% if (message) { %>
-    <div class="alert alert-danger text-center mb-4"><%= message %></div>
+    <input type="hidden" id="loginErrorMessage" value="<%= message %>" />
     <% } %>
 
     <form id="adminLoginForm" method="post" action="/admin/login">
@@ -58,9 +58,25 @@
 
   <script src="/js/jquery.min.js"></script>
   <script src="/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
   <script>
     document.addEventListener("DOMContentLoaded", function () {
+      const serverMessage = document.getElementById("loginErrorMessage")?.value;
+
+      if (serverMessage) {
+        if (window.Swal && typeof window.Swal.fire === "function") {
+          Swal.fire({
+            icon: "error",
+            title: "Login failed",
+            text: serverMessage,
+            confirmButtonText: "Try again"
+          });
+        } else if (window.swal && typeof window.swal === "function") {
+          swal("Login failed", serverMessage, "error");
+        }
+      }
+
       const adminLoginForm = document.getElementById("adminLoginForm");
       const emailField = document.getElementById("adminEmail");
       const passwordField = document.getElementById("adminPassword");

@@ -24,8 +24,8 @@ const login = async (req, res) => {
   try {
     const { email, password } = req.body;
     const admin = await User.findOne({ email, isAdmin: true });
+
     if (!admin) {
-      throw new Error("Admin not found");
       return res.render("admin/admin-login", {
         message: MESSAGES.INVALID_CREDENTIALS,
       });
@@ -40,20 +40,16 @@ const login = async (req, res) => {
         isAdmin: admin.isAdmin,
       };
       return res.redirect("/admin/dashboard");
-    } else {
-      throw new Error("Incorrect password");
-      return res.render("admin/admin-login", {
-        message: MESSAGES.INCORRECT_PASSWORD,
-      });
     }
+
+    return res.render("admin/admin-login", {
+      message: MESSAGES.INCORRECT_PASSWORD,
+    });
   } catch (error) {
     console.error("Login error:", error);
-    return res
-      .status(STATUS_CODES.INTERNAL_SERVER_ERROR)
-      .json({
-        success: false,
-        message: error.message || MESSAGES.INTERNAL_SERVER_ERROR,
-      });
+    return res.render("admin/admin-login", {
+      message: error.message || MESSAGES.INTERNAL_SERVER_ERROR,
+    });
   }
 };
 
