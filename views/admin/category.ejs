@@ -73,13 +73,13 @@
                                                 <% if (category.categoryOffer && category.categoryOffer > 0) { %>
                                                     <form action="/admin/remove-category-offer" method="POST" class="d-flex gap-2 align-items-center remove-category-offer" data-confirm-title="Remove category offer" data-confirm-text="This offer will be removed from the category. Continue?">
                                                         <input type="hidden" name="categoryId" value="<%= category._id %>">
-                                                        <input type="number" name="offerValue" class="form-control form-control-sm" placeholder="Offer Value" style="min-width:140px; max-width:200px;">
+                                                        <span class="badge bg-warning text-dark" style="min-width: 92px; display: inline-flex; justify-content: center; align-items: center; height: 31px;">Offer: <%= category.categoryOffer %>%</span>
                                                         <button type="submit" class="btn btn-danger btn-sm">Remove</button>
                                                     </form>
                                                 <% } else { %>
                                                     <form action="/admin/apply-category-offer" method="POST" class="d-flex gap-2 align-items-center apply-category-offer" data-confirm-title="Apply category offer" data-confirm-text="This offer will be applied to all products in this category. Continue?">
                                                         <input type="hidden" name="categoryId" value="<%= category._id %>">
-                                                        <input type="number" name="offerValue" class="form-control form-control-sm" placeholder="Offer Value" min="0" max="100" required style="min-width:140px; max-width:200px;">
+                                                        <input type="number" name="offerValue" class="form-control form-control-sm" placeholder="Offer %" min="0" max="100" required style="min-width:140px; max-width:200px; height: 31px;">
                                                         <button type="submit" class="btn btn-success btn-sm">Apply</button>
                                                     </form>
                                                 <% } %>

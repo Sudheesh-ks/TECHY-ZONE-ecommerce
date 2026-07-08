@@ -120,6 +120,15 @@ const editCategory = async (req, res) => {
   }
 };
 
+const calculateDiscountedPrice = (basePrice, percentOff) => {
+  const numericBasePrice = Number(basePrice) || 0;
+  const numericPercentOff = Number(percentOff) || 0;
+
+  if (numericPercentOff <= 0) return numericBasePrice;
+  const discountAmount = numericBasePrice * (numericPercentOff / 100);
+  return Math.max(0, numericBasePrice - discountAmount);
+};
+
 const applyCategoryOffer = async (req, res) => {
   try {
     const { categoryId, offerValue } = req.body;
@@ -130,6 +139,14 @@ const applyCategoryOffer = async (req, res) => {
         .json({ success: false, message: MESSAGES.BAD_REQUEST });
     }
 
+    const parsedOfferValue = Number(offerValue);
+    if (Number.isNaN(parsedOfferValue) || parsedOfferValue < 0 || parsedOfferValue > 100) {
+      return res.status(STATUS_CODES.BAD_REQUEST).json({
+        success: false,
+        message: "Offer must be a valid percentage between 0 and 100",
+      });
+    }
+
     const category = await Category.findById(categoryId);
     if (!category) {
       return res
@@ -137,32 +154,29 @@ const applyCategoryOffer = async (req, res) => {
         .json({ success: false, message: MESSAGES.NOT_FOUND });
     }
 
-    category.categoryOffer = offerValue;
+    category.categoryOffer = parsedOfferValue;
     await category.save();
 
-    // Updates all products in the category
     const products = await Product.find({ category: categoryId });
     for (const product of products) {
-      // Calculate the new offer price
-      const basePrice = product.offerPrice || product.price;
-      const discountedPrice = Math.max(0, basePrice - offerValue);
+      const basePrice = Number(product.price) || 0;
+      const discountedPrice = calculateDiscountedPrice(basePrice, parsedOfferValue);
 
       product.offerPrice = discountedPrice;
-      product.categoryOffer = offerValue;
+      product.categoryOffer = parsedOfferValue;
       await product.save();
     }
 
-    res
-      .status(STATUS_CODES.OK)
-      .json({ success: true, message: MESSAGES.SUCCESS });
+    res.status(STATUS_CODES.OK).json({
+      type: "success",
+      message: "Category offer applied successfully",
+    });
   } catch (error) {
     console.error("Error applying category offer:", error);
-    res
-      .status(STATUS_CODES.INTERNAL_SERVER_ERROR)
-      .json({
-        success: false,
-        message: error.message || MESSAGES.INTERNAL_SERVER_ERROR,
-      });
+    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
+      success: false,
+      message: error.message || MESSAGES.INTERNAL_SERVER_ERROR,
+    });
   }
 };
 
@@ -183,32 +197,26 @@ const removeCategoryOffer = async (req, res) => {
         .json({ success: false, message: MESSAGES.NOT_FOUND });
     }
 
-    category.categoryOffer = null;
+    category.categoryOffer = 0;
     await category.save();
 
-    // Update products in the category
     const products = await Product.find({ category: categoryId });
     for (const product of products) {
-      if (product.categoryOffer !== null) {
-        const restoredPrice = product.offerPrice + product.categoryOffer;
-        product.offerPrice =
-          restoredPrice <= product.price ? restoredPrice : product.price;
-        product.categoryOffer = null;
-        await product.save();
-      }
+      product.offerPrice = Number(product.price) || 0;
+      product.categoryOffer = null;
+      await product.save();
     }
 
-    res
-      .status(STATUS_CODES.OK)
-      .json({ success: true, message: MESSAGES.SUCCESS });
+    res.status(STATUS_CODES.OK).json({
+      type: "success",
+      message: "Category offer removed successfully",
+    });
   } catch (error) {
     console.error("Error removing category offer:", error);
-    res
-      .status(STATUS_CODES.INTERNAL_SERVER_ERROR)
-      .json({
-        success: false,
-        message: error.message || MESSAGES.INTERNAL_SERVER_ERROR,
-      });
+    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
+      success: false,
+      message: error.message || MESSAGES.INTERNAL_SERVER_ERROR,
+    });
   }
 };
 
