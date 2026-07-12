@@ -56,15 +56,17 @@ const placeOrder = async (req, res) => {
           .json({ success: false, message: MESSAGES.NOT_FOUND });
       }
 
+      const productPrice = Number(product.offerPrice || product.price) || 0;
+
       orderProducts.push({
         productId: product._id,
         name: product.name,
-        price: product.price,
+        price: Number(productPrice.toFixed(2)),
         quantity: parseInt(quantity),
         image: product.images[0] || "default-image.jpg",
       });
 
-      totalPrice = product.price * quantity;
+      totalPrice = Number((productPrice * parseInt(quantity)).toFixed(2));
     } else {
       const cart = await Cart.findOne({ userId }).session(session);
       if (!cart || cart.items.length === 0) {
@@ -77,18 +79,19 @@ const placeOrder = async (req, res) => {
       orderProducts = cart.items.map((item) => ({
         productId: item.productId,
         name: item.name,
-        price: item.price,
+        price: Number(item.price) || 0,
         quantity: item.quantity,
         image: item.images,
       }));
 
-      totalPrice = cart.totalPrice;
+      totalPrice = Number(cart.totalPrice) || 0;
     }
 
     let discountAmount = 0;
     if (couponCode) {
+      const normalizedCouponCode = String(couponCode || "").trim().toUpperCase();
       const coupon = await Coupon.findOne({
-        couponCode: couponCode.toUpperCase(),
+        couponCode: { $regex: `^${normalizedCouponCode}$`, $options: "i" },
         isActive: true,
         expiryDate: { $gte: new Date() },
       }).session(session);
@@ -123,10 +126,24 @@ const placeOrder = async (req, res) => {
       await coupon.save({ session });
     }
 
-    const finalTotalPrice = totalPrice - discountAmount;
+    const roundedDiscountAmount = Number(discountAmount.toFixed(2));
+    const discountRate = totalPrice > 0 ? roundedDiscountAmount / totalPrice : 0;
+    const discountedOrderProducts = orderProducts.map((item) => {
+      const unitPrice = Number(item.price) || 0;
+      const discountedUnitPrice = Math.max(0, unitPrice - unitPrice * discountRate);
+      return {
+        ...item,
+        price: Number(discountedUnitPrice.toFixed(2)),
+      };
+    });
+
+    const finalTotalPrice = Number((totalPrice - roundedDiscountAmount).toFixed(2));
 
     const deliveryCharge = finalTotalPrice < 500 ? 30 : 0;
-    const totalAmountWithDelivery = finalTotalPrice + deliveryCharge;
+    const totalAmountWithDelivery = Number((finalTotalPrice + deliveryCharge).toFixed(2));
+
+    console.log("PRICE DETAILS - totalPrice:", totalPrice, "discountAmount:", roundedDiscountAmount, "finalPrice:", finalTotalPrice, "totWithDelivery:", totalAmountWithDelivery);
+
 
     if (paymentMethod === "Cash on Delivery" && finalTotalPrice > 1000) {
       if (session.inTransaction()) await session.abortTransaction();
@@ -137,14 +154,14 @@ const placeOrder = async (req, res) => {
 
     const order = new Order({
       userId,
-      products: orderProducts,
+      products: discountedOrderProducts,
       totalPrice: totalAmountWithDelivery,
       address: selectedAddress,
       paymentMethod,
       paymentStatus: "Pending",
       status: "Pending",
       couponCode: couponCode || null,
-      discountAmount,
+      discountAmount: roundedDiscountAmount,
       deliveryCharge,
     });
 

@@ -98,18 +98,19 @@
         
             <% if (order && order.products.length > 0) { %>
                 <% order.products.forEach(product => { %>
+                    <% const lineTotal = (Number(product.price) || 0) * Number(product.quantity || 0); %>
                     <div class="product-item">
                         <img src="<%= product.image %>" alt="<%= product.name %>" class="product-image">
                         <div class="product-details">
                             <h3 class="h6 mb-1"><%= product.name %></h3>
                             <p>Quantity: <%= product.quantity %></p>
                         </div>
-                        <div class="product-price">₹ <%= product.price * product.quantity %></div>
+                        <div class="product-price">₹ <%= lineTotal.toFixed(2) %></div>
                     </div>
                 <% }); %>
                 <div class="total-row">
                     <span>Total</span>
-                    <span>₹ <%= order.totalPrice %></span>
+                    <span>₹ <%= order.displayTotal.toFixed(2) %></span>
                 </div>
             <% } else { %>
                 <p>No products found in this order.</p>

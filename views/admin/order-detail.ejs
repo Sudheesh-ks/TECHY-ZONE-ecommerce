@@ -24,14 +24,15 @@
                             </thead>
                             <tbody>
                                 <% order.products.forEach(item => { %>
+                                    <% const unitPrice = typeof item.price === 'number' ? item.price : (item.productDetails?.offerPrice || item.productDetails?.price || 0); %>
                                     <tr>
                                         <td>
                                             <img src="<%= item.productDetails.images %>" alt="<%= item.productDetails.name %>" class="rounded" style="width: 48px; height: 48px; object-fit: cover;">
                                         </td>
                                         <td><%= item.productDetails.name %></td>
-                                        <td>₹<%= item.productDetails.offerPrice || item.productDetails.price %></td>
+                                        <td>₹<%= Number(unitPrice).toFixed(2) %></td>
                                         <td><%= item.quantity %></td>
-                                        <td>₹<%= item.quantity * (item.productDetails.offerPrice || item.productDetails.price) %></td>
+                                        <td>₹<%= (item.quantity * Number(unitPrice)).toFixed(2) %></td>
                                     </tr>
                                 <% }) %>
                             </tbody>

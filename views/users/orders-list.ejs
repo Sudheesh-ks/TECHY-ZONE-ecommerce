@@ -372,8 +372,8 @@ body {
 										<% if (order.paymentStatus === 'Pending' && order.paymentMethod === 'Razorpay' && order.status !== 'Delivered' && order.status !== 'Cancelled') { %>
 											<button class="retry-payment-btn" data-order-id="<%= order._id %>">Retry Payment</button>
 										<% } %>
-									</td>									
-									<td>₹<%= order.totalPrice.toFixed(2) %></td>
+									</td>									 
+									<td>₹<%= (order.displayTotal || order.totalPrice).toFixed(2) %></td>
 									<td class="table-actions"><a href="/order-listview/<%= order._id %>" style="text-decoration: none; color: green;">View</a></td>
 									<td class="table-actions">
 										<% if (order.status === 'Delivered') { %>

@@ -262,55 +262,82 @@ const applyCoupon = async (req, res) => {
 
   try {
     if (isReplicaSet) session.startTransaction();
+
+    const normalizedCouponCode = String(couponCode || "").trim().toUpperCase();
+    const parsedCartTotal = Number(cartTotal);
+
+    if (!normalizedCouponCode) {
+      if (session.inTransaction()) await session.abortTransaction();
+      return res.status(STATUS_CODES.BAD_REQUEST).json({
+        success: false,
+        message: "Please enter a coupon code.",
+      });
+    }
+
+    if (!Number.isFinite(parsedCartTotal) || parsedCartTotal <= 0) {
+      if (session.inTransaction()) await session.abortTransaction();
+      return res.status(STATUS_CODES.BAD_REQUEST).json({
+        success: false,
+        message: "Invalid cart total.",
+      });
+    }
+
     const coupon = await Coupon.findOne({
-      couponCode,
+      couponCode: { $regex: `^${normalizedCouponCode}$`, $options: "i" },
       isActive: true,
     }).session(session);
 
     if (!coupon) {
       if (session.inTransaction()) await session.abortTransaction();
-      return res
-        .status(STATUS_CODES.BAD_REQUEST)
-        .json({ success: false, message: MESSAGES.BAD_REQUEST });
-    }
-
-    if (cartTotal < coupon.minAmount) {
-      if (session.inTransaction()) await session.abortTransaction();
       return res.status(STATUS_CODES.BAD_REQUEST).json({
         success: false,
-        message: MESSAGES.BAD_REQUEST,
+        message: "Coupon not found or inactive.",
       });
     }
 
-    if (coupon.userUsed >= coupon.maxUsage) {
+    const minAmount = Number(coupon.minAmount) || 0;
+    if (parsedCartTotal < minAmount) {
       if (session.inTransaction()) await session.abortTransaction();
-      return res
-        .status(STATUS_CODES.BAD_REQUEST)
-        .json({ success: false, message: MESSAGES.BAD_REQUEST });
+      return res.status(STATUS_CODES.BAD_REQUEST).json({
+        success: false,
+        message: `Minimum order amount for this coupon is ₹${minAmount}.`,
+      });
+    }
+
+    const usedCount = Number(coupon.userUsed) || 0;
+    const maxUsage = Number(coupon.maxUsage) || 0;
+    if (usedCount >= maxUsage) {
+      if (session.inTransaction()) await session.abortTransaction();
+      return res.status(STATUS_CODES.BAD_REQUEST).json({
+        success: false,
+        message: "Coupon usage limit has been reached.",
+      });
     }
 
     const discount = coupon.discount
-      ? (cartTotal * coupon.discount) / 100
-      : Math.min(cartTotal, coupon.maxDiscount);
+      ? (parsedCartTotal * coupon.discount) / 100
+      : Math.min(parsedCartTotal, coupon.maxDiscount);
 
-    const discountedTotal = Math.max(cartTotal - discount, 0);
+    const discountedTotal = Math.max(parsedCartTotal - discount, 0);
+
+    const deliveryCharge = discountedTotal < 500 ? 30 : 0;
+
+const finalTotal = discountedTotal + deliveryCharge;
 
     req.session.appliedCoupon = {
       couponCode: coupon.couponCode,
       discount,
     };
 
-    coupon.userUsed += 1;
-    coupon.maxUsage -= 1;
-    await coupon.save({ session });
-
     if (session.inTransaction()) await session.commitTransaction();
 
     return res.status(STATUS_CODES.OK).json({
       success: true,
-      message: MESSAGES.SUCCESS,
+      message: "Coupon applied successfully.",
       discount,
       discountedTotal,
+      deliveryCharge,
+      finalTotal
     });
   } catch (error) {
     if (session.inTransaction()) {
@@ -335,15 +362,6 @@ const removeCoupon = async (req, res) => {
   try {
     if (isReplicaSet) session.startTransaction();
     if (req.session.appliedCoupon) {
-      const { couponCode } = req.session.appliedCoupon;
-
-      const coupon = await Coupon.findOne({ couponCode }).session(session);
-      if (coupon) {
-        coupon.userUsed -= 1;
-        coupon.maxUsage += 1;
-        await coupon.save({ session });
-      }
-
       delete req.session.appliedCoupon;
     }
     if (session.inTransaction()) await session.commitTransaction();

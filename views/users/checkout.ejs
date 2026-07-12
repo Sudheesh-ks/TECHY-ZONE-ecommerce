@@ -1,226 +1,226 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
 	<title>Checkout Page</title>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-<!--===============================================================================================-->	
-	<link rel="icon" type="image/png" href="/user/images/icons/favicon.png"/>
-<!--===============================================================================================-->
+	<!--===============================================================================================-->
+	<link rel="icon" type="image/png" href="/user/images/icons/favicon.png" />
+	<!--===============================================================================================-->
 	<link rel="stylesheet" type="text/css" href="/user/vendor/bootstrap/css/bootstrap.min.css">
-<!--===============================================================================================-->
+	<!--===============================================================================================-->
 	<link rel="stylesheet" type="text/css" href="/user/fonts/font-awesome-4.7.0/css/font-awesome.min.css">
-<!--===============================================================================================-->
+	<!--===============================================================================================-->
 	<link rel="stylesheet" type="text/css" href="/user/fonts/iconic/css/material-design-iconic-font.min.css">
-<!--===============================================================================================-->
+	<!--===============================================================================================-->
 	<link rel="stylesheet" type="text/css" href="/user/fonts/linearicons-v1.0.0/icon-font.min.css">
-<!--===============================================================================================-->
+	<!--===============================================================================================-->
 	<link rel="stylesheet" type="text/css" href="/user/vendor/animate/animate.css">
-<!--===============================================================================================-->	
+	<!--===============================================================================================-->
 	<link rel="stylesheet" type="text/css" href="/user/vendor/css-hamburgers/hamburgers.min.css">
-<!--===============================================================================================-->
+	<!--===============================================================================================-->
 	<link rel="stylesheet" type="text/css" href="/user/vendor/animsition/css/animsition.min.css">
-<!--===============================================================================================-->
+	<!--===============================================================================================-->
 	<link rel="stylesheet" type="text/css" href="/user/vendor/select2/select2.min.css">
-<!--===============================================================================================-->
+	<!--===============================================================================================-->
 	<link rel="stylesheet" type="text/css" href="/user/vendor/perfect-scrollbar/perfect-scrollbar.css">
-<!--===============================================================================================-->
+	<!--===============================================================================================-->
 	<link rel="stylesheet" type="text/css" href="/user/css/util.css">
 	<link rel="stylesheet" type="text/css" href="/user/css/main.css">
-<!--===============================================================================================-->
+	<!--===============================================================================================-->
 
-<style>
+	<style>
+		/* General Styles */
 
-/* General Styles */
+		body {
+			background-color: #f8f9fa;
+			color: #333;
+			font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+		}
 
-body {
-    background-color: #f8f9fa;
-    color: #333;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-}
+		/* Card Styles */
+		.card {
+			border: none;
+			box-shadow: 0 0 20px rgba(0, 0, 0, 0.05);
+			border-radius: 10px;
+			margin-bottom: 1.5rem;
+		}
 
-/* Card Styles */
-.card {
-    border: none;
-    box-shadow: 0 0 20px rgba(0,0,0,0.05);
-    border-radius: 10px;
-    margin-bottom: 1.5rem;
-}
+		.card-title {
+			color: #000;
+			font-weight: 600;
+			margin-bottom: 1.5rem;
+			padding-bottom: 0.5rem;
+			border-bottom: 2px solid #f8f9fa;
+		}
 
-.card-title {
-    color: #000;
-    font-weight: 600;
-    margin-bottom: 1.5rem;
-    padding-bottom: 0.5rem;
-    border-bottom: 2px solid #f8f9fa;
-}
+		/* Address Card Styles */
+		.card-body {
+			padding: 1.5rem;
+		}
 
-/* Address Card Styles */
-.card-body {
-    padding: 1.5rem;
-}
+		.form-check-input {
+			width: 1.2em;
+			height: 1.2em;
+			margin-top: 0.25em;
+			cursor: pointer;
+		}
 
-.form-check-input {
-    width: 1.2em;
-    height: 1.2em;
-    margin-top: 0.25em;
-    cursor: pointer;
-}
+		.form-check-input:checked {
+			background-color: #000 !important;
+			border-color: #000 !important;
+		}
 
-.form-check-input:checked {
-    background-color: #000 !important;
-    border-color: #000 !important;
-}
+		.form-check-label {
+			margin-left: 0.5rem;
+			font-weight: 500;
+		}
 
-.form-check-label {
-    margin-left: 0.5rem;
-    font-weight: 500;
-}
+		/* Cart Summary Table Styles */
+		.table {
+			margin-bottom: 0;
+		}
 
-/* Cart Summary Table Styles */
-.table {
-    margin-bottom: 0;
-}
+		.table th {
+			border-bottom: 2px solid #f8f9fa;
+			color: #000;
+			font-weight: 600;
+			padding: 1rem;
+		}
 
-.table th {
-    border-bottom: 2px solid #f8f9fa;
-    color: #000;
-    font-weight: 600;
-    padding: 1rem;
-}
+		.table td {
+			padding: 1rem;
+			vertical-align: middle;
+			border-bottom: 1px solid #f8f9fa;
+		}
 
-.table td {
-    padding: 1rem;
-    vertical-align: middle;
-    border-bottom: 1px solid #f8f9fa;
-}
+		.table img {
+			border-radius: 5px;
+			box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+		}
 
-.table img {
-    border-radius: 5px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
+		/* Product Details */
+		.text-muted {
+			color: #6c757d !important;
+		}
 
-/* Product Details */
-.text-muted {
-    color: #6c757d !important;
-}
+		/* Payment Section Styles */
+		.form-check {
+			margin-bottom: 0.75rem;
+		}
 
-/* Payment Section Styles */
-.form-check {
-    margin-bottom: 0.75rem;
-}
+		/* Place Order Button */
+		.btn-primary {
+			background-color: #000;
+			border: none;
+			padding: 0.8rem 1.5rem;
+			font-weight: 500;
+			border-radius: 5px;
+			transition: all 0.3s ease;
+		}
 
-/* Place Order Button */
-.btn-primary {
-    background-color: #000;
-    border: none;
-    padding: 0.8rem 1.5rem;
-    font-weight: 500;
-    border-radius: 5px;
-    transition: all 0.3s ease;
-}
+		.btn-primary:hover {
+			background-color: #383838;
+			transform: translateY(-1px);
+			box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+		}
 
-.btn-primary:hover {
-    background-color: #383838;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-}
+		.btn-primary:active {
+			transform: translateY(0);
+		}
 
-.btn-primary:active {
-    transform: translateY(0);
-}
+		/* Responsive Adjustments */
+		@media (max-width: 768px) {
+			.card {
+				margin-bottom: 1rem;
+			}
 
-/* Responsive Adjustments */
-@media (max-width: 768px) {
-    .card {
-        margin-bottom: 1rem;
-    }
-    
-    .navbar .form-control {
-        width: 100%;
-    }
-    
-    .table td {
-        padding: 0.75rem;
-    }
-    
-    .card-body {
-        padding: 1rem;
-    }
-}
+			.navbar .form-control {
+				width: 100%;
+			}
 
-/* Cart Icons */
-.btn-outline-secondary {
-    border: 1px solid #e0e0e0;
-    padding: 0.375rem 0.75rem;
-    margin-left: 0.5rem;
-    border-radius: 5px;
-    color: #000;
-}
+			.table td {
+				padding: 0.75rem;
+			}
 
-.btn-outline-secondary:hover {
-    background-color: #f8f9fa;
-    color: #000;
-    border-color: #000;
-}
+			.card-body {
+				padding: 1rem;
+			}
+		}
 
-/* Product Image Container */
-.product-image-container {
-    width: 50px;
-    height: 50px;
-    overflow: hidden;
-    border-radius: 5px;
-    margin-right: 1rem;
-}
+		/* Cart Icons */
+		.btn-outline-secondary {
+			border: 1px solid #e0e0e0;
+			padding: 0.375rem 0.75rem;
+			margin-left: 0.5rem;
+			border-radius: 5px;
+			color: #000;
+		}
 
-/* Subtotal and Total Rows */
-.table tr:nth-last-child(3) td,
-.table tr:nth-last-child(2) td,
-.table tr:last-child td {
-    border-top: 2px solid #f8f9fa;
-    font-weight: 500;
-}
+		.btn-outline-secondary:hover {
+			background-color: #f8f9fa;
+			color: #000;
+			border-color: #000;
+		}
 
-.table tr:last-child td {
-    font-weight: 600;
-    color: #000;
-}
+		/* Product Image Container */
+		.product-image-container {
+			width: 50px;
+			height: 50px;
+			overflow: hidden;
+			border-radius: 5px;
+			margin-right: 1rem;
+		}
 
-/* Free Shipping Badge */
-.shipping-badge {
-    display: inline-block;
-    padding: 0.25rem 0.5rem;
-    background-color: #e8f5e9;
-    color: #2e7d32;
-    border-radius: 4px;
-    font-size: 0.875rem;
-}
+		/* Subtotal and Total Rows */
+		.table tr:nth-last-child(3) td,
+		.table tr:nth-last-child(2) td,
+		.table tr:last-child td {
+			border-top: 2px solid #f8f9fa;
+			font-weight: 500;
+		}
 
-.card-body .border {
-    padding: 10px;
-    margin-bottom: 10px;
-    border-radius: 8px;
-    background-color: #f9f9f9;
-}
+		.table tr:last-child td {
+			font-weight: 600;
+			color: #000;
+		}
 
-.card-body h6 {
-    margin: 0;
-    font-weight: bold;
-    color: #333;
-}
+		/* Free Shipping Badge */
+		.shipping-badge {
+			display: inline-block;
+			padding: 0.25rem 0.5rem;
+			background-color: #e8f5e9;
+			color: #2e7d32;
+			border-radius: 4px;
+			font-size: 0.875rem;
+		}
 
-</style>
+		.card-body .border {
+			padding: 10px;
+			margin-bottom: 10px;
+			border-radius: 8px;
+			background-color: #f9f9f9;
+		}
+
+		.card-body h6 {
+			margin: 0;
+			font-weight: bold;
+			color: #333;
+		}
+	</style>
 </head>
+
 <body class="animsition">
-	
+
 	<!-- Header -->
 	<header class="header-v4">
 		<!-- Header desktop -->
 		<div class="container-menu-desktop">
 			<div class="wrap-menu-desktop how-shadow1">
 				<nav class="limiter-menu-desktop container">
-					
-					<!-- Logo desktop -->		
+
+					<!-- Logo desktop -->
 					<a href="#" class="logo">
 						<img src="/user/images/icons/Techy_Zone.png" alt="IMG-LOGO">
 					</a>
@@ -235,7 +235,7 @@ body {
 							<li>
 								<a href="/product">Shop</a>
 							</li>
-                            
+
 							<li>
 								<a href="/myaccount">My Account</a>
 							</li>
@@ -252,9 +252,9 @@ body {
 								<li>
 									<a href="/login">Login</a>
 								</li>
-							<% } %>
+								<% } %>
 						</ul>
-					</div>	
+					</div>
 
 					<!-- Icon header -->
 					<div class="wrap-icon-header flex-w flex-r-m">
@@ -271,12 +271,12 @@ body {
 						</a>
 					</div>
 				</nav>
-			</div>	
+			</div>
 		</div>
 
 		<!-- Header Mobile -->
 		<div class="wrap-header-mobile">
-			<!-- Logo moblie -->		
+			<!-- Logo moblie -->
 			<div class="logo-mobile">
 				<a href="index.html"><img src="/user/images/icons/Techy_Zone.png" alt="IMG-LOGO"></a>
 			</div>
@@ -333,7 +333,7 @@ body {
 					<li>
 						<a href="/login">Login</a>
 					</li>
-				<% } %>
+					<% } %>
 			</ul>
 		</div>
 
@@ -368,53 +368,68 @@ body {
 				<i class="fa fa-angle-right m-l-9 m-r-10" aria-hidden="true"></i>
 			</a>
 
-            <span class="stext-109 cl4">
+			<span class="stext-109 cl4">
 				Checkout
 			</span>
 		</div>
 	</div>
 
 
-    <!-- Main Content -->
-    <div class="container my-4">
+	<!-- Main Content -->
+	<div class="container my-4">
 		<form id="checkoutForm" action="/place-order" method="POST">
 			<div class="row">
 				<!-- Shipping Address Section -->
 				<div class="col-md-6">
 					<h3 class="fw-bold mb-4">Select Your Addresses</h3>
-	
-					<% if (addresses && addresses.length > 0) { %>
-						<% addresses.forEach((address) => { %>
+
+					<% if (addresses && addresses.length> 0) { %>
+						<% addresses.forEach((address)=> { %>
 							<div class="card mb-4">
 								<div class="card-body">
 									<!-- Radio button to select address -->
 									<div class="form-check">
-										<input class="form-check-input" type="radio" name="addressId" id="address-<%= address._id %>" value="<%= address._id %>" <% if (address.isDefault) { %> checked <% } %> >
+										<input class="form-check-input" type="radio" name="addressId"
+											id="address-<%= address._id %>" value="<%= address._id %>" <% if
+											(address.isDefault) { %> checked <% } %> >
 									</div>
-									<h5 class="card-title"><%= address.addressType %> Address</h5>
+									<h5 class="card-title">
+										<%= address.addressType %> Address
+									</h5>
 									<div class="mb-3">
-										<p class="mb-1"><strong>Name:</strong> <%= address.name %></p>
-										<p class="mb-1"><%= address.city %>, <%= address.landMark %></p>
-										<p class="mb-1"><%= address.state %> - <%= address.pincode %></p>
-										<p class="mb-1"><strong>Phone:</strong> <%= address.phone %></p>
+										<p class="mb-1"><strong>Name:</strong>
+											<%= address.name %>
+										</p>
+										<p class="mb-1">
+											<%= address.city %>, <%= address.landMark %>
+										</p>
+										<p class="mb-1">
+											<%= address.state %> - <%= address.pincode %>
+										</p>
+										<p class="mb-1"><strong>Phone:</strong>
+											<%= address.phone %>
+										</p>
 										<% if (address.altPhone) { %>
-											<p class="mb-1"><strong>Alternate Phone:</strong> <%= address.altPhone %></p>
-										<% } %>
+											<p class="mb-1"><strong>Alternate Phone:</strong>
+												<%= address.altPhone %>
+											</p>
+											<% } %>
 									</div>
-	
+
 									<!-- Edit and Delete Buttons -->
 									<div class="mt-3">
-										<a href="/editCheckoutAddress?id=<%= address._id %>" class="btn btn btn-dark">Edit</a>
+										<a href="/editCheckoutAddress?id=<%= address._id %>"
+											class="btn btn btn-dark">Edit</a>
 									</div>
 								</div>
 							</div>
-						<% }); %>
-					<% } else { %>
-						<p>No addresses found. Please add a new address.</p>
-					<% } %>
-					<a href="/addCheckoutAddress" class="btn btn-dark">Add New Address</a>
+							<% }); %>
+								<% } else { %>
+									<p>No addresses found. Please add a new address.</p>
+									<% } %>
+										<a href="/addCheckoutAddress" class="btn btn-dark">Add New Address</a>
 				</div>
-	
+
 				<!-- Cart Summary Section -->
 				<div class="col-md-6">
 					<div class="card">
@@ -422,26 +437,28 @@ body {
 							<h5 class="card-title">Cart Totals</h5>
 							<div class="available-coupons my-4">
 								<h5>Available Coupons</h5>
-								<% if (availableCoupons && availableCoupons.length > 0) { %>
+								<% if (availableCoupons && availableCoupons.length> 0) { %>
 									<div class="row">
-										<% availableCoupons.forEach(coupon => { %>
+										<% availableCoupons.forEach(coupon=> { %>
 											<div class="col-md-4">
 												<div class="card mb-3">
 													<div class="card-body">
-														<h6 class="card-title"><%= coupon.couponCode %></h6>
+														<h6 class="card-title">
+															<%= coupon.couponCode %>
+														</h6>
 														<p class="card-text">
 															Discount: <%= coupon.discount %>%<br>
 														</p>
 													</div>
 												</div>
 											</div>
-										<% }); %>
+											<% }); %>
 									</div>
-								<% } else { %>
-									<p>No coupons available at the moment.</p>
-								<% } %>
+									<% } else { %>
+										<p>No coupons available at the moment.</p>
+										<% } %>
 							</div>
-							
+
 							<div class="table-responsive">
 								<table class="table">
 									<thead>
@@ -451,118 +468,153 @@ body {
 										</tr>
 									</thead>
 									<tbody>
-										<% let subtotal = 0; %> <!-- Initialize subtotal -->
-									
-										<% if (product) { %> 
-											<!-- Render single product passed from "Buy Now" -->
-											<tr>
-												<td>
-													<div class="d-flex align-items-center">
-														<img src="<%= product.image %>" alt="<%= product.name %>" class="me-2" style="width: 50px;">
-														<div>
-															<%= product.name %>
-															<br>
-															<small class="text-muted">× <%= product.quantity %></small>
-														</div>
-													</div>
-												</td>
-												<td class="text-end">₹<%= (product.price * product.quantity).toFixed(2) %></td>
-											</tr>
-											<% subtotal += product.price * product.quantity; %>
-										<% } %>
-									
-										<% if (cart && cart.items && cart.items.length > 0) { %> 
-											<!-- Render cart items -->
-											<% cart.items.forEach(item => { %>
+										<% let subtotal=0; %> <!-- Initialize subtotal -->
+
+											<% if (product) { %>
+												<!-- Render single product passed from "Buy Now" -->
 												<tr>
 													<td>
 														<div class="d-flex align-items-center">
-															<img src="<%= item.images %>" alt="<%= item.name %>" class="me-2" style="width: 50px;">
+															<img src="<%= product.image %>" alt="<%= product.name %>"
+																class="me-2" style="width: 50px;">
 															<div>
-																<%= item.name %>
-																<br>
-																<small class="text-muted">× <%= item.quantity %></small>
+																<%= product.name %>
+																	<br>
+																	<small class="text-muted">× <%= product.quantity %>
+																	</small>
 															</div>
 														</div>
 													</td>
-													<td class="text-end">₹<%= (item.price * item.quantity).toFixed(2) %></td>
+													<td class="text-end">₹<%= (product.price *
+															product.quantity).toFixed(2) %>
+													</td>
 												</tr>
-												<% subtotal += item.price * item.quantity; %>
-											<% }); %>
-										<% } %>
-									
-										<tr>
-											<td>Subtotal</td>
-											<td class="text-end">₹<%= subtotal.toFixed(2) %></td>
-										</tr>
-										<tr>
-											<td>Shipping</td>
-											<td class="text-end">
-												<% if (deliveryCharge > 0) { %>
-													₹<%= deliveryCharge.toFixed(2) %>
-												<% } else { %>
-													Free
-												<% } %>
-											</td>
-										</tr>										
-										<tr>
-										<!-- Coupon Code -->
+												<% subtotal +=product.price * product.quantity; %>
+													<% } %>
 
-							<div class="flex-w flex-m m-r-20 m-tb-5">
-								<input class="stext-104 cl2 plh4 size-117 bor13 p-lr-20 m-r-10 m-tb-5" 
-									   type="text" id="couponCode" name="coupon" placeholder="Coupon Code">
-									   
-								<div id="applyCouponBtn" 
-									 class="flex-c-m stext-101 cl2 size-118 bg8 bor13 hov-btn3 p-lr-15 trans-04 pointer m-tb-5">
-									Apply Coupon
-								</div>
-	
-								<div id="removeCouponBtn" 
-									 class="flex-c-m stext-101 cl2 size-118 bg8 bor13 hov-btn3 p-lr-15 trans-04 pointer m-tb-5" 
-									 style="display: none;">
-									Remove Coupon
-								</div>
-							</div>
-	
-							<!-- Coupon Messages -->
-							<div id="couponMessage" class="m-tb-10 stext-104 cl2"></div>
-	
-							<!-- Order Summary -->
-							<div class="order-summary m-tb-20">
-								<p>Cart Total: ₹<span id="cartTotal"><%= subtotal.toFixed(2) %></span></p>
-								<p>Discount: ₹<span id="discount">0.00</span></p>
-								<p>Final Total: ₹<span id="finalTotalSummary"><%= subtotal.toFixed(2) %></span></p>
-							</div>
-										<tr>
-											<td><strong>Total</strong></td>
-											<td class="order-summary text-end"><strong>₹<span id="finalTotalTable"><%= totalPriceWithDelivery.toFixed(2) %></span></strong></td>
-										</tr>
-									</tbody>        
+														<% if (cart && cart.items && cart.items.length> 0) { %>
+															<!-- Render cart items -->
+															<% cart.items.forEach(item=> { %>
+																<tr>
+																	<td>
+																		<div class="d-flex align-items-center">
+																			<img src="<%= item.images %>"
+																				alt="<%= item.name %>" class="me-2"
+																				style="width: 50px;">
+																			<div>
+																				<%= item.name %>
+																					<br>
+																					<small class="text-muted">× <%=
+																							item.quantity %></small>
+																			</div>
+																		</div>
+																	</td>
+																	<td class="text-end">₹<%= (item.price *
+																			item.quantity).toFixed(2) %>
+																	</td>
+																</tr>
+																<% subtotal +=item.price * item.quantity; %>
+																	<% }); %>
+																		<% } %>
+
+																			<tr>
+																				<td>Subtotal</td>
+																				<td class="text-end">₹<%=
+																						subtotal.toFixed(2) %>
+																				</td>
+																			</tr>
+																			<tr>
+																				<td>Shipping</td>
+																				<td class="text-end" id="shippingCharge">
+																					<% if (deliveryCharge> 0) { %>
+																						₹<%= deliveryCharge.toFixed(2)
+																							%>
+																							<% } else { %>
+																								Free
+																								<% } %>
+																				</td>
+																			</tr>
+																			<tr>
+																				<!-- Coupon Code -->
+
+																				<div
+																					class="flex-w flex-m m-r-20 m-tb-5">
+																					<input
+																						class="stext-104 cl2 plh4 size-117 bor13 p-lr-20 m-r-10 m-tb-5"
+																						type="text" id="couponCode"
+																						name="coupon"
+																						placeholder="Coupon Code">
+
+																					<div id="applyCouponBtn"
+																						class="flex-c-m stext-101 cl2 size-118 bg8 bor13 hov-btn3 p-lr-15 trans-04 pointer m-tb-5">
+																						Apply Coupon
+																					</div>
+
+																					<div id="removeCouponBtn"
+																						class="flex-c-m stext-101 cl2 size-118 bg8 bor13 hov-btn3 p-lr-15 trans-04 pointer m-tb-5"
+																						style="display: none;">
+																						Remove Coupon
+																					</div>
+																				</div>
+
+																				<!-- Coupon Messages -->
+																				<div id="couponMessage"
+																					class="m-tb-10 stext-104 cl2"></div>
+
+																				<!-- Order Summary -->
+																				<div class="order-summary m-tb-20">
+																					<p>Cart Total: ₹<span
+																							id="cartTotal">
+																							<%= subtotal.toFixed(2) %>
+																						</span></p>
+																					<p>Discount: ₹<span
+																							id="discount">0.00</span>
+																					</p>
+																					<p>Final Total: ₹<span
+																							id="finalTotalSummary">
+																							<%= subtotal.toFixed(2) %>
+																						</span></p>
+																				</div>
+																			<tr>
+																				<td><strong>Total</strong></td>
+																				<td class="order-summary text-end">
+																					<strong>₹<span id="finalTotalTable">
+																							<%= totalPriceWithDelivery.toFixed(2)
+																								%>
+																						</span></strong>
+																				</td>
+																			</tr>
+									</tbody>
 								</table>
 							</div>
-						</tr>
+							</tr>
 
-							
-	
+
+
 							<!-- Payment Methods -->
 							<div class="mt-4">
 								<h6>Payment</h6>
 								<div class="form-check">
-									<input class="form-check-input" type="radio" name="paymentMethod" id="razorpay" value="Razorpay">
+									<input class="form-check-input" type="radio" name="paymentMethod" id="razorpay"
+										value="Razorpay">
 									<label class="form-check-label" for="razorpay">Razorpay</label>
 								</div>
 								<div class="form-check">
-									<input class="form-check-input" type="radio" name="paymentMethod" id="cash-on-delivery" value="Cash on Delivery">
+									<input class="form-check-input" type="radio" name="paymentMethod"
+										id="cash-on-delivery" value="Cash on Delivery">
 									<label class="form-check-label" for="cash-on-delivery">Cash on Delivery</label>
 								</div>
 								<div class="form-check">
-									<input class="form-check-input" type="radio" name="paymentMethod" id="wallet" value="Wallet">
+									<input class="form-check-input" type="radio" name="paymentMethod" id="wallet"
+										value="Wallet">
 									<label class="form-check-label" for="wallet">Wallet</label><br>
-									<p>Wallet Balance: ₹<span id="walletBalance" class="text-success"><%= wallet && wallet.balance ? wallet.balance.toFixed(2) : '0.00' %></span></p>
+									<p>Wallet Balance: ₹<span id="walletBalance" class="text-success">
+											<%= wallet && wallet.balance ? wallet.balance.toFixed(2) : '0.00' %>
+										</span></p>
 								</div>
 							</div>
-							
-	
+
+
 							<!-- Place Order Button -->
 							<button type="submit" class="btn btn-primary w-100 mt-4">Place Order</button>
 						</div>
@@ -572,10 +624,10 @@ body {
 		</form>
 	</div>
 
-	
-	
 
-<!-- Footer -->
+
+
+	<!-- Footer -->
 	<footer class="bg3 p-t-75 p-b-32">
 		<div class="container">
 			<div class="row">
@@ -625,7 +677,7 @@ body {
 
 						<li class="p-b-10">
 							<a href="#" class="stext-107 cl7 hov-cl1 trans-04">
-								Returns 
+								Returns
 							</a>
 						</li>
 
@@ -649,7 +701,8 @@ body {
 					</h4>
 
 					<p class="stext-107 cl7 size-201">
-						Any questions? Let us know in store at 5th floor, Kinfra, Kakkanchery, Kerala or call us on (+1) 96 716 6879
+						Any questions? Let us know in store at 5th floor, Kinfra, Kakkanchery, Kerala or call us on (+1)
+						96 716 6879
 					</p>
 
 					<div class="p-t-27">
@@ -674,7 +727,8 @@ body {
 
 					<form>
 						<div class="wrap-input1 w-full p-b-4">
-							<input class="input1 bg-none plh1 stext-107 cl7" type="text" name="email" placeholder="email@techyzone.com">
+							<input class="input1 bg-none plh1 stext-107 cl7" type="text" name="email"
+								placeholder="email@techyzone.com">
 							<div class="focus-input1 trans-04"></div>
 						</div>
 
@@ -712,8 +766,12 @@ body {
 
 				<p class="stext-107 cl6 txt-center">
 					<!-- Link back to Colorlib can't be removed. Template is licensed under CC BY 3.0. -->
-Copyright &copy;<script>document.write(new Date().getFullYear());</script> All rights reserved | Made with <i class="fa fa-heart-o" aria-hidden="true"></i> by <a href="https://colorlib.com" target="_blank">Colorlib</a> &amp; distributed by <a href="https://themewagon.com" target="_blank">ThemeWagon</a>
-<!-- Link back to Colorlib can't be removed. Template is licensed under CC BY 3.0. -->
+					Copyright &copy;
+					<script>document.write(new Date().getFullYear());</script> All rights reserved | Made with <i
+						class="fa fa-heart-o" aria-hidden="true"></i> by <a href="https://colorlib.com"
+						target="_blank">Colorlib</a> &amp; distributed by <a href="https://themewagon.com"
+						target="_blank">ThemeWagon</a>
+					<!-- Link back to Colorlib can't be removed. Template is licensed under CC BY 3.0. -->
 
 				</p>
 			</div>
@@ -728,43 +786,43 @@ Copyright &copy;<script>document.write(new Date().getFullYear());</script> All r
 		</span>
 	</div>
 
-<!--===============================================================================================-->	
+	<!--===============================================================================================-->
 	<script src="/user/vendor/jquery/jquery-3.2.1.min.js"></script>
-<!--===============================================================================================-->
+	<!--===============================================================================================-->
 	<script src="/user/vendor/animsition/js/animsition.min.js"></script>
-<!--===============================================================================================-->
+	<!--===============================================================================================-->
 	<script src="/user/vendor/bootstrap/js/popper.js"></script>
 	<script src="/user/vendor/bootstrap/js/bootstrap.min.js"></script>
-<!--===============================================================================================-->
+	<!--===============================================================================================-->
 	<script src="/user/vendor/select2/select2.min.js"></script>
 	<script>
-		₹(".js-select2").each(function(){
+		₹(".js-select2").each(function () {
 			₹(this).select2({
 				minimumResultsForSearch: 20,
 				dropdownParent: ₹(this).next('.dropDownSelect2')
 			});
 		})
 	</script>
-<!--===============================================================================================-->
+	<!--===============================================================================================-->
 	<script src="/user/vendor/MagnificPopup/jquery.magnific-popup.min.js"></script>
-<!--===============================================================================================-->
+	<!--===============================================================================================-->
 	<script src="/user/vendor/perfect-scrollbar/perfect-scrollbar.min.js"></script>
 	<script>
-		₹('.js-pscroll').each(function(){
-			₹(this).css('position','relative');
-			₹(this).css('overflow','hidden');
+		₹('.js-pscroll').each(function () {
+			₹(this).css('position', 'relative');
+			₹(this).css('overflow', 'hidden');
 			var ps = new PerfectScrollbar(this, {
 				wheelSpeed: 1,
 				scrollingThreshold: 1000,
 				wheelPropagation: false,
 			});
 
-			₹(window).on('resize', function(){
+			₹(window).on('resize', function () {
 				ps.update();
 			})
 		});
 	</script>
-<!--===============================================================================================-->
+	<!--===============================================================================================-->
 	<script src="/user/js/main.js"></script>
 
 
@@ -784,15 +842,15 @@ Copyright &copy;<script>document.write(new Date().getFullYear());</script> All r
 	</script>
 	<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 	<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
-	
+
 	<script>
 		document.getElementById('checkoutForm').addEventListener('submit', async (event) => {
-			event.preventDefault(); 
-	
+			event.preventDefault();
+
 			const addressSelected = document.querySelector('input[name="addressId"]:checked');
 			const paymentSelected = document.querySelector('input[name="paymentMethod"]:checked');
 			const finalTotalPrice = parseFloat(document.getElementById('finalTotalSummary').innerText);
-	
+
 			if (!addressSelected) {
 				Swal.fire({
 					icon: 'error',
@@ -802,7 +860,7 @@ Copyright &copy;<script>document.write(new Date().getFullYear());</script> All r
 				});
 				return;
 			}
-	
+
 			if (!paymentSelected) {
 				Swal.fire({
 					icon: 'error',
@@ -812,9 +870,9 @@ Copyright &copy;<script>document.write(new Date().getFullYear());</script> All r
 				});
 				return;
 			}
-	
+
 			const paymentMethod = paymentSelected.value;
-	
+
 			if (paymentMethod === 'Cash on Delivery' && finalTotalPrice > 1000) {
 				Swal.fire({
 					icon: 'error',
@@ -825,15 +883,15 @@ Copyright &copy;<script>document.write(new Date().getFullYear());</script> All r
 				return;
 			}
 
-		if (paymentMethod === 'Wallet' && finalTotalPrice > wallet.balance) {
-			Swal.fire({
-				icon: 'error',
-				title: 'Payment Method Restriction',
-				text: 'Wallet payment is not available for orders above ₹1000.',
-				confirmButtonColor: '#d33'
-			});
-			return;
-		}
+			if (paymentMethod === 'Wallet' && finalTotalPrice > wallet.balance) {
+				Swal.fire({
+					icon: 'error',
+					title: 'Payment Method Restriction',
+					text: 'Wallet payment is not available for orders above ₹1000.',
+					confirmButtonColor: '#d33'
+				});
+				return;
+			}
 
 			if (walletBalance < finalTotalPrice) {
 				Swal.fire({
@@ -844,20 +902,22 @@ Copyright &copy;<script>document.write(new Date().getFullYear());</script> All r
 				});
 				return;
 			}
-	
+
 			if (paymentMethod === 'Razorpay') {
 				try {
-					const response = await fetch('/place-order', {
+					const queryParams = window.location.search;
+					const response = await fetch('/place-order' + queryParams, {
 						method: 'POST',
 						headers: { 'Content-Type': 'application/json' },
 						body: JSON.stringify({
 							addressId: addressSelected.value,
 							paymentMethod: 'Razorpay',
+							couponCode: document.getElementById('couponCode').value,
 						}),
 					});
-	
+
 					const data = await response.json();
-	
+
 					if (data.razorpayOrderId) {
 						const options = {
 							key: data.razorpayKey,
@@ -865,7 +925,7 @@ Copyright &copy;<script>document.write(new Date().getFullYear());</script> All r
 							currency: data.currency,
 							order_id: data.razorpayOrderId,
 							handler: async function (response) {
-								
+
 								const paymentVerification = await fetch('/verify-payment', {
 									method: 'POST',
 									headers: { 'Content-Type': 'application/json' },
@@ -876,7 +936,7 @@ Copyright &copy;<script>document.write(new Date().getFullYear());</script> All r
 										razorpaySignature: response.razorpay_signature,
 									}),
 								});
-	
+
 								if (paymentVerification.ok) {
 									Swal.fire({
 										icon: 'success',
@@ -890,46 +950,46 @@ Copyright &copy;<script>document.write(new Date().getFullYear());</script> All r
 									}, 3000);
 								} else {
 									Swal.fire({
-									icon: 'error',
-									title: 'Payment Verification Failed',
-									text: 'Payment verification failed. Please contact support or retry the payment.',
-									confirmButtonColor: '#d33',
-									showCancelButton: true, 
-									cancelButtonText: 'Go to Orders',
-									reverseButtons: true, 
-								}).then((result) => {
-									if (result.isConfirmed) {
-										window.location.href = `/order-list`; 
-									}
-								});
+										icon: 'error',
+										title: 'Payment Verification Failed',
+										text: 'Payment verification failed. Please contact support or retry the payment.',
+										confirmButtonColor: '#d33',
+										showCancelButton: true,
+										cancelButtonText: 'Go to Orders',
+										reverseButtons: true,
+									}).then((result) => {
+										if (result.isConfirmed) {
+											window.location.href = `/order-list`;
+										}
+									});
 								}
 							},
 							theme: {
 								color: '#3399cc'
 							}
 						};
-	
+
 						const rzp = new Razorpay(options);
 
-						rzp.on('payment.failed', function(response) {
+						rzp.on('payment.failed', function (response) {
 							Swal.fire({
-									icon: 'error',
-									title: 'Payment Verification Failed',
-									text: 'Payment verification failed. Please contact support or retry the payment.',
-									confirmButtonColor: '#d33',
-									showCancelButton: true, 
-								}).then((result) => {
-									if (result.isConfirmed) {
-										window.location.href = `/orders-list`; 
-									}else{
-										window.location.href = `/checkout`;
-									}
-								});
+								icon: 'error',
+								title: 'Payment Verification Failed',
+								text: 'Payment verification failed. Please contact support or retry the payment.',
+								confirmButtonColor: '#d33',
+								showCancelButton: true,
+							}).then((result) => {
+								if (result.isConfirmed) {
+									window.location.href = `/orders-list`;
+								} else {
+									window.location.href = `/checkout`;
+								}
+							});
 						});
 
 						rzp.open();
 					} else {
-						
+
 					}
 				} catch (error) {
 					Swal.fire({
@@ -940,38 +1000,40 @@ Copyright &copy;<script>document.write(new Date().getFullYear());</script> All r
 					});
 				}
 			} else {
-				
+
 				try {
-					const response = await fetch('/place-order', {
+					const queryParams = window.location.search;
+					const response = await fetch('/place-order' + queryParams, {
 						method: 'POST',
 						headers: { 'Content-Type': 'application/json' },
 						body: JSON.stringify({
 							addressId: addressSelected.value,
 							paymentMethod: paymentMethod,
+							couponCode: document.getElementById('couponCode').value,
 						}),
 					});
-	
+
 					if (response.ok) {
 						const data = await response.json();
-            Swal.fire({
-                icon: 'success',
-                title: 'Order Placed Successfully!',
-                text: data.message,
-                showConfirmButton: false,
-                timer: 3000,
-            });
+						Swal.fire({
+							icon: 'success',
+							title: 'Order Placed Successfully!',
+							text: data.message,
+							showConfirmButton: false,
+							timer: 3000,
+						});
 
-            setTimeout(() => {
-                window.location.href = data.redirectUrl;
-            }, 3000);
-        } else {
-            const error = await response.text();
-            Swal.fire({
-                icon: 'error',
-                title: 'Order Failed',
-                text: error,
-            });
-        }
+						setTimeout(() => {
+							window.location.href = data.redirectUrl;
+						}, 3000);
+					} else {
+						const error = await response.text();
+						Swal.fire({
+							icon: 'error',
+							title: 'Order Failed',
+							text: error,
+						});
+					}
 				} catch (error) {
 					Swal.fire({
 						icon: 'error',
@@ -982,75 +1044,93 @@ Copyright &copy;<script>document.write(new Date().getFullYear());</script> All r
 				}
 			}
 		});
-	
+
 
 
 		// Coupon  Integration
 
 
 		document.getElementById('applyCouponBtn').addEventListener('click', async () => {
-    const couponCode = document.getElementById('couponCode').value;
-    const cartTotal = parseFloat(document.getElementById('cartTotal').innerText);
+			const couponCode = document.getElementById('couponCode').value;
+			const cartTotal = parseFloat(document.getElementById('cartTotal').innerText);
 
-    if (!couponCode) {
-        document.getElementById('couponMessage').innerText = 'Please enter a coupon code';
-        return;
-    }
+			if (!couponCode) {
+				document.getElementById('couponMessage').innerText = 'Please enter a coupon code';
+				return;
+			}
 
-    try {
-        const response = await fetch('/apply-coupon', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ couponCode, cartTotal }),
-        });
+			try {
+				const response = await fetch('/apply-coupon', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ couponCode, cartTotal }),
+				});
 
-        const data = await response.json();
+				const data = await response.json();
 
-        if (response.ok) {
-            document.getElementById('discount').innerText = data.discount.toFixed(2);
-			document.getElementById('finalTotalSummary').innerText = data.discountedTotal.toFixed(2);
-            document.getElementById('finalTotalTable').innerText = data.discountedTotal.toFixed(2);
-            document.getElementById('couponMessage').innerText = data.message;
+				if (response.ok) {
+					document.getElementById('discount').innerText = data.discount.toFixed(2);
+					document.getElementById('finalTotalSummary').innerText = data.discountedTotal.toFixed(2);
+					document.getElementById('finalTotalTable').innerText = data.finalTotal.toFixed(2);
+					document.getElementById('couponMessage').innerText = data.message;
 
-            document.getElementById('applyCouponBtn').style.display = 'none';
-            document.getElementById('removeCouponBtn').style.display = 'block';
-        } else {
-            document.getElementById('couponMessage').innerText = data.message;
-        }
-    } catch (error) {
-        console.error('Error applying coupon:', error);
-        document.getElementById('couponMessage').innerText = 'Failed to apply the coupon.';
-    }
-});
+					document.getElementById('applyCouponBtn').style.display = 'none';
+					document.getElementById("shippingCharge").innerText =
+    data.deliveryCharge > 0
+        ? `₹${data.deliveryCharge.toFixed(2)}`
+        : "Free";
+					document.getElementById('removeCouponBtn').style.display = 'block';
+				} else {
+					document.getElementById('couponMessage').innerText = data.message;
+				}
+			} catch (error) {
+				console.error('Error applying coupon:', error);
+				document.getElementById('couponMessage').innerText = 'Failed to apply the coupon.';
+			}
+		});
 
 
-document.getElementById('removeCouponBtn').addEventListener('click', async () => {
-    try {
-        const response = await fetch('/remove-coupon', {
-            method: 'POST',
-        });
+		document.getElementById('removeCouponBtn').addEventListener('click', async () => {
+			try {
+				const response = await fetch('/remove-coupon', {
+					method: 'POST',
+				});
 
-        const data = await response.json();
+				const data = await response.json();
 
-        if (response.ok) {
-            document.getElementById('discount').innerText = '0';
-            const cartTotal = parseFloat(document.getElementById('cartTotal').innerText);
-            document.getElementById('finalTotalSummary').innerText = cartTotal.toFixed(2);
-            document.getElementById('finalTotalTable').innerText = cartTotal.toFixed(2); 
-            document.getElementById('couponMessage').innerText = data.message;
+				if (response.ok) {
+					document.getElementById('discount').innerText = '0';
+					const cartTotal = parseFloat(document.getElementById('cartTotal').innerText);
 
-            document.getElementById('applyCouponBtn').style.display = 'block';
-            document.getElementById('removeCouponBtn').style.display = 'none';
-        } else {
-            document.getElementById('couponMessage').innerText = data.message;
-        }
-    } catch (error) {
-        console.error('Error removing coupon:', error);
-        document.getElementById('couponMessage').innerText = 'Failed to remove the coupon.';
-    }
-});
-	
-</script>
+const deliveryCharge = cartTotal < 500 ? 30 : 0;
+
+const finalTotal = cartTotal + deliveryCharge;
+
+document.getElementById("shippingCharge").innerText =
+    deliveryCharge > 0
+        ? `₹${deliveryCharge.toFixed(2)}`
+        : "Free";
+
+document.getElementById("finalTotalSummary").innerText =
+    finalTotal.toFixed(2);
+
+document.getElementById("finalTotalTable").innerText =
+    finalTotal.toFixed(2);
+					document.getElementById('couponMessage').innerText = data.message;
+
+					document.getElementById('applyCouponBtn').style.display = 'block';
+					document.getElementById('removeCouponBtn').style.display = 'none';
+				} else {
+					document.getElementById('couponMessage').innerText = data.message;
+				}
+			} catch (error) {
+				console.error('Error removing coupon:', error);
+				document.getElementById('couponMessage').innerText = 'Failed to remove the coupon.';
+			}
+		});
+
+	</script>
 
 </body>
+
 </html>

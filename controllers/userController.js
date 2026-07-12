@@ -18,9 +18,11 @@ const productModel = require("../models/productModel");
 const pdf = require("html-pdf");
 const PDFDocument = require("pdfkit");
 const crypto = require("crypto");
-console.log("sudheesh");
 
 const saltRounds = 10;
+
+// Returns the effective price of an item: offerPrice if available, otherwise regular price
+const getEffectivePrice = (product) => Number(product.offerPrice || product.price);
 
 const loadRegister = async (req, res) => {
   try {
@@ -78,7 +80,7 @@ const insertUser = async (req, res, next) => {
 };
 
 const loadOTPVerification = async (req, res) => {
-  console.log(req.session.tempUserData);
+  // console.log(req.session.tempUserData);
   if (!req.session.user) {
     const { email } = req.session.tempUserData; // Accessing user data from session
     res.render("users/otp-verification", { email });
@@ -223,7 +225,6 @@ const loadLogin = async (req, res) => {
 
 const login = async (req, res) => {
   const { email, password, returnUrl } = req.body;
-  console.log(email, password);
   try {
     const user = await User.findOne({ email }); // Finding user
 
@@ -491,7 +492,6 @@ const loadProductDetail = async (req, res) => {
     const { productId } = req.params;
 
     const product = await Product.findOne({ _id: productId });
-    console.log(product);
 
     if (!product || product.isDeleted) {
       // Checking if the product exists
@@ -659,6 +659,31 @@ const updateProfile = async (req, res) => {
   }
 };
 
+const calculateOrderDisplayTotal = (order = {}) => {
+  const subtotal = (order.products || []).reduce(
+    (sum, item) => sum + (Number(item.price) || 0) * (Number(item.quantity) || 0),
+    0,
+  );
+
+  return Number(subtotal.toFixed(2));
+};
+
+const calculateRefundableItemAmount = (order = {}, item = {}) => {
+  const itemLineTotal = (Number(item.price) || 0) * (Number(item.quantity) || 0);
+  const subtotal = (order.products || []).reduce(
+    (sum, currentItem) =>
+      sum + (Number(currentItem.price) || 0) * (Number(currentItem.quantity) || 0),
+    0,
+  );
+  const paidTotal = Math.max(0, Number(order.totalPrice || 0));
+
+  if (paidTotal > 0 && subtotal > 0) {
+    return Number((paidTotal * (itemLineTotal / subtotal)).toFixed(2));
+  }
+
+  return Number(itemLineTotal.toFixed(2));
+};
+
 const loadOrdersList = async (req, res) => {
   try {
     const userId = req.session.user.id;
@@ -703,6 +728,8 @@ const loadOrdersList = async (req, res) => {
           name: "Product not found",
         };
       });
+
+      order.displayTotal = order.totalPrice;
 
       const shippingAddress = await Address.findById(order.addressId).lean();
       order.address = shippingAddress
@@ -762,6 +789,7 @@ const orderListView = async (req, res) => {
     }
 
     const shippingAddress = order.address;
+    order.displayTotal = order.totalPrice;
 
     res.render("users/order-listview", { user: req.session.user, order });
   } catch (error) {
@@ -929,10 +957,6 @@ const cancelProduct = async (req, res) => {
     const userId = req.session.user.id;
     const { orderId, productId } = req.params;
 
-    console.log("User ID from session:", userId);
-    console.log("Order ID:", orderId);
-    console.log("Product ID:", productId);
-
     const order = await Order.findOne({ _id: orderId, userId });
 
     if (!order) {
@@ -958,12 +982,17 @@ const cancelProduct = async (req, res) => {
     }
 
     const canceledProduct = order.products[productIndex];
-    const canceledProductPrice =
-      canceledProduct.price * canceledProduct.quantity;
+    const canceledProductPrice = calculateRefundableItemAmount(
+      order,
+      canceledProduct,
+    );
 
     order.products[productIndex].status = "Cancelled";
 
-    order.totalPrice -= canceledProductPrice;
+    order.totalPrice = Math.max(
+      0,
+      Number((order.totalPrice - canceledProductPrice).toFixed(2)),
+    );
 
     if (order.totalPrice < 0) {
       // Handle negative total price
@@ -1512,7 +1541,7 @@ const addToCart = async (req, res) => {
       cart.items.push({
         productId: product._id,
         name: product.name,
-        price: product.offerPrice,
+        price: getEffectivePrice(product),
         quantity: parsedQuantity,
         images: product.images[0] || "default-image.jpg",
       });
@@ -1524,10 +1553,16 @@ const addToCart = async (req, res) => {
       (total, item) => total + item.quantity,
       0,
     );
-    cart.totalPrice = cart.items.reduce(
-      (total, item) => total + item.price * item.quantity,
-      0,
-    );
+    // cart.totalPrice = cart.items.reduce(
+    //   (total, item) => total + item.offerPrice ? item.offerPrice * item.quantity : item.price * item.quantity,
+    //   0,
+    // );
+    cart.totalPrice = Number(
+    cart.items.reduce(
+        (sum,item)=>sum + item.price * item.quantity,
+        0
+    ).toFixed(2)
+);
 
     await cart.save();
 
@@ -1683,22 +1718,28 @@ const loadCheckout = async (req, res) => {
         return res.status(STATUS_CODES.NOT_FOUND).send("Product not found");
       }
 
+      const effectivePrice = getEffectivePrice(product);
+
       const checkoutProduct = {
         _id: product._id,
         name: product.name,
-        price: product.price,
+        price: effectivePrice,
         quantity: parseInt(quantity),
         image: product.images[0] || "default-image.jpg",
-        total: product.price * parseInt(quantity),
+        total: effectivePrice * parseInt(quantity),
       };
 
+      const subtotal = checkoutProduct.total;
+
       if (appliedCoupon) {
-        discount = Math.min(appliedCoupon.discount, checkoutProduct.total);
-        checkoutProduct.total -= discount;
+        discount = Math.min(appliedCoupon.discount, subtotal);
       }
 
-      const deliveryCharge = checkoutProduct.total < 500 ? 30 : 0;
-      checkoutProduct.total += deliveryCharge;
+      const discountedSubtotal = subtotal - discount;
+
+const deliveryCharge = discountedSubtotal < 500 ? 30 : 0;
+
+const totalPriceWithDelivery = discountedSubtotal + deliveryCharge;
 
       return res.render("users/checkout", {
         user: req.session.user,
@@ -1706,23 +1747,38 @@ const loadCheckout = async (req, res) => {
         wallet,
         cart: null,
         product: checkoutProduct,
-        appliedCoupon,
-        discount,
-        deliveryCharge,
-        availableCoupons,
+
+  subtotal,
+  discount,
+  deliveryCharge,
+  totalPriceWithDelivery,
+
+  appliedCoupon,
+  availableCoupons,
       });
     }
 
     const cart = await Cart.findOne({ userId });
 
-    if (cart && appliedCoupon) {
-      discount = Math.min(appliedCoupon.discount, cart.totalPrice);
-      cart.totalPrice -= discount;
-    }
+    // if (cart && appliedCoupon) {
+    //   discount = Math.min(appliedCoupon.discount, cart.totalPrice);
+    //   cart.totalPrice -= discount;
+    // }
 
-    const deliveryCharge = cart && cart.totalPrice < 500 ? 30 : 0; // Adding delivery charge
-    const totalPriceWithDelivery =
-      (cart ? cart.totalPrice : 0) + deliveryCharge; // Updating total price with delivery charge
+    // const deliveryCharge = cart && cart.offerPrice ? cart.offerPrice < 500 ? 30 : 0 : cart.totalPrice < 500 ? 30 : 0; // Adding delivery charge
+    // const totalPriceWithDelivery = cart.totalPrice + deliveryCharge; // Updating total price with delivery charge
+
+    const subtotal = cart ? cart.totalPrice : 0;
+
+if (appliedCoupon) {
+  discount = Math.min(appliedCoupon.discount, subtotal);
+}
+
+const discountedSubtotal = subtotal - discount;
+
+const deliveryCharge = discountedSubtotal < 500 ? 30 : 0;
+
+const totalPriceWithDelivery = discountedSubtotal + deliveryCharge;
 
     res.render("users/checkout", {
       user: req.session.user,
@@ -1730,11 +1786,13 @@ const loadCheckout = async (req, res) => {
       wallet,
       cart: cart || { items: [], totalPrice: 0, totalQuantity: 0 },
       product: null,
-      appliedCoupon,
-      discount,
-      deliveryCharge,
-      totalPriceWithDelivery,
-      availableCoupons,
+  subtotal,
+  discount,
+  deliveryCharge,
+  totalPriceWithDelivery,
+
+  appliedCoupon,
+  availableCoupons,
     });
   } catch (error) {
     console.error("Error in loading checkout:", error.message, error);
@@ -1916,6 +1974,8 @@ const loadOrderConfirmation = async (req, res) => {
     if (!order) {
       return res.status(STATUS_CODES.NOT_FOUND).send("Order not found.");
     }
+
+    order.displayTotal = order.totalPrice;
 
     res.render("users/order-confirmation", {
       user: req.session.user,

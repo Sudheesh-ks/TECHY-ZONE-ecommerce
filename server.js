@@ -2,9 +2,6 @@ const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 dotenv.config(); 
 
-console.log(process.env.MONGO_URI);
-console.log(process.env.PORT);
-
 
 const DB = require('./config/db');
 DB();
