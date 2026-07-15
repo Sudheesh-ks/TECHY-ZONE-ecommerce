@@ -179,8 +179,8 @@
                         })
                     });
                     const data = await response.json();
-                    if(!data.val){
-                        sweetAlert("Server msg",data.msg, "error");
+                    if(!data.success){
+                        sweetAlert("Server msg",data.message, "error");
                     }else{
                         window.location.href = '/verify-otp'
                     }
